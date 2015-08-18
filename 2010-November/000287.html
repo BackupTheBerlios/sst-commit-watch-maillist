@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r818 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2010-November/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r818%20-%20trunk&In-Reply-To=%3C20101130100953.A196348018C%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000286.html">
+   <LINK REL="Next"  HREF="000288.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r818 - trunk</H1>
+    <B>esr at mail.berlios.de</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r818%20-%20trunk&In-Reply-To=%3C20101130100953.A196348018C%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r818 - trunk">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Nov 30 11:09:53 CET 2010</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000286.html">[Sst-commit-watch] r817 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000288.html">[Sst-commit-watch] r819 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#287">[ date ]</a>
+              <a href="thread.html#287">[ thread ]</a>
+              <a href="subject.html#287">[ subject ]</a>
+              <a href="author.html#287">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2010-11-30 11:09:53 +0100 (Tue, 30 Nov 2010)
+New Revision: 818
+
+Modified:
+   trunk/sst.py
+Log:
+Fix a reference to sys.version_info.major that broke Python 2.6.
+
+
+Modified: trunk/sst.py
+===================================================================
+--- trunk/sst.py	2010-11-30 09:51:35 UTC (rev 817)
++++ trunk/sst.py	2010-11-30 10:09:53 UTC (rev 818)
+@@ -3066,7 +3066,7 @@
+     &quot;for some recent versions of python2, the following enables UTF8&quot;
+     &quot;for the older ones we probably need to set C locale, and the python3&quot;
+     &quot;has no problems at all&quot;
+-    if sys.version_info.major &lt; 3:
++    if sys.version_info[0] &lt; 3:
+ 	import locale
+ 	locale.setlocale(locale.LC_ALL, &quot;&quot;)
+     gettext.bindtextdomain(&quot;sst&quot;, &quot;/usr/local/share/locale&quot;)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000286.html">[Sst-commit-watch] r817 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000288.html">[Sst-commit-watch] r819 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#287">[ date ]</a>
+              <a href="thread.html#287">[ thread ]</a>
+              <a href="subject.html#287">[ subject ]</a>
+              <a href="author.html#287">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

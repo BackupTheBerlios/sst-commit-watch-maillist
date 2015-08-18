@@ -1,0 +1,253 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r571 - in trunk: doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r571%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C200609152058.k8FKw5vu011957%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000037.html">
+   <LINK REL="Next"  HREF="000039.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r571 - in trunk: doc src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r571%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C200609152058.k8FKw5vu011957%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r571 - in trunk: doc src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 15 22:58:05 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000037.html">[Sst-commit-watch] r570 - trunk/doc
+</A></li>
+        <LI>Next message: <A HREF="000039.html">[Sst-commit-watch] r572 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#38">[ date ]</a>
+              <a href="thread.html#38">[ thread ]</a>
+              <a href="subject.html#38">[ subject ]</a>
+              <a href="author.html#38">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-15 22:58:05 +0200 (Fri, 15 Sep 2006)
+New Revision: 571
+
+Modified:
+   trunk/doc/makehelp.py
+   trunk/doc/sst-doc.xml
+   trunk/src/moving.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+Fixes the bug that was directing help lookups incorrectly.
+Renames the old &quot;help()&quot; function to &quot;mayday()&quot; to match the new command.
+Fixes display bugs in curses due to generation of wacky quotes, nonbreak
+spaces, and dashes.  Does not fix problems with forms-drawing characters.
+
+
+Modified: trunk/doc/makehelp.py
+===================================================================
+--- trunk/doc/makehelp.py	2006-09-15 20:12:00 UTC (rev 570)
++++ trunk/doc/makehelp.py	2006-09-15 20:58:05 UTC (rev 571)
+@@ -37,6 +37,10 @@
+         line = line.replace(&quot;%&quot;, &quot;%%&quot;)
+         # Hack Unicode non-breaking spaces into ordinary spaces
+         line = line.replace(&quot;\xc2\xa0&quot;, &quot; &quot;).replace(&quot;\240&quot;, &quot;&quot;)
++        # Hack right and left quotes into regular ASCII quotes
++        line = line.replace(&quot;\xe2\x80\x9c&quot;, '&quot;').replace(&quot;\xe2\x80\x9d&quot;, '&quot;')
++        # Hack dashes and bullets (Hmmm...might want to handle this in curses)
++        line = line.replace(&quot;\xe2\x80\x94&quot;, &quot;-&quot;).replace(&quot;\xe2\x97\x8f&quot;, &quot;*&quot;);
+         if line.startswith(&quot;Mnemonic:&quot;):
+             while not savetext[-1].strip():
+                 savetext.pop()
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2006-09-15 20:12:00 UTC (rev 570)
++++ trunk/doc/sst-doc.xml	2006-09-15 20:58:05 UTC (rev 571)
+@@ -407,6 +407,7 @@
+ 
+ &lt;para&gt;If your short-range sensors are damaged, this command will only show
+ the contents of adjacent sectors.&lt;/para&gt;
++
+ &lt;/sect1&gt;
+ &lt;sect1&gt;&lt;title&gt;Status Report&lt;/title&gt;
+ 
+@@ -596,6 +597,7 @@
+ 
+ &lt;para&gt;Long-range scans are free.  They use up no energy or time, and can be
+ done safely regardless of battle conditions.&lt;/para&gt;
++
+ &lt;/sect1&gt;
+ &lt;sect1&gt;&lt;title&gt;Star Chart&lt;/title&gt;
+ 
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-15 20:12:00 UTC (rev 570)
++++ trunk/src/moving.c	2006-09-15 20:58:05 UTC (rev 571)
+@@ -898,7 +898,7 @@
+     return;
+ }
+ 
+-void help(void) 
++void mayday(void) 
+ {
+     /* There's more than one way to move in this game! */
+     double ddist, xdist, probf;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-15 20:12:00 UTC (rev 570)
++++ trunk/src/sst.c	2006-09-15 20:58:05 UTC (rev 571)
+@@ -208,66 +208,66 @@
+ #define TORPEDO	5
+         {&quot;TORPEDO&quot;,	TORPEDO,	0},
+ 	{&quot;PHOTONS&quot;,	TORPEDO,	0},
+-#define MOVE	6
++#define MOVE	7
+ 	{&quot;MOVE&quot;,	MOVE,		0},
+-#define SHIELDS	7
++#define SHIELDS	8
+ 	{&quot;SHIELDS&quot;,	SHIELDS,	0},
+-#define DOCK	8
++#define DOCK	9
+ 	{&quot;DOCK&quot;,	DOCK,		0},
+-#define DAMAGES	9
++#define DAMAGES	10
+ 	{&quot;DAMAGES&quot;,	DAMAGES,	0},
+-#define CHART	10
++#define CHART	11
+ 	{&quot;CHART&quot;,	CHART,		0},
+-#define IMPULSE	11
++#define IMPULSE	12
+ 	{&quot;IMPULSE&quot;,	IMPULSE,	0},
+-#define REST	12
++#define REST	13
+ 	{&quot;REST&quot;,	REST,		0},
+-#define WARP	13
++#define WARP	14
+ 	{&quot;WARP&quot;,	WARP,		0},
+-#define SCORE	14
++#define SCORE	15
+ 	{&quot;SCORE&quot;,	SCORE,		0},
+-#define SENSORS	15
++#define SENSORS	16
+ 	{&quot;SENSORS&quot;,	SENSORS,	OPTION_PLANETS},
+-#define ORBIT	16
++#define ORBIT	17
+ 	{&quot;ORBIT&quot;,	ORBIT,		OPTION_PLANETS},
+-#define TRANSPORT	17
++#define TRANSPORT	18
+ 	{&quot;TRANSPORT&quot;,	TRANSPORT,	OPTION_PLANETS},
+-#define MINE	18
++#define MINE	19
+ 	{&quot;MINE&quot;,	MINE,		OPTION_PLANETS},
+-#define CRYSTALS	19
++#define CRYSTALS	20
+ 	{&quot;CRYSTALS&quot;,	CRYSTALS,	OPTION_PLANETS},
+-#define SHUTTLE	20
++#define SHUTTLE	21
+ 	{&quot;SHUTTLE&quot;,	SHUTTLE,	OPTION_PLANETS},
+-#define PLANETS	21
++#define PLANETS	22
+ 	{&quot;PLANETS&quot;,	PLANETS,	OPTION_PLANETS},
+-#define REPORT	22
++#define REPORT	23
+ 	{&quot;REPORT&quot;,	REPORT,		0},
+-#define COMPUTER	23
++#define COMPUTER	24
+ 	{&quot;COMPUTER&quot;,	COMPUTER,      	0},
+-#define COMMANDS	24
++#define COMMANDS	25
+ 	{&quot;COMMANDS&quot;,	COMMANDS,      	0},
+-#define EMEXIT	25
++#define EMEXIT	26
+ 	{&quot;EMEXIT&quot;,	EMEXIT,		0},
+-#define PROBE	26
++#define PROBE	27
+ 	{&quot;PROBE&quot;,	PROBE,		OPTION_PROBE},
+-#define SAVE	27
++#define SAVE	28
+ 	{&quot;SAVE&quot;,	SAVE,		0},
+ 	{&quot;FREEZE&quot;,	SAVE,		0},
+-#define ABANDON	28
++#define ABANDON	30
+ 	{&quot;ABANDON&quot;,	ABANDON,	0},
+-#define DESTRUCT	29
++#define DESTRUCT	31
+ 	{&quot;DESTRUCT&quot;,	DESTRUCT,	0},
+-#define DEATHRAY	30
++#define DEATHRAY	32
+ 	{&quot;DEATHRAY&quot;,	DEATHRAY,	0},
+-#define DEBUGCMD	31
++#define DEBUGCMD	33
+ 	{&quot;DEBUG&quot;,	DEBUGCMD,	0},
+-#define MAYDAY	32
++#define MAYDAY	34
+ 	{&quot;MAYDAY&quot;,	MAYDAY,		0},
+ 	//{&quot;SOS&quot;,		MAYDAY,		0},
+ 	//{&quot;CALL&quot;,	MAYDAY,		0},
+-#define QUIT	33
++#define QUIT	35
+ 	{&quot;QUIT&quot;,	QUIT,		0},
+-#define HELP	34
++#define HELP	36
+ 	{&quot;HELP&quot;,	HELP,		0},
+ };
+ 
+@@ -532,7 +532,7 @@
+ #endif
+ 	    break;
+ 	case MAYDAY:			// Call for help
+-	    help();
++	    mayday();
+ 	    if (game.ididit) hitme = TRUE;
+ 	    break;
+ 	case QUIT:
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-15 20:12:00 UTC (rev 570)
++++ trunk/src/sst.h	2006-09-15 20:58:05 UTC (rev 571)
+@@ -326,7 +326,7 @@
+ void events(void);
+ void report(void);
+ void eta(void);
+-void help(void);
++void mayday(void);
+ void abandn(void);
+ void finish(FINTYPE);
+ void dstrct(void);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000037.html">[Sst-commit-watch] r570 - trunk/doc
+</A></li>
+	<LI>Next message: <A HREF="000039.html">[Sst-commit-watch] r572 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#38">[ date ]</a>
+              <a href="thread.html#38">[ thread ]</a>
+              <a href="subject.html#38">[ subject ]</a>
+              <a href="author.html#38">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

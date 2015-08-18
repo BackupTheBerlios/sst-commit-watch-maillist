@@ -1,0 +1,819 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r654 - in trunk: . po src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r654%20-%20in%20trunk%3A%20.%20po%20src&In-Reply-To=%3C200610021903.k92J3X7T008328%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000120.html">
+   <LINK REL="Next"  HREF="000122.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r654 - in trunk: . po src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r654%20-%20in%20trunk%3A%20.%20po%20src&In-Reply-To=%3C200610021903.k92J3X7T008328%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r654 - in trunk: . po src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Mon Oct  2 21:03:33 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000120.html">[Sst-commit-watch] r653 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000122.html">[Sst-commit-watch] r655 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#121">[ date ]</a>
+              <a href="thread.html#121">[ thread ]</a>
+              <a href="subject.html#121">[ subject ]</a>
+              <a href="author.html#121">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2006-10-02 21:03:33 +0200 (Mon, 02 Oct 2006)
+New Revision: 654
+
+Modified:
+   trunk/TODO
+   trunk/po/ru.po
+   trunk/src/planets.c
+Log:
+adjustments
+
+Modified: trunk/TODO
+===================================================================
+--- trunk/TODO	2006-10-02 17:17:04 UTC (rev 653)
++++ trunk/TODO	2006-10-02 19:03:33 UTC (rev 654)
+@@ -7,7 +7,7 @@
+ * Complete, polish, improve, complete, polish, improve the
+   gettextization and the translation! Right now it just sucks.
+ 
+-* Add the attacked inhabited planets to the report
++* Add the attacked inhabited planets to the status report
+ 
+ 
+ Long-term items:
+
+Modified: trunk/po/ru.po
+===================================================================
+--- trunk/po/ru.po	2006-10-02 17:17:04 UTC (rev 653)
++++ trunk/po/ru.po	2006-10-02 19:03:33 UTC (rev 654)
+@@ -11,7 +11,7 @@
+ msgstr &quot;&quot;
+ &quot;Project-Id-Version: sst 2.0\n&quot;
+ &quot;Report-Msgid-Bugs-To: stsp\n&quot;
+-&quot;POT-Creation-Date: 2006-10-02 16:06+0400\n&quot;
++&quot;POT-Creation-Date: 2006-10-02 23:04+0400\n&quot;
+ &quot;PO-Revision-Date: 2006-09-15 11:01+0400\n&quot;
+ &quot;Last-Translator: Stas Sergeev &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">stsp at aknet.ru</A>&gt;\n&quot;
+ &quot;Language-Team: Russian &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">ru at li.org</A>&gt;\n&quot;
+@@ -162,7 +162,7 @@
+ msgstr &quot;&#1047;&#1072;&#1073;&#1080;&#1088;&#1072;&#1102; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1102; &#1080;&#1079; &#1079;&#1072;&#1097;&#1080;&#1090;&#1099;.\&quot;&quot;
+ 
+ #: src/battle.c:199 src/battle.c:999 src/events.c:875 src/moving.c:144
+-#: src/moving.c:750 src/planets.c:491
++#: src/moving.c:750 src/planets.c:492
+ msgid &quot;***RED ALERT!  RED ALERT!&quot;
+ msgstr &quot;***&#1058;&#1056;&#1045;&#1042;&#1054;&#1043;&#1040;!  &#1058;&#1056;&#1045;&#1042;&#1054;&#1043;&#1040;!&quot;
+ 
+@@ -762,11 +762,11 @@
+ msgid &quot;Emergency override attempts t&quot;
+ msgstr &quot;&#1040;&#1074;&#1090;&#1086;&#1087;&#1080;&#1083;&#1086;&#1090; &#1087;&#1099;&#1090;&#1072;&#1077;&#1090;&#1089;&#1103; &#1074;&quot;
+ 
+-#: src/events.c:948
++#: src/events.c:947
+ msgid &quot;Lucky you!&quot;
+ msgstr &quot;&#1055;&#1086;&#1074;&#1077;&#1079;&#1083;&#1086;!&quot;
+ 
+-#: src/events.c:949
++#: src/events.c:948
+ #, c-format
+ msgid &quot;A supernova in %s has just destroyed the last Klingons.&quot;
+ msgstr &quot;&#1057;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1074;&#1072;&#1103; &#1074; %s &#1082;&#1072;&#1082; &#1088;&#1072;&#1079; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1080;&#1083;&#1072; &#1087;&#1086;&#1089;&#1083;&#1077;&#1076;&#1085;&#1080;&#1093; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;.&quot;
+@@ -2035,7 +2035,7 @@
+ msgstr &quot;  &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1091;, &#1085;&#1086; &#1085;&#1072; &#1086;&#1073;&#1088;&#1072;&#1090;&#1085;&#1099;&#1081; &#1087;&#1091;&#1090;&#1100; &#1101;&#1085;&#1077;&#1075;&#1080;&#1080; &#1085;&#1077; &#1086;&#1089;&#1090;&#1072;&#1085;&#1077;&#1090;&#1089;&#1103;.&quot;
+ 
+ #: src/planets.c:158
+-msgid &quot;  However, the Galileo shuttle craft may still be on a surface.&quot;
++msgid &quot;  Although the Galileo shuttle craft may still be on a surface.&quot;
+ msgstr &quot;  &#1061;&#1086;&#1090;&#1103; &#1095;&#1077;&#1083;&#1085;&#1086;&#1082; &#1043;&#1072;&#1083;&#1080;&#1083;&#1077;&#1081; &#1084;&#1086;&#1078;&#1077;&#1090; &#1073;&#1099;&#1090;&#1100; &#1074;&#1089;&#1105; &#1077;&#1097;&#1105; &#1085;&#1072; &#1087;&#1086;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1089;&#1090;&#1080;.&quot;
+ 
+ #: src/planets.c:169
+@@ -2162,11 +2162,11 @@
+ msgid &quot;  \&quot;Activating now! - - No good!  It's***&quot;
+ msgstr &quot;  \&quot;&#1059;&#1078;&#1077; &#1079;&#1072;&#1087;&#1091;&#1089;&#1082;&#1072;&#1102;! - - &#1055;&#1083;&#1086;&#1093;&#1086;!  &#1054;&#1085;***&quot;
+ 
+-#: src/planets.c:289 src/planets.c:495
++#: src/planets.c:289 src/planets.c:496
+ msgid &quot;***RED ALERT!  RED A*L********************************&quot;
+ msgstr &quot;***&#1058;&#1056;&#1045;&#1042;&#1054;&#1043;&#1040;! &#1058;&#1056;&#1045;*&#1042;&#1054;***********************************&quot;
+ 
+-#: src/planets.c:292 src/planets.c:498
++#: src/planets.c:292 src/planets.c:499
+ msgid &quot;******************   KA-BOOM!!!!   *******************&quot;
+ msgstr &quot;******************   &#1041;&#1040;-&#1041;&#1040;&#1061;!!!!    ********************&quot;
+ 
+@@ -2247,7 +2247,7 @@
+ msgid &quot; boards Galileo and swoops toward planet surface.&quot;
+ msgstr &quot; &#1089;&#1072;&#1076;&#1080;&#1090;&#1089;&#1103; &#1074; &#1043;&#1072;&#1083;&#1080;&#1083;&#1077;&#1081; &#1080; &#1091;&#1089;&#1090;&#1088;&#1077;&#1084;&#1083;&#1103;&#1077;&#1090;&#1089;&#1103; &#1082; &#1087;&#1086;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1089;&#1090;&#1080; &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1099;.&quot;
+ 
+-#: src/planets.c:379 src/planets.c:401 src/planets.c:420
++#: src/planets.c:379 src/planets.c:402 src/planets.c:421
+ msgid &quot;Trip complete.&quot;
+ msgstr &quot;&#1055;&#1086;&#1083;&#1105;&#1090; &#1086;&#1082;&#1086;&#1085;&#1095;&#1077;&#1085;.&quot;
+ 
+@@ -2263,159 +2263,159 @@
+ msgid &quot;The short hop begins . . .&quot;
+ msgstr &quot;&#1053;&#1072;&#1095;&#1072;&#1083;&#1089;&#1103; &#1085;&#1077;&#1076;&#1086;&#1083;&#1075;&#1080;&#1081; &#1087;&#1077;&#1088;&#1077;&#1083;&#1105;&#1090; . . .&quot;
+ 
+-#: src/planets.c:408
++#: src/planets.c:409
+ msgid &quot;Mining party assembles in the hangar deck,&quot;
+ msgstr &quot;&#1043;&#1088;&#1091;&#1087;&#1087;&#1072; &#1076;&#1086;&#1073;&#1099;&#1090;&#1095;&#1080;&#1082;&#1086;&#1074; &#1089;&#1086;&#1073;&#1088;&#1072;&#1083;&#1072;&#1089;&#1100; &#1074; &#1072;&#1085;&#1075;&#1072;&#1088;&#1077;,&quot;
+ 
+-#: src/planets.c:409
++#: src/planets.c:410
+ msgid &quot;ready to board the shuttle craft \&quot;Galileo\&quot;.&quot;
+ msgstr &quot;&#1074;&#1089;&#1077; &#1075;&#1086;&#1090;&#1086;&#1074;&#1099; &#1079;&#1072;&#1083;&#1077;&#1079;&#1090;&#1100; &#1074; &#1095;&#1077;&#1083;&#1085;&#1086;&#1082; \&quot;&#1043;&#1072;&#1083;&#1080;&#1083;&#1077;&#1081;\&quot;.&quot;
+ 
+-#: src/planets.c:411
++#: src/planets.c:412
+ msgid &quot;The hangar doors open; the trip begins.&quot;
+ msgstr &quot;&#1044;&#1074;&#1077;&#1088;&#1080; &#1072;&#1085;&#1075;&#1072;&#1088;&#1072; &#1086;&#1090;&#1082;&#1088;&#1099;&#1090;&#1099;; &#1087;&#1086;&#1083;&#1105;&#1090; &#1085;&#1072;&#1095;&#1072;&#1083;&#1089;&#1103;.&quot;
+ 
+-#: src/planets.c:434
++#: src/planets.c:435
+ msgid &quot;Ye Faerie Queene has no death ray.&quot;
+ msgstr &quot;&#1053;&#1072; &#1042;&#1086;&#1083;&#1096;&#1077;&#1073;&#1085;&#1086;&#1081; &#1050;&#1086;&#1088;&#1086;&#1083;&#1077;&#1074;&#1077; &#1085;&#1077;&#1090; &#1083;&#1091;&#1095;&#1072; &#1089;&#1084;&#1077;&#1088;&#1090;&#1080;.&quot;
+ 
+-#: src/planets.c:438
++#: src/planets.c:439
+ msgid &quot;Sulu-  \&quot;But Sir, there are no enemies in this quadrant.\&quot;&quot;
+ msgstr &quot;&#1057;&#1091;&#1083;&#1091;- \&quot;&#1053;&#1086; &#1057;&#1101;&#1088;, &#1074; &#1101;&#1090;&#1086;&#1084; &#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090;&#1077; &#1085;&#1077;&#1090; &#1074;&#1088;&#1072;&#1075;&#1086;&#1074;.\&quot;&quot;
+ 
+-#: src/planets.c:442
++#: src/planets.c:443
+ msgid &quot;Death Ray is damaged.&quot;
+ msgstr &quot;&#1051;&#1091;&#1095; &#1057;&#1084;&#1077;&#1088;&#1090;&#1080; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1105;&#1085;.&quot;
+ 
+-#: src/planets.c:445
++#: src/planets.c:446
+ msgid &quot;Spock-  \&quot;Captain, the 'Experimental Death Ray'&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, '&#1069;&#1082;&#1089;&#1087;&#1077;&#1088;&#1080;&#1084;&#1077;&#1085;&#1090;&#1072;&#1083;&#1100;&#1085;&#1099;&#1081; &#1051;&#1091;&#1095; &#1057;&#1084;&#1077;&#1088;&#1090;&#1080;'&quot;
+ 
+-#: src/planets.c:446
++#: src/planets.c:447
+ msgid &quot;  is highly unpredictible.  Considering the alternatives,&quot;
+ msgstr &quot;  &#1076;&#1086;&#1074;&#1086;&#1083;&#1100;&#1085;&#1086; &#1085;&#1077;&#1087;&#1088;&#1077;&#1076;&#1089;&#1082;&#1072;&#1079;&#1091;&#1077;&#1084;.  &#1054;&#1073;&#1076;&#1091;&#1084;&#1072;&#1074; &#1074;&#1089;&#1077; &#1072;&#1083;&#1100;&#1090;&#1077;&#1088;&#1085;&#1072;&#1090;&#1080;&#1074;&#1099;,&quot;
+ 
+-#: src/planets.c:447
++#: src/planets.c:448
+ msgid &quot;  are you sure this is wise?\&quot; &quot;
+ msgstr &quot; &#1074;&#1099; &#1091;&#1074;&#1077;&#1088;&#1077;&#1085;&#1099; &#1095;&#1090;&#1086; &#1101;&#1090;&#1086; &#1088;&#1072;&#1079;&#1091;&#1084;&#1085;&#1086;?\&quot; &quot;
+ 
+-#: src/planets.c:450
++#: src/planets.c:451
+ msgid &quot;Spock-  \&quot;Acknowledged.\&quot;&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1042;&#1072;&#1089; &#1087;&#1086;&#1085;&#1103;&#1083;.\&quot;&quot;
+ 
+-#: src/planets.c:453
++#: src/planets.c:454
+ msgid &quot;WHOOEE ... WHOOEE ... WHOOEE ... WHOOEE&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/planets.c:455
++#: src/planets.c:456
+ msgid &quot;Crew scrambles in emergency preparation.&quot;
+ msgstr &quot;&#1050;&#1086;&#1084;&#1072;&#1085;&#1076;&#1072; &#1079;&#1072;&#1089;&#1091;&#1077;&#1090;&#1080;&#1083;&#1072;&#1089;&#1100;, &#1085;&#1072;&#1095;&#1072;&#1083;&#1080;&#1089;&#1100; &#1089;&#1088;&#1086;&#1095;&#1085;&#1099;&#1077; &#1087;&#1088;&#1080;&#1075;&#1086;&#1090;&#1086;&#1074;&#1083;&#1077;&#1085;&#1080;&#1103;.&quot;
+ 
+-#: src/planets.c:456
++#: src/planets.c:457
+ msgid &quot;Spock and Scotty ready the death ray and&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082; &#1080; &#1057;&#1082;&#1086;&#1090;&#1090;&#1080; &#1085;&#1072;&#1083;&#1072;&#1076;&#1080;&#1083;&#1080; &#1083;&#1091;&#1095; &#1089;&#1084;&#1077;&#1088;&#1090;&#1080; &#1080;&quot;
+ 
+-#: src/planets.c:457
++#: src/planets.c:458
+ msgid &quot;prepare to channel all ship's power to the device.&quot;
+ msgstr &quot;&#1075;&#1086;&#1090;&#1086;&#1074;&#1099; &#1082; &#1087;&#1086;&#1076;&#1072;&#1095;&#1077; &#1074;&#1089;&#1077;&#1081; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1082;&#1086;&#1088;&#1072;&#1073;&#1083;&#1103; &#1085;&#1072; &#1091;&#1089;&#1090;&#1072;&#1085;&#1086;&#1074;&#1082;&#1091;.&quot;
+ 
+-#: src/planets.c:459
++#: src/planets.c:460
+ msgid &quot;Spock-  \&quot;Preparations complete, sir.\&quot;&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1055;&#1088;&#1077;&#1075;&#1086;&#1090;&#1086;&#1074;&#1083;&#1077;&#1085;&#1080;&#1103; &#1086;&#1082;&#1086;&#1085;&#1095;&#1077;&#1085;&#1099;, &#1089;&#1101;&#1088;.\&quot;&quot;
+ 
+-#: src/planets.c:460
++#: src/planets.c:461
+ msgid &quot;Kirk-  \&quot;Engage!\&quot;&quot;
+ msgstr &quot;&#1050;&#1080;&#1088;&#1082;- \&quot;&#1055;&#1083;&#1080;!\&quot;&quot;
+ 
+-#: src/planets.c:462
++#: src/planets.c:463
+ msgid &quot;WHIRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/planets.c:468 src/planets.c:489
++#: src/planets.c:469 src/planets.c:490
+ msgid &quot;Sulu- \&quot;Captain!  It's working!\&quot;&quot;
+ msgstr &quot;&#1057;&#1091;&#1083;&#1091;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;!  &#1054;&#1085; &#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1077;&#1090;!\&quot;&quot;
+ 
+-#: src/planets.c:472
++#: src/planets.c:473
+ msgid &quot;Ensign Chekov-  \&quot;Congratulations, Captain!\&quot;&quot;
+ msgstr &quot;&#1055;&#1088;&#1072;&#1087;&#1086;&#1088;&#1097;&#1080;&#1082; &#1063;&#1077;&#1093;&#1086;&#1074;- \&quot;&#1055;&#1086;&#1079;&#1076;&#1088;&#1072;&#1074;&#1083;&#1103;&#1102;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;.\&quot;&quot;
+ 
+-#: src/planets.c:476
++#: src/planets.c:477
+ msgid &quot;Spock-  \&quot;Captain, I believe the `Experimental Death Ray'&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1103; &#1095;&#1091;&#1074;&#1089;&#1090;&#1074;&#1091;&#1102;, &#1095;&#1090;&#1086; '&#1069;&#1082;&#1089;&#1087;&#1077;&#1088;&#1077;&#1084;&#1077;&#1085;&#1090;&#1072;&#1083;&#1100;&#1085;&#1099;&#1081; &#1051;&#1091;&#1095; &#1057;&#1084;&#1077;&#1088;&#1090;&#1080;'&quot;
+ 
+-#: src/planets.c:478
++#: src/planets.c:479
+ msgid &quot;   is still operational.\&quot;&quot;
+ msgstr &quot;   &#1074;&#1089;&#1105; &#1077;&#1097;&#1105; &#1080;&#1089;&#1087;&#1088;&#1072;&#1074;&#1077;&#1085;.\&quot;&quot;
+ 
+-#: src/planets.c:481
++#: src/planets.c:482
+ msgid &quot;   has been rendered nonfunctional.\&quot;&quot;
+ msgstr &quot;   &#1087;&#1088;&#1080;&#1096;&#1105;&#1083; &#1074; &#1085;&#1077;&#1075;&#1086;&#1076;&#1085;&#1086;&#1089;&#1090;&#1100;.\&quot;&quot;
+ 
+-#: src/planets.c:493
++#: src/planets.c:494
+ msgid &quot;***MATTER-ANTIMATTER IMPLOSION IMMINENT!&quot;
+ msgstr &quot;***&#1053;&#1040;&#1063;&#1040;&#1051;&#1054;&#1057;&#1068; &#1057;&#1051;&#1048;&#1071;&#1053;&#1048;&#1045; &#1052;&#1040;&#1058;&#1045;&#1056;&#1048;&#1048; &#1057; &#1040;&#1053;&#1058;&#1048;&#1052;&#1040;&#1058;&#1045;&#1056;&#1048;&#1045;&#1049;!&quot;
+ 
+-#: src/planets.c:504
++#: src/planets.c:505
+ msgid &quot;Sulu- \&quot;Captain!  Yagabandaghangrapl, brachriigringlanbla!\&quot;&quot;
+ msgstr &quot;&#1057;&#1091;&#1083;&#1091;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;!  &#1050;&#1072;&#1073;&#1072;&#1073;&#1086;&#1085;&#1075;&#1072;, &#1040;&#1073;&#1099;&#1088;&#1074;&#1072;&#1083;&#1075;, &#1050;&#1080;&#1088;&#1075;&#1091;&#1076;&#1091;-&#1041;&#1072;&#1084;&#1073;&#1072;&#1088;&#1073;&#1080;&#1103;!\&quot;&quot;
+ 
+-#: src/planets.c:506
++#: src/planets.c:507
+ msgid &quot;Lt. Uhura-  \&quot;Graaeek!  Graaeek!\&quot;&quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1043;&#1086;&#1088;&#1103;&#1095;&#1105;!  &#1043;&#1086;&#1088;&#1102;!\&quot;&quot;
+ 
+-#: src/planets.c:508
++#: src/planets.c:509
+ msgid &quot;Spock-  \&quot;Fascinating!  . . . All humans aboard&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1043;&#1088;&#1072;&#1085;&#1076;&#1080;&#1086;&#1079;&#1085;&#1086;!  . . . &#1042;&#1089;&#1077; &#1083;&#1102;&#1076;&#1080; &#1085;&#1072; &#1073;&#1086;&#1088;&#1090;&#1091;&quot;
+ 
+-#: src/planets.c:509
++#: src/planets.c:510
+ msgid &quot;  have apparently been transformed into strange mutations.&quot;
+ msgstr &quot;  &#1103;&#1074;&#1085;&#1086; &#1087;&#1086;&#1076;&#1074;&#1077;&#1088;&#1075;&#1083;&#1080;&#1089;&#1100; &#1082;&#1072;&#1082;&#1086;&#1081;-&#1090;&#1086; &#1089;&#1090;&#1088;&#1072;&#1085;&#1085;&#1086;&#1081; &#1084;&#1091;&#1090;&#1072;&#1094;&#1080;&#1080;.&quot;
+ 
+-#: src/planets.c:510
++#: src/planets.c:511
+ msgid &quot;  Vulcans do not seem to be affected.&quot;
+ msgstr &quot;  &#1042;&#1091;&#1083;&#1082;&#1072;&#1085;&#1080;&#1090;&#1099;, &#1086;&#1076;&#1085;&#1072;&#1082;&#1086;, &#1087;&#1086;&#1093;&#1086;&#1078;&#1077; &#1085;&#1077; &#1087;&#1086;&#1089;&#1090;&#1088;&#1072;&#1076;&#1072;&#1083;&#1080;.&quot;
+ 
+-#: src/planets.c:512
++#: src/planets.c:513
+ msgid &quot;Kirk-  \&quot;Raauch!  Raauch!\&quot;&quot;
+ msgstr &quot;&#1050;&#1080;&#1088;&#1082;- \&quot;&#1043;&#1072;&#1074;! &#1043;&#1072;&#1074;! &#1056;&#1088;&#1088;-&#1072;&#1074;!&quot;
+ 
+-#: src/planets.c:518
++#: src/planets.c:519
+ msgid &quot;Sulu- \&quot;Captain!  It's   --WHAT?!?!\&quot;&quot;
+ msgstr &quot;&#1057;&#1091;&#1083;&#1091;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;!  &#1054;&#1085;   --&#1063;&#1058;&#1054;???!\&quot;&quot;
+ 
+-#: src/planets.c:520
++#: src/planets.c:521
+ msgid &quot;Spock-  \&quot;I believe the word is&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1055;&#1086;&#1093;&#1086;&#1078;&#1077;, &#1089;&#1083;&#1086;&#1074;&#1086;&quot;
+ 
+-#: src/planets.c:521
++#: src/planets.c:522
+ msgid &quot; *ASTONISHING*&quot;
+ msgstr &quot; *&#1059;&#1044;&#1048;&#1042;&#1048;&#1058;&#1045;&#1051;&#1068;&#1053;&#1054;*&quot;
+ 
+-#: src/planets.c:522
++#: src/planets.c:523
+ msgid &quot; Mr. Sulu.&quot;
+ msgstr &quot; &#1052;&#1080;&#1089;&#1090;&#1077;&#1088; &#1057;&#1091;&#1083;&#1091;.&quot;
+ 
+-#: src/planets.c:527
++#: src/planets.c:528
+ msgid &quot;  Captain, our quadrant is now infested with&quot;
+ msgstr &quot;  &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1085;&#1072;&#1096; &#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090; &#1090;&#1077;&#1087;&#1077;&#1088;&#1100; &#1074;&#1077;&#1089;&#1100; &#1085;&#1072;&#1073;&#1080;&#1090;&quot;
+ 
+-#: src/planets.c:528
++#: src/planets.c:529
+ msgid &quot; - - - - - -  *THINGS*.&quot;
+ msgstr &quot; - - - - - -  *&#1060;&#1048;&#1043;&#1053;&#1025;&#1049;*.&quot;
+ 
+-#: src/planets.c:530
++#: src/planets.c:531
+ msgid &quot;  I have no logical explanation.\&quot;&quot;
+ msgstr &quot;  &#1059; &#1084;&#1077;&#1085;&#1103; &#1085;&#1077;&#1090; &#1083;&#1086;&#1075;&#1080;&#1095;&#1085;&#1086;&#1075;&#1086; &#1086;&#1073;&#1098;&#1103;&#1089;&#1085;&#1077;&#1085;&#1080;&#1103;.\&quot;&quot;
+ 
+-#: src/planets.c:533
++#: src/planets.c:534
+ msgid &quot;Sulu- \&quot;Captain!  The Death Ray is creating tribbles!\&quot;&quot;
+ msgstr &quot;&#1057;&#1091;&#1083;&#1091;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;!   &#1051;&#1091;&#1095; &#1057;&#1084;&#1077;&#1088;&#1090;&#1080; &#1079;&#1072;&#1095;&#1077;&#1084;-&#1090;&#1086; &#1089;&#1086;&#1079;&#1076;&#1072;&#1105;&#1090; &#1095;&#1077;&#1088;&#1074;&#1103;&#1082;&#1086;&#1074;!\&quot;&quot;
+ 
+-#: src/planets.c:535
++#: src/planets.c:536
+ msgid &quot;Scotty-  \&quot;There are so many tribbles down here&quot;
+ msgstr &quot;&#1057;&#1082;&#1086;&#1090;&#1090;&#1080;-  \&quot;&#1058;&#1091;&#1090; &#1089;&#1090;&#1086;&#1083;&#1100;&#1082;&#1086; &#1101;&#1090;&#1080;&#1093; &#1095;&#1077;&#1088;&#1074;&#1103;&#1082;&#1086;&#1074; &#1073;&#1077;&#1075;&#1072;&#1077;&#1090;&quot;
+ 
+-#: src/planets.c:536
++#: src/planets.c:537
+ msgid &quot;  in Engineering, we can't move for 'em, Captain.\&quot;&quot;
+ msgstr &quot;  &#1074; &#1090;&#1077;&#1093;&#1085;&#1080;&#1095;&#1077;&#1089;&#1082;&#1086;&#1084; &#1086;&#1090;&#1089;&#1077;&#1082;&#1077;, &#1095;&#1090;&#1086; &#1084;&#1099; &#1085;&#1077; &#1084;&#1086;&#1078;&#1077;&#1084; &#1082; &#1085;&#1077;&#1084;&#1091; &#1087;&#1086;&#1076;&#1086;&#1073;&#1088;&#1072;&#1090;&#1100;&#1089;&#1103;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;.\&quot;&quot;
+ 
+@@ -2702,7 +2702,7 @@
+ msgid &quot;ACTIVE&quot;
+ msgstr &quot;&#1056;&#1040;&#1041;&#1054;&#1058;&#1040;&#1045;&#1058;&quot;
+ 
+-#: src/reports.c:319 src/setup.c:160
++#: src/reports.c:319 src/setup.c:159
+ msgid &quot;Life Support&quot;
+ msgstr &quot;&#1046;&#1080;&#1079;&#1085;&#1077;&#1086;&#1073;&#1077;&#1089;&#1087;&quot;
+ 
+@@ -2739,7 +2739,7 @@
+ msgid &quot; %d%% %.1f units&quot;
+ msgstr &quot; %d%% %.1f &#1077;&#1076;&#1080;&#1085;&#1080;&#1094;&quot;
+ 
+-#: src/reports.c:345 src/setup.c:163
++#: src/reports.c:345 src/setup.c:162
+ msgid &quot;Shields&quot;
+ msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072;&quot;
+ 
+@@ -2887,348 +2887,348 @@
+ msgid &quot;Game file format is bad, should begin with &quot;
+ msgstr &quot;&#1060;&#1040;&#1081;&#1083; &#1089; &#1080;&#1075;&#1088;&#1086;&#1081; &#1080;&#1089;&#1087;&#1086;&#1088;&#1095;&#1077;&#1085;, &#1086;&#1085; &#1076;&#1086;&#1083;&#1078;&#1077;&#1085; &#1073;&#1099;&#1083; &#1085;&#1072;&#1095;&#1080;&#1085;&#1072;&#1090;&#1100;&#1089;&#1103; &#1089; &quot;
+ 
+-#: src/setup.c:109
++#: src/setup.c:108
+ msgid &quot;Andoria (Fesoan)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:110
++#: src/setup.c:109
+ msgid &quot;Tellar Prime (Miracht)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:111
++#: src/setup.c:110
+ msgid &quot;Vulcan (T'Khasi)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:112
++#: src/setup.c:111
+ msgid &quot;Medusa&quot;
+ msgstr &quot;&#1052;&#1077;&#1076;&#1091;&#1079;&#1072;&quot;
+ 
+-#: src/setup.c:113
++#: src/setup.c:112
+ msgid &quot;Argelius II (Nelphia)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:114
++#: src/setup.c:113
+ msgid &quot;Ardana&quot;
+ msgstr &quot;&#1040;&#1088;&#1076;&#1072;&#1085;&#1072;&quot;
+ 
+-#: src/setup.c:115
++#: src/setup.c:114
+ msgid &quot;Catulla (Cendo-Prae)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:116
++#: src/setup.c:115
+ msgid &quot;Gideon&quot;
+ msgstr &quot;&#1043;&#1080;&#1076;&#1077;&#1086;&#1085;&quot;
+ 
+-#: src/setup.c:117
++#: src/setup.c:116
+ msgid &quot;Aldebaran III&quot;
+ msgstr &quot;&#1040;&#1083;&#1100;&#1076;&#1077;&#1073;&#1072;&#1088;&#1072;&#1085; 3&quot;
+ 
+-#: src/setup.c:118
++#: src/setup.c:117
+ msgid &quot;Alpha Majoris I&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:119
++#: src/setup.c:118
+ msgid &quot;Altair IV&quot;
+ msgstr &quot;&#1040;&#1083;&#1100;&#1090;&#1072;&#1080;&#1088; 4&quot;
+ 
+-#: src/setup.c:120
++#: src/setup.c:119
+ msgid &quot;Ariannus&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:121
++#: src/setup.c:120
+ msgid &quot;Benecia&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:122
++#: src/setup.c:121
+ msgid &quot;Beta Niobe I (Sarpeidon)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:123
++#: src/setup.c:122
+ msgid &quot;Alpha Carinae II&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:124
++#: src/setup.c:123
+ msgid &quot;Capella IV (Kohath)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:125
++#: src/setup.c:124
+ msgid &quot;Daran V&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:126
++#: src/setup.c:125
+ msgid &quot;Deneb II&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:127
++#: src/setup.c:126
+ msgid &quot;Eminiar VII&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:128
++#: src/setup.c:127
+ msgid &quot;Gamma Canaris IV&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:129
++#: src/setup.c:128
+ msgid &quot;Gamma Tranguli VI (Vaalel)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:130
++#: src/setup.c:129
+ msgid &quot;Ingraham B&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:131
++#: src/setup.c:130
+ msgid &quot;Janus IV&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:132
++#: src/setup.c:131
+ msgid &quot;Makus III&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:133
++#: src/setup.c:132
+ msgid &quot;Marcos XII&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:134
++#: src/setup.c:133
+ msgid &quot;Omega IV&quot;
+ msgstr &quot;&#1054;&#1084;&#1077;&#1075;&#1072; 4&quot;
+ 
+-#: src/setup.c:135
++#: src/setup.c:134
+ msgid &quot;Regulus V&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:136
++#: src/setup.c:135
+ msgid &quot;Deneva&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:138
++#: src/setup.c:137
+ msgid &quot;Rigel II&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:139
++#: src/setup.c:138
+ msgid &quot;Beta III&quot;
+ msgstr &quot;&#1041;&#1101;&#1090;&#1072; 3&quot;
+ 
+-#: src/setup.c:140
++#: src/setup.c:139
+ msgid &quot;Triacus&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:141
++#: src/setup.c:140
+ msgid &quot;Exo III&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:144
++#: src/setup.c:143
+ msgid &quot;Hansen's Planet&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:145
++#: src/setup.c:144
+ msgid &quot;Taurus IV&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:146
++#: src/setup.c:145
+ msgid &quot;Antos IV (Doraphane)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:147
++#: src/setup.c:146
+ msgid &quot;Izar&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:148
++#: src/setup.c:147
+ msgid &quot;Tiburon&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:149
++#: src/setup.c:148
+ msgid &quot;Merak II&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:150
++#: src/setup.c:149
+ msgid &quot;Coridan (Desotriana)&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/setup.c:151
++#: src/setup.c:150
+ msgid &quot;Iotia&quot;
+ msgstr &quot;&#1051;&#1086;&#1094;&#1080;&#1103;&quot;
+ 
+-#: src/setup.c:156
++#: src/setup.c:155
+ msgid &quot;S. R. Sensors&quot;
+ msgstr &quot;&#1057;&#1077;&#1085;&#1089;&#1086;&#1088;&#1099; &#1041;. &#1054;.&quot;
+ 
+-#: src/setup.c:157
++#: src/setup.c:156
+ msgid &quot;L. R. Sensors&quot;
+ msgstr &quot;&#1057;&#1077;&#1085;&#1089;&#1086;&#1088;&#1099; &#1044;. &#1054;.&quot;
+ 
+-#: src/setup.c:158
++#: src/setup.c:157
+ msgid &quot;Phasers&quot;
+ msgstr &quot;&#1060;&#1072;&#1079;&#1077;&#1088;&#1099;&quot;
+ 
+-#: src/setup.c:159
++#: src/setup.c:158
+ msgid &quot;Photon Tubes&quot;
+ msgstr &quot;&#1060;&#1086;&#1090;&#1086;&#1085;&#1085;&#1099;&#1077; &#1058;&#1088;&#1091;&#1073;&#1099;&quot;
+ 
+-#: src/setup.c:161
++#: src/setup.c:160
+ msgid &quot;Warp Engines&quot;
+ msgstr &quot;&#1052;&#1077;&#1078;&#1087;&#1088;&#1086;&#1089;&#1090;&#1088; &#1044;&#1074;&#1080;&#1075;&quot;
+ 
+-#: src/setup.c:162
++#: src/setup.c:161
+ msgid &quot;Impulse Engines&quot;
+ msgstr &quot;&#1048;&#1084;&#1087;&#1091;&#1083;&#1100;&#1089;&#1085;&#1099;&#1077; &#1044;&#1074;&#1080;&#1075;&quot;
+ 
+-#: src/setup.c:164
++#: src/setup.c:163
+ msgid &quot;Subspace Radio&quot;
+ msgstr &quot;&#1052;&#1077;&#1078;&#1087;&#1088;&#1086;&#1089;&#1090;&#1088; &#1056;&#1072;&#1094;&#1080;&#1103;&quot;
+ 
+-#: src/setup.c:165
++#: src/setup.c:164
+ msgid &quot;Shuttle Craft&quot;
+ msgstr &quot;&#1063;&#1077;&#1083;&#1085;&#1086;&#1082;&quot;
+ 
+-#: src/setup.c:166
++#: src/setup.c:165
+ msgid &quot;Computer&quot;
+ msgstr &quot;&#1050;&#1086;&#1084;&#1087;&#1100;&#1102;&#1090;&#1077;&#1088;&quot;
+ 
+-#: src/setup.c:167
++#: src/setup.c:166
+ msgid &quot;Navigation System&quot;
+ msgstr &quot;&#1057;&#1080;&#1089;&#1090; &#1053;&#1072;&#1074;&#1080;&#1075;&#1072;&#1094;&#1080;&#1080;&quot;
+ 
+-#: src/setup.c:168
++#: src/setup.c:167
+ msgid &quot;Transporter&quot;
+ msgstr &quot;&#1058;&#1088;&#1072;&#1085;&#1089;&#1087;&#1086;&#1088;&#1090;&#1105;&#1088;&quot;
+ 
+-#: src/setup.c:169
++#: src/setup.c:168
+ msgid &quot;Shield Control&quot;
+ msgstr &quot;&#1059;&#1087;&#1088;&#1072;&#1074;&#1083; &#1047;&#1072;&#1097;&#1080;&#1090;&#1086;&#1081;&quot;
+ 
+-#: src/setup.c:170
++#: src/setup.c:169
+ msgid &quot;Death Ray&quot;
+ msgstr &quot;&#1051;&#1091;&#1095; &#1057;&#1084;&#1077;&#1088;&#1090;&#1080;&quot;
+ 
+-#: src/setup.c:171
++#: src/setup.c:170
+ msgid &quot;D. S. Probe&quot;
+ msgstr &quot;&#1044;. &#1050;. &#1056;&#1072;&#1082;&#1077;&#1090;&#1072;&quot;
+ 
+-#: src/setup.c:376
++#: src/setup.c:375
+ #, c-format
+ msgid &quot;It is stardate %d. The Federation is being attacked by&quot;
+ msgstr &quot;&#1057;&#1077;&#1075;&#1086;&#1076;&#1085;&#1103; %d &#1095;&#1080;&#1089;&#1083;&#1086;. &#1060;&#1077;&#1076;&#1077;&#1088;&#1072;&#1094;&#1080;&#1103; &#1072;&#1090;&#1072;&#1082;&#1086;&#1074;&#1072;&#1085;&#1072;&quot;
+ 
+-#: src/setup.c:378
++#: src/setup.c:377
+ msgid &quot;a deadly Klingon invasion force. As captain of the United&quot;
+ msgstr &quot;&#1073;&#1077;&#1089;&#1087;&#1086;&#1097;&#1072;&#1076;&#1085;&#1099;&#1084;&#1080; &#1079;&#1072;&#1093;&#1074;&#1072;&#1090;&#1095;&#1080;&#1082;&#1072;&#1084;&#1080; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1072;&#1084;&#1080;. &#1050;&#1072;&#1082; &#1082;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;&quot;
+ 
+-#: src/setup.c:379
++#: src/setup.c:378
+ msgid &quot;Starship U.S.S. Enterprise, it is your mission to seek out&quot;
+ msgstr &quot;&#1079;&#1074;&#1077;&#1079;&#1076;&#1086;&#1083;&#1105;&#1090;&#1072; &#1069;&#1085;&#1090;&#1077;&#1088;&#1087;&#1088;&#1072;&#1081;&#1079;, &#1074;&#1099; &#1076;&#1086;&#1083;&#1078;&#1085;&#1099; &#1085;&#1072;&#1081;&#1090;&#1080;&quot;
+ 
+-#: src/setup.c:380
++#: src/setup.c:379
+ #, c-format
+ msgid &quot;and destroy this invasion force of %d battle cruisers.&quot;
+ msgstr &quot;&#1080; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1080;&#1090;&#1100; &#1074;&#1089;&#1077; &#1074;&#1090;&#1086;&#1088;&#1075;&#1096;&#1080;&#1077;&#1089;&#1103; &#1074;&#1086;&#1081;&#1089;&#1082;&#1072; &#1074; &#1089;&#1086;&#1089;&#1090;&#1072;&#1074;&#1077; %d &#1073;&#1086;&#1077;&#1074;&#1099;&#1093; &#1082;&#1088;&#1077;&#1081;&#1089;&#1077;&#1088;&#1086;&#1074;.&quot;
+ 
+-#: src/setup.c:382
++#: src/setup.c:381
+ #, c-format
+ msgid &quot;You have an initial allotment of %d stardates to complete&quot;
+ msgstr &quot;&#1059; &#1074;&#1072;&#1089; &#1077;&#1089;&#1090;&#1100; %d &#1076;&#1085;&#1077;&#1081; &#1095;&#1090;&#1086;&#1073;&#1099; &#1079;&#1072;&#1074;&#1077;&#1088;&#1096;&#1080;&#1090;&#1100;&quot;
+ 
+-#: src/setup.c:383
++#: src/setup.c:382
+ msgid &quot;your mission.  As you proceed you may be given more time.&quot;
+ msgstr &quot;&#1101;&#1090;&#1091; &#1084;&#1080;&#1089;&#1089;&#1080;&#1102;.  &#1055;&#1086; &#1093;&#1086;&#1076;&#1091; &#1076;&#1077;&#1083;&#1072; &#1074;&#1072;&#1084; &#1084;&#1086;&#1075;&#1091;&#1090; &#1076;&#1072;&#1090;&#1100; &#1077;&#1097;&#1105; &#1074;&#1088;&#1077;&#1084;&#1077;&#1085;&#1080;.&quot;
+ 
+-#: src/setup.c:385
++#: src/setup.c:384
+ #, c-format
+ msgid &quot;You will have %d supporting starbases.&quot;
+ msgstr &quot;&#1059; &#1074;&#1072;&#1089; &#1073;&#1091;&#1076;&#1077;&#1090; %d &#1073;&#1072;&#1079;.&quot;
+ 
+-#: src/setup.c:386
++#: src/setup.c:385
+ msgid &quot;Starbase locations-  &quot;
+ msgstr &quot;&#1050;&#1086;&#1086;&#1088;&#1076;&#1080;&#1085;&#1072;&#1090;&#1099; &#1041;&#1072;&#1079;-  &quot;
+ 
+-#: src/setup.c:389
++#: src/setup.c:388
+ #, c-format
+ msgid &quot;Stardate %d.&quot;
+ msgstr &quot;&#1063;&#1080;&#1089;&#1083;&#1086; %d.&quot;
+ 
+-#: src/setup.c:391
++#: src/setup.c:390
+ #, c-format
+ msgid &quot;%d Klingons.&quot;
+ msgstr &quot;%d &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;.&quot;
+ 
+-#: src/setup.c:392
++#: src/setup.c:391
+ msgid &quot;An unknown number of Romulans.&quot;
+ msgstr &quot;&#1052;&#1085;&#1086;&#1078;&#1077;&#1089;&#1090;&#1074;&#1086; &#1056;&#1086;&#1084;&#1091;&#1083;&#1072;&#1085;.&quot;
+ 
+-#: src/setup.c:394
++#: src/setup.c:393
+ msgid &quot;And one (GULP) Super-Commander.&quot;
+ msgstr &quot;&#1048; &#1086;&#1076;&#1080;&#1085; (&#1080;&#1082;!) &#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;.&quot;
+ 
+-#: src/setup.c:395
++#: src/setup.c:394
+ #, c-format
+ msgid &quot;%d stardates.&quot;
+ msgstr &quot;%d &#1076;&#1085;&#1077;&#1081;.&quot;
+ 
+-#: src/setup.c:396
++#: src/setup.c:395
+ #, c-format
+ msgid &quot;%d starbases in &quot;
+ msgstr &quot;%d &#1073;&#1072;&#1079; &#1074; &quot;
+ 
+-#: src/setup.c:403
++#: src/setup.c:402
+ msgid &quot;The Enterprise is currently in &quot;
+ msgstr &quot;&#1069;&#1085;&#1090;&#1077;&#1088;&#1087;&#1088;&#1072;&#1081;&#1079; &#1089;&#1077;&#1081;&#1095;&#1072;&#1089; &#1074; &quot;
+ 
+-#: src/setup.c:408
++#: src/setup.c:407
+ msgid &quot;Good Luck!&quot;
+ msgstr &quot;&#1059;&#1076;&#1072;&#1095;&#1080;!&quot;
+ 
+-#: src/setup.c:410
++#: src/setup.c:409
+ msgid &quot;  YOU'LL NEED IT.&quot;
+ msgstr &quot;  &#1054;&#1053;&#1040; &#1042;&#1040;&#1052; &#1055;&#1054;&#1053;&#1040;&#1044;&#1054;&#1041;&#1048;&#1058;&#1057;&#1071;.&quot;
+ 
+-#: src/setup.c:428
++#: src/setup.c:427
+ msgid &quot;Would you like a regular, tournament, or saved game? &quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1086;&#1073;&#1099;&#1095;&#1085;&#1091;&#1102; (r), &#1090;&#1091;&#1088;&#1085;&#1080;&#1088;&#1085;&#1091;&#1102; (t), &#1080;&#1083;&#1080; &#1089;&#1086;&#1093;&#1088;&#1072;&#1085;&#1105;&#1085;&#1085;&#1091;&#1102; (s) &#1080;&#1075;&#1088;&#1091;? &quot;
+ 
+-#: src/setup.c:434
++#: src/setup.c:433
+ msgid &quot;Type in tournament number-&quot;
+ msgstr &quot;&#1042;&#1074;&#1077;&#1076;&#1080;&#1090;&#1077; &#1085;&#1086;&#1084;&#1077;&#1088; &#1090;&#1091;&#1088;&#1085;&#1080;&#1088;&#1072;-&quot;
+ 
+-#: src/setup.c:459 src/setup.c:483 src/setup.c:515
++#: src/setup.c:458 src/setup.c:482 src/setup.c:514
+ msgid &quot;What is \&quot;&quot;
+ msgstr &quot;&#1063;&#1090;&#1086; &#1079;&#1072; \&quot;&quot;
+ 
+-#: src/setup.c:491
++#: src/setup.c:490
+ msgid &quot;Would you like a Short, Medium, or Long game? &quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1082;&#1086;&#1088;&#1086;&#1090;&#1082;&#1091;&#1102; (s), &#1089;&#1088;&#1077;&#1076;&#1085;&#1102;&#1102; (m), &#1080;&#1083;&#1080; &#1076;&#1083;&#1080;&#1085;&#1085;&#1091;&#1102; (l) &#1080;&#1075;&#1088;&#1091;? &quot;
+ 
+-#: src/setup.c:493
++#: src/setup.c:492
+ msgid &quot;Are you a Novice, Fair, Good, Expert, or Emeritus player? &quot;
+ msgstr &quot;&quot;
+ &quot;&#1042;&#1099; &#1085;&#1086;&#1074;&#1080;&#1095;&#1105;&#1082; (n), &#1089;&#1088;&#1077;&#1076;&#1085;&#1080;&#1081; (f), &#1091;&#1084;&#1077;&#1083;&#1099;&#1081; (g), &#1089;&#1087;&#1077;&#1094;&#1080;&#1072;&#1083;&#1080;&#1089;&#1090; (e), &#1080;&#1083;&#1080; &#1054;&#1090;&#1089;&#1090;&#1072;&#1074;&#1085;&#1086;&#1081; (em)? &quot;
+ 
+-#: src/setup.c:499
++#: src/setup.c:498
+ msgid &quot;Choose your game style (or just press enter): &quot;
+ msgstr &quot;&#1042;&#1099;&#1073;&#1077;&#1088;&#1080;&#1090;&#1077; &#1089;&#1090;&#1080;&#1090;&#1100; &#1080;&#1075;&#1088;&#1099; (&#1080;&#1083;&#1080; &#1085;&#1072;&#1078;&#1084;&#1080;&#1090;&#1077; &#1074;&#1074;&#1086;&#1076;): &quot;
+ 
+-#: src/setup.c:680
++#: src/setup.c:679
+ msgid &quot;LT. Uhura- \&quot;Captain, an urgent message.&quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1089;&#1088;&#1086;&#1095;&#1085;&#1086;&#1077; &#1089;&#1086;&#1086;&#1073;&#1097;&#1077;&#1085;&#1080;&#1077;.&quot;
+ 
+-#: src/setup.c:681
++#: src/setup.c:680
+ msgid &quot;  I'll put it on audio.\&quot;  CLICK&quot;
+ msgstr &quot;  &#1071; &#1074;&#1099;&#1074;&#1077;&#1076;&#1091; &#1077;&#1075;&#1086; &#1085;&#1072; &#1075;&#1088;&#1086;&#1084;&#1082;&#1086;&#1075;&#1086;&#1074;&#1086;&#1088;&#1080;&#1090;&#1077;&#1083;&#1100;.\&quot;  &#1065;&#1025;&#1051;&#1050;&quot;
+ 
+-#: src/setup.c:683
++#: src/setup.c:682
+ msgid &quot;INTRUDER! YOU HAVE VIOLATED THE ROMULAN NEUTRAL ZONE.&quot;
+ msgstr &quot;&#1063;&#1059;&#1046;&#1040;&#1050;! &#1058;&#1067; &#1055;&#1045;&#1056;&#1045;&#1057;&#1025;&#1050; &#1043;&#1056;&#1040;&#1053;&#1048;&#1062;&#1059; &#1058;&#1045;&#1056;&#1056;&#1048;&#1058;&#1054;&#1056;&#1048;&#1048; &#1056;&#1054;&#1052;&#1059;&#1051;&#1040;&#1053;.&quot;
+ 
+-#: src/setup.c:684
++#: src/setup.c:683
+ msgid &quot;LEAVE AT ONCE, OR YOU WILL BE DESTROYED!&quot;
+ msgstr &quot;&#1059;&#1051;&#1045;&#1058;&#1040;&#1049; &#1053;&#1045;&#1052;&#1045;&#1044;&#1051;&#1045;&#1053;&#1053;&#1054;, &#1048;&#1051;&#1048; &#1041;&#1059;&#1044;&#1045;&#1064;&#1068; &#1059;&#1053;&#1048;&#1063;&#1058;&#1054;&#1046;&#1045;&#1053;!&quot;
+ 
+-#: src/setup.c:701
++#: src/setup.c:700
+ msgid &quot;Mr. Spock- \&quot;Captain, this is most unusual.&quot;
+ msgstr &quot;&#1052;&#1080;&#1089;&#1090;&#1077;&#1088; &#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1090;&#1091;&#1090; &#1095;&#1090;&#1086;-&#1090;&#1086; &#1086;&#1095;&#1077;&#1085;&#1100; &#1085;&#1077;&#1086;&#1073;&#1099;&#1095;&#1085;&#1086;&#1077;.&quot;
+ 
+-#: src/setup.c:702
++#: src/setup.c:701
+ msgid &quot;    Please examine your short-range scan.\&quot;&quot;
+ msgstr &quot;    &#1055;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072; &#1087;&#1086;&#1089;&#1084;&#1086;&#1090;&#1088;&#1080;&#1090;&#1077; &#1088;&#1077;&#1079;&#1091;&#1083;&#1100;&#1090;&#1072;&#1090;&#1099; &#1073;&#1083;&#1080;&#1078;&#1085;&#1077;&#1075;&#1086; &#1089;&#1082;&#1072;&#1085;&#1080;&#1088;&#1086;&#1074;&#1072;&#1085;&#1080;&#1103;.\&quot;&quot;
+ 
+-#: src/setup.c:798
++#: src/setup.c:797
+ msgid &quot;Please type in a secret password- &quot;
+ msgstr &quot;&#1055;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072; &#1085;&#1072;&#1073;&#1077;&#1088;&#1080;&#1090;&#1077; &#1087;&#1072;&#1088;&#1086;&#1083;&#1100;- &quot;
+ 
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-10-02 17:17:04 UTC (rev 653)
++++ trunk/src/planets.c	2006-10-02 19:03:33 UTC (rev 654)
+@@ -155,7 +155,7 @@
+ 	    prout(_(&quot;  Captain, we have enough energy only to transport you down to&quot;));
+ 	    prout(_(&quot;  the planet, but there wouldn't be an energy for the trip back.&quot;));
+ 	    if (game.state.planets[game.iplnet].known == shuttle_down)
+-		prout(_(&quot;  However, the Galileo shuttle craft may still be on a surface.&quot;));
++		prout(_(&quot;  Although the Galileo shuttle craft may still be on a surface.&quot;));
+ 	    proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;));
+ 	    if (ja() == false) {
+ 		chew();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000120.html">[Sst-commit-watch] r653 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000122.html">[Sst-commit-watch] r655 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#121">[ date ]</a>
+              <a href="thread.html#121">[ thread ]</a>
+              <a href="subject.html#121">[ subject ]</a>
+              <a href="author.html#121">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

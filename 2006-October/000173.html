@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r706 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r706%20-%20trunk/src&In-Reply-To=%3C200610080635.k986ZdED010228%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000172.html">
+   <LINK REL="Next"  HREF="000174.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r706 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r706%20-%20trunk/src&In-Reply-To=%3C200610080635.k986ZdED010228%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r706 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Sun Oct  8 08:35:39 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000172.html">[Sst-commit-watch] r705 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000174.html">[Sst-commit-watch] r707 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#173">[ date ]</a>
+              <a href="thread.html#173">[ thread ]</a>
+              <a href="subject.html#173">[ subject ]</a>
+              <a href="author.html#173">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-08 08:35:38 +0200 (Sun, 08 Oct 2006)
+New Revision: 706
+
+Modified:
+   trunk/src/sst.py
+Log:
+Simplify some corner cases in the scanner code.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-08 06:19:28 UTC (rev 705)
++++ trunk/src/sst.py	2006-10-08 06:35:38 UTC (rev 706)
+@@ -6365,6 +6365,8 @@
+ 		if game.options &amp; OPTION_CURSES:
+ 		    makechart()
+ 		continue
++            elif scanner.token == &quot;&quot;:
++                continue
+ 	    game.ididit = False
+ 	    clrscr()
+ 	    setwnd(message_window)
+@@ -6375,7 +6377,7 @@
+                 cmd = candidates[0]
+                 break
+             elif candidates and not (game.options &amp; OPTION_PLAIN):
+-                prout(&quot;Commands with that prefix: &quot; + &quot; &quot;.join(candidates))
++                prout(&quot;Commands with prefix '%s': %s&quot; % (scanner.token, &quot; &quot;.join(candidates)))
+             else:
+                 listCommands()
+                 continue
+@@ -6568,24 +6570,21 @@
+         # Get a token from the user
+         self.real = 0.0
+         self.token = ''
+-        # Read a line if nothing here
+-        if self.inqueue == None:
++        # Fill the token quue if nothing here
++        while self.inqueue == None:
+             line = cgetline()
+             if curwnd==prompt_window:
+                 clrscr()
+                 setwnd(message_window)
+                 clrscr()
++            if line == '':
++                return None
+             # Skip leading white space
+             line = line.lstrip()
+-            if line:
+-                self.inqueue = line.split()
++            if not line:
++                continue
+             else:
+-                self.inqueue = []
+-                self.type = IHEOL
+-                return IHEOL
+-        elif not self.inqueue:
+-            self.type = IHEOL
+-            return IHEOL
++                self.inqueue = line.lstrip().split() + [IHEOL] 
+         # From here on in it's all looking at the queue
+         self.token = self.inqueue.pop(0)
+         if self.token == IHEOL:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000172.html">[Sst-commit-watch] r705 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000174.html">[Sst-commit-watch] r707 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#173">[ date ]</a>
+              <a href="thread.html#173">[ thread ]</a>
+              <a href="subject.html#173">[ subject ]</a>
+              <a href="author.html#173">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

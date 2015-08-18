@@ -1,0 +1,2456 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r637 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r637%20-%20trunk/src&In-Reply-To=%3C200609280801.k8S81laO014314%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000103.html">
+   <LINK REL="Next"  HREF="000105.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r637 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r637%20-%20trunk/src&In-Reply-To=%3C200609280801.k8S81laO014314%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r637 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 28 10:01:47 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000103.html">[Sst-commit-watch] r636 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000105.html">[Sst-commit-watch] r638 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#104">[ date ]</a>
+              <a href="thread.html#104">[ thread ]</a>
+              <a href="subject.html#104">[ subject ]</a>
+              <a href="author.html#104">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-28 10:01:45 +0200 (Thu, 28 Sep 2006)
+New Revision: 637
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/finish.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.py
+   trunk/src/sstlinux.c
+Log:
+Clean up nasty FORTRAN-style if statements with the body on the
+same line as the guard.  They're bad style and make the code hard to 
+read, and I got fed up,
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/ai.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -17,12 +17,15 @@
+ 	/* avoid intruding on another commander's territory */
+ 	if (ienm == IHC) {
+ 	    for_commanders(n)
+-		if (same(game.state.kcmdr[n],iq)) return false;
++		if (same(game.state.kcmdr[n],iq))
++		    return false;
+ 	    /* refuse to leave if currently attacking starbase */
+-	    if (same(game.battle, game.quadrant)) return false;
++	    if (same(game.battle, game.quadrant))
++		return false;
+ 	}
+ 	/* don't leave if over 1000 units of energy */
+-	if (game.kpower[loccom] &gt; 1000.) return false;
++	if (game.kpower[loccom] &gt; 1000.0)
++	    return false;
+     }
+     /* print escape message and move out of quadrant.
+        We know this if either short or long range sensors are working */
+@@ -40,7 +43,8 @@
+     game.kdist[loccom] = game.kdist[game.nenhere];
+     game.klhere--;
+     game.nenhere--;
+-    if (game.condition != docked) newcnd();
++    if (game.condition != docked)
++	newcnd();
+     /* Handle global matters related to escape */
+     game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons--;
+     game.state.galaxy[iq.x][iq.y].klingons++;
+@@ -157,9 +161,11 @@
+ 	if (idebug)
+ 	    proutn(&quot;=== MOTION = %d, FORCES = %1.2f, &quot;, motion, forces);
+ 	/* don't move if no motion */
+-	if (motion==0) return;
++	if (motion==0)
++	    return;
+ 	/* Limit motion according to skill */
+-	if (abs(motion) &gt; game.skill) motion = (motion &lt; 0) ? -game.skill : game.skill;
++	if (abs(motion) &gt; game.skill)
++	    motion = (motion &lt; 0) ? -game.skill : game.skill;
+     }
+     /* calculate preferred number of steps */
+     nsteps = motion &lt; 0 ? -motion : motion;
+@@ -172,10 +178,14 @@
+     /* Compute preferred values of delta X and Y */
+     mx = game.sector.x - com.x;
+     my = game.sector.y - com.y;
+-    if (2.0 * abs(mx) &lt; abs(my)) mx = 0;
+-    if (2.0 * abs(my) &lt; abs(game.sector.x-com.x)) my = 0;
+-    if (mx != 0) mx = mx*motion &lt; 0 ? -1 : 1;
+-    if (my != 0) my = my*motion &lt; 0 ? -1 : 1;
++    if (2.0 * abs(mx) &lt; abs(my))
++	mx = 0;
++    if (2.0 * abs(my) &lt; abs(game.sector.x-com.x))
++	my = 0;
++    if (mx != 0)
++	mx = mx*motion &lt; 0 ? -1 : 1;
++    if (my != 0)
++	my = my*motion &lt; 0 ? -1 : 1;
+     next = com;
+     /* main move loop */
+     for (ll = 0; ll &lt; nsteps; ll++) {
+@@ -192,14 +202,16 @@
+ 	    if (look.x &lt; 1 || look.x &gt; QUADSIZE) {
+ 		if (motion &lt; 0 &amp;&amp; tryexit(look, ienm, loccom, irun))
+ 		    return;
+-		if (krawlx == mx || my == 0) break;
++		if (krawlx == mx || my == 0)
++		    break;
+ 		look.x = next.x + krawlx;
+ 		krawlx = -krawlx;
+ 	    }
+ 	    else if (look.y &lt; 1 || look.y &gt; QUADSIZE) {
+ 		if (motion &lt; 0 &amp;&amp; tryexit(look, ienm, loccom, irun))
+ 		    return;
+-		if (krawly == my || mx == 0) break;
++		if (krawly == my || mx == 0)
++		    break;
+ 		look.y = next.y + krawly;
+ 		krawly = -krawly;
+ 	    }
+@@ -218,16 +230,19 @@
+ 		    look.y = next.y + krawly;
+ 		    krawly = -krawly;
+ 		}
+-		else break; /* we have failed */
++		else
++		    break; /* we have failed */
+ 	    }
+-	    else success = true;
++	    else
++		success = true;
+ 	}
+ 	if (success) {
+ 	    next = look;
+ 	    if (idebug)
+ 		proutn(cramlc(neither, next));
+ 	}
+-	else break; /* done early */
++	else
++	    break; /* done early */
+ 	
+     }
+     if (idebug)
+@@ -243,8 +258,10 @@
+ 	    proutn(&quot;***&quot;);
+ 	    cramen(ienm);
+ 	    proutn(_(&quot; from %s&quot;), cramlc(2, com));
+-	    if (game.kdist[loccom] &lt; dist1) proutn(_(&quot; advances to &quot;));
+-	    else proutn(_(&quot; retreats to &quot;));
++	    if (game.kdist[loccom] &lt; dist1)
++		proutn(_(&quot; advances to &quot;));
++	    else
++		proutn(_(&quot; retreats to &quot;));
+ 	    prout(cramlc(sector, next));
+ 	}
+     }
+@@ -256,7 +273,8 @@
+     coord w; 
+     int i;
+ 
+-    if (idebug) prout(&quot;== MOVCOM&quot;);
++    if (idebug)
++	prout(&quot;== MOVCOM&quot;);
+ 
+     /* Figure out which Klingon is the commander (or Supercommander)
+        and do move */
+@@ -304,7 +322,8 @@
+ 	    if (same(game.state.baseq[i], iq)) 
+ 		return true;
+     }
+-    if (game.justin &amp;&amp; !game.iscate) return true;
++    if (game.justin &amp;&amp; !game.iscate)
++	return true;
+     /* do the move */
+     game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].klingons--;
+     game.state.kscmdr = iq;
+@@ -317,7 +336,8 @@
+ 	game.ientesc = false;
+ 	unschedule(FSCDBAS);
+ 	for_local_enemies(i) 
+-	    if (game.quad[game.ks[i].x][game.ks[i].y] == IHS) break;
++	    if (game.quad[game.ks[i].x][game.ks[i].y] == IHS)
++		break;
+ 	game.quad[game.ks[i].x][game.ks[i].y] = IHDOT;
+ 	game.ks[i] = game.ks[game.nenhere];
+ 	game.kdist[i] = game.kdist[game.nenhere];
+@@ -325,7 +345,8 @@
+ 	game.kpower[i] = game.kpower[game.nenhere];
+ 	game.klhere--;
+ 	game.nenhere--;
+-	if (game.condition!=docked) newcnd();
++	if (game.condition!=docked)
++	    newcnd();
+ 	sortkl();
+     }
+     /* check for a helpful planet */
+@@ -336,7 +357,8 @@
+ 	    DESTROY(&amp;game.state.plnets[i]);
+ 	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET;
+ 	    if (!damaged(DRADIO) || game.condition == docked) {
+-		if (!*ipage) pause_game(true);
++		if (!*ipage)
++		    pause_game(true);
+ 		*ipage = true;
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;));
+ 		proutn(_(&quot;   a planet in &quot;));
+@@ -359,7 +381,8 @@
+     double bdist[BASEMAX+1];
+     bool flag;
+ 
+-    if (idebug) prout(&quot;== SCOM&quot;);
++    if (idebug)
++	prout(&quot;== SCOM&quot;);
+ 
+     /* Decide on being active or passive */
+     flag = ((NKILLC+NKILLK)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) ||
+@@ -437,10 +460,14 @@
+ 	ideltay = ibq.y - game.state.kscmdr.y;
+     }
+     /* Maximum movement is 1 quadrant in either or both axis */
+-    if (ideltax &gt; 1) ideltax = 1;
+-    if (ideltax &lt; -1) ideltax = -1;
+-    if (ideltay &gt; 1) ideltay = 1;
+-    if (ideltay &lt; -1) ideltay = -1;
++    if (ideltax &gt; 1)
++	ideltax = 1;
++    if (ideltax &lt; -1)
++	ideltax = -1;
++    if (ideltay &gt; 1)
++	ideltay = 1;
++    if (ideltay &lt; -1)
++	ideltay = -1;
+ 
+     /* try moving in both x and y directions */
+     iq.x = game.state.kscmdr.x + ideltax;
+@@ -491,7 +518,8 @@
+ 	    if (damaged(DRADIO) &amp;&amp; game.condition != docked)
+ 		return; /* no warning */
+ 	    game.iseenit = true;
+-	    if (!*ipage)  pause_game(true);
++	    if (!*ipage)
++		pause_game(true);
+ 	    *ipage = true;
+ 	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
+ 	    proutn(cramlc(quadrant, game.state.kscmdr));
+@@ -499,9 +527,11 @@
+ 	    prout(_(&quot;   reports that it is under attack from the Klingon Super-commander.&quot;));
+ 	    proutn(_(&quot;   It can survive until stardate %d.\&quot;&quot;),
+ 		   (int)scheduled(FSCDBAS));
+-	    if (!game.resting) return;
++	    if (!game.resting)
++		return;
+ 	    prout(_(&quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;));
+-	    if (ja() == false) return;
++	    if (ja() == false)
++		return;
+ 	    game.resting = false;
+ 	    game.optime = 0.0; /* actually finished */
+ 	    return;
+@@ -514,7 +544,8 @@
+ 	 (damaged(DRADIO) &amp;&amp; game.condition != docked) ||
+ 	 !game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].charted))
+ 	return;
+-    if (!*ipage) pause_game(true);
++    if (!*ipage)
++	pause_game(true);
+     *ipage = true;
+     prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;));
+     proutn(_(&quot;   the Super-commander is in &quot;));
+@@ -528,7 +559,8 @@
+ {
+     int idx, idy, im, i;
+     /* Move the Tholian */
+-    if (!game.ithere || game.justin) return;
++    if (!game.ithere || game.justin)
++	return;
+ 
+     if (game.tholian.x == 1 &amp;&amp; game.tholian.y == 1) {
+ 	idx = 1; idy = QUADSIZE;
+@@ -549,7 +581,8 @@
+     }
+ 
+     /* Do nothing if we are blocked */
+-    if (game.quad[idx][idy]!= IHDOT &amp;&amp; game.quad[idx][idy]!= IHWEB) return;
++    if (game.quad[idx][idy]!= IHDOT &amp;&amp; game.quad[idx][idy]!= IHWEB)
++	return;
+     game.quad[game.tholian.x][game.tholian.y] = IHWEB;
+ 
+     if (game.tholian.x != idx) {
+@@ -557,7 +590,8 @@
+ 	im = fabs((double)idx - game.tholian.x)/((double)idx - game.tholian.x);
+ 	while (game.tholian.x != idx) {
+ 	    game.tholian.x += im;
+-	    if (game.quad[game.tholian.x][game.tholian.y]==IHDOT) game.quad[game.tholian.x][game.tholian.y] = IHWEB;
++	    if (game.quad[game.tholian.x][game.tholian.y]==IHDOT)
++		game.quad[game.tholian.x][game.tholian.y] = IHWEB;
+ 	}
+     }
+     else if (game.tholian.y != idy) {
+@@ -565,7 +599,8 @@
+ 	im = fabs((double)idy - game.tholian.y)/((double)idy - game.tholian.y);
+ 	while (game.tholian.y != idy) {
+ 	    game.tholian.y += im;
+-	    if (game.quad[game.tholian.x][game.tholian.y]==IHDOT) game.quad[game.tholian.x][game.tholian.y] = IHWEB;
++	    if (game.quad[game.tholian.x][game.tholian.y]==IHDOT)
++		game.quad[game.tholian.x][game.tholian.y] = IHWEB;
+ 	}
+     }
+     game.quad[game.tholian.x][game.tholian.y] = IHT;
+@@ -573,10 +608,14 @@
+ 
+     /* check to see if all holes plugged */
+     for_sectors(i) {
+-	if (game.quad[1][i]!=IHWEB &amp;&amp; game.quad[1][i]!=IHT) return;
+-	if (game.quad[QUADSIZE][i]!=IHWEB &amp;&amp; game.quad[QUADSIZE][i]!=IHT) return;
+-	if (game.quad[i][1]!=IHWEB &amp;&amp; game.quad[i][1]!=IHT) return;
+-	if (game.quad[i][QUADSIZE]!=IHWEB &amp;&amp; game.quad[i][QUADSIZE]!=IHT) return;
++	if (game.quad[1][i]!=IHWEB &amp;&amp; game.quad[1][i]!=IHT)
++	    return;
++	if (game.quad[QUADSIZE][i]!=IHWEB &amp;&amp; game.quad[QUADSIZE][i]!=IHT)
++	    return;
++	if (game.quad[i][1]!=IHWEB &amp;&amp; game.quad[i][1]!=IHT)
++	    return;
++	if (game.quad[i][QUADSIZE]!=IHWEB &amp;&amp; game.quad[i][QUADSIZE]!=IHT)
++	    return;
+     }
+     /* All plugged up -- Tholian splits */
+     game.quad[game.tholian.x][game.tholian.y]=IHWEB;
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/battle.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -39,7 +39,8 @@
+ 	    }
+ 	    else if (game.shldup) {
+ 		proutn(_(&quot;Shields are up. Do you want them down? &quot;));
+-		if (ja() == true) action = SHDN;
++		if (ja() == true)
++		    action = SHDN;
+ 		else {
+ 		    chew();
+ 		    return;
+@@ -47,7 +48,8 @@
+ 	    }
+ 	    else {
+ 		proutn(_(&quot;Shields are down. Do you want them up? &quot;));
+-		if (ja() == true) action = SHUP;
++		if (ja() == true)
++		    action = SHUP;
+ 		else {
+ 		    chew();
+ 		    return;
+@@ -63,7 +65,8 @@
+ 	}
+ 	game.shldup = true;
+ 	game.shldchg = true;
+-	if (game.condition != docked) game.energy -= 50.0;
++	if (game.condition != docked)
++	    game.energy -= 50.0;
+ 	prout(_(&quot;Shields raised.&quot;));
+ 	if (game.energy &lt;= 0) {
+ 	    skip(1);
+@@ -89,7 +92,8 @@
+ 	    proutn(_(&quot;Energy to transfer to shields- &quot;));
+ 	}
+ 	chew();
+-	if (aaitem==0) return;
++	if (aaitem==0)
++	    return;
+ 	if (aaitem &gt; game.energy) {
+ 	    prout(_(&quot;Insufficient ship energy.&quot;));
+ 	    return;
+@@ -208,7 +212,8 @@
+     }
+     proutn(ibumpd ? _(&quot; rammed by &quot;) : _(&quot; rams &quot;));
+     crmena(false, ienm, sector, w);
+-    if (ibumpd) proutn(_(&quot; (original position)&quot;));
++    if (ibumpd)
++	proutn(_(&quot; (original position)&quot;));
+     skip(1);
+     deadkl(w, ienm, game.sector);
+     proutn(&quot;***&quot;);
+@@ -238,7 +243,8 @@
+ 	pause_game(true);
+ 	dreprt();
+     }
+-    else finish(FWON);
++    else
++	finish(FWON);
+     return;
+ }
+ 
+@@ -257,7 +263,8 @@
+ 
+     w.x = w.y = jw.x = jw.y = 0;
+     bigger = fabs(deltax);
+-    if (fabs(deltay) &gt; bigger) bigger = fabs(deltay);
++    if (fabs(deltay) &gt; bigger)
++	bigger = fabs(deltay);
+     deltax /= bigger;
+     deltay /= bigger;
+     if (!damaged(DSRSENS) || game.condition==docked) 
+@@ -270,10 +277,12 @@
+ 	w.x = x + 0.5;
+ 	y += deltay;
+ 	w.y = y + 0.5;
+-	if (!VALID_SECTOR(w.x, w.y)) break;
++	if (!VALID_SECTOR(w.x, w.y))
++	    break;
+ 	iquad=game.quad[w.x][w.y];
+ 	tracktorpedo(w, l, i, n, iquad);
+-	if (iquad==IHDOT) continue;
++	if (iquad==IHDOT)
++	    continue;
+ 	/* hit something */
+ 	setwnd(message_window);
+ 	if (damaged(DSRSENS) &amp;&amp; !game.condition==docked)
+@@ -294,12 +303,14 @@
+ 		return; /* Cheat if on a planet */
+ 	    ang = angle + 2.5*(Rand()-0.5);
+ 	    temp = fabs(sin(ang));
+-	    if (fabs(cos(ang)) &gt; temp) temp = fabs(cos(ang));
++	    if (fabs(cos(ang)) &gt; temp)
++		temp = fabs(cos(ang));
+ 	    xx = -sin(ang)/temp;
+ 	    yy = cos(ang)/temp;
+ 	    jw.x=w.x+xx+0.5;
+ 	    jw.y=w.y+yy+0.5;
+-	    if (!VALID_SECTOR(jw.x, jw.y)) return;
++	    if (!VALID_SECTOR(jw.x, jw.y))
++		return;
+ 	    if (game.quad[jw.x][jw.y]==IHBLANK) {
+ 		finish(FHOLE);
+ 		return;
+@@ -331,7 +342,8 @@
+ 	    h1 = 700.0 + 100.0*Rand() -
+ 		1000.0 * distance(w, in) * fabs(sin(bullseye-angle));
+ 	    h1 = fabs(h1);
+-	    if (kp &lt; h1) h1 = kp;
++	    if (kp &lt; h1)
++		h1 = kp;
+ 	    game.kpower[ll] -= (game.kpower[ll]&lt;0 ? -h1 : h1);
+ 	    if (game.kpower[ll] == 0) {
+ 		deadkl(w, iquad, w);
+@@ -341,7 +353,8 @@
+ 	    /* If enemy damaged but not destroyed, try to displace */
+ 	    ang = angle + 2.5*(Rand()-0.5);
+ 	    temp = fabs(sin(ang));
+-	    if (fabs(cos(ang)) &gt; temp) temp = fabs(cos(ang));
++	    if (fabs(cos(ang)) &gt; temp)
++		temp = fabs(cos(ang));
+ 	    xx = -sin(ang)/temp;
+ 	    yy = cos(ang)/temp;
+ 	    jw.x=w.x+xx+0.5;
+@@ -505,7 +518,8 @@
+     int ktr=1, loop1, loop2, j, cdam[NDEVICES];
+ 
+     /* a critical hit occured */
+-    if (hit &lt; (275.0-25.0*game.skill)*(1.0+0.5*Rand())) return;
++    if (hit &lt; (275.0-25.0*game.skill)*(1.0+0.5*Rand()))
++	return;
+ 
+     ncrit = 1.0 + hit/(500.0+100.0*Rand());
+     proutn(_(&quot;***CRITICAL HIT--&quot;));
+@@ -521,7 +535,8 @@
+ 	game.damage[j] += extradm;
+ 	if (loop1 &gt; 0) {
+ 	    for (loop2 = 0; loop2 &lt; loop1 &amp;&amp; j != cdam[loop2]; loop2++) ;
+-	    if (loop2 &lt; loop1) continue;
++	    if (loop2 &lt; loop1)
++		continue;
+ 	    ktr += 1;
+ 	    if (ktr==3) skip(1);
+ 	    proutn(_(&quot; and &quot;));
+@@ -572,7 +587,8 @@
+ 
+     /* set up partial hits if attack happens during shield status change */
+     pfac = 1.0/game.inshld;
+-    if (game.shldchg) chgfac = 0.25+0.5*Rand();
++    if (game.shldchg)
++	chgfac = 0.25+0.5*Rand();
+ 
+     skip(1);
+ 
+@@ -585,11 +601,14 @@
+ 	/* compute hit strength and diminish shield power */
+ 	r = Rand();
+ 	/* Increase chance of photon torpedos if docked or enemy energy low */
+-	if (game.condition == docked) r *= 0.25;
+-	if (game.kpower[loop] &lt; 500) r *= 0.25; 
++	if (game.condition == docked)
++	    r *= 0.25;
++	if (game.kpower[loop] &lt; 500)
++	    r *= 0.25; 
+ 	jay = game.ks[loop];
+ 	iquad = game.quad[jay.x][jay.y];
+-	if (iquad==IHT || (iquad==IHQUEST &amp;&amp; !iqengry)) continue;
++	if (iquad==IHT || (iquad==IHQUEST &amp;&amp; !iqengry))
++	    continue;
+ 	/* different enemies have different probabilities of throwing a torp */
+ 	usephasers = !torps_ok || \
+ 	    (iquad == IHK &amp;&amp; r &gt; 0.0005) || 
+@@ -621,16 +640,19 @@
+ 		finish(FWON); /* Klingons did themselves in! */
+ 	    if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova || game.alldone) 
+ 		return; /* Supernova or finished */
+-	    if (hit == 0) continue;
++	    if (hit == 0)
++		continue;
+ 	}
+ 	/* incoming phaser or torpedo, shields may dissipate it */
+ 	if (game.shldup || game.shldchg || game.condition==docked) {
+ 	    /* shields will take hits */
+ 	    double absorb, hitsh, propor = pfac*game.shield*(game.condition==docked ? 2.1 : 1.0);
+-	    if (propor &lt; 0.1) propor = 0.1;
++	    if (propor &lt; 0.1)
++		propor = 0.1;
+ 	    hitsh = propor*chgfac*hit+1.0;
+ 	    absorb = 0.8*hitsh;
+-	    if (absorb &gt; game.shield) absorb = game.shield;
++	    if (absorb &gt; game.shield)
++		absorb = game.shield;
+ 	    game.shield -= absorb;
+ 	    hit -= hitsh;
+ 	    /* taking a hit blasts us out of a starbase dock */
+@@ -653,7 +675,8 @@
+ 	}
+ 	skip(1);
+ 	/* Decide if hit is critical */
+-	if (hit &gt; hitmax) hitmax = hit;
++	if (hit &gt; hitmax)
++	    hitmax = hit;
+ 	hittot += hit;
+ 	fry(hit);
+ 	game.energy -= hit;
+@@ -665,7 +688,8 @@
+     }
+     if (!attempt &amp;&amp; game.condition == docked)
+ 	prout(_(&quot;***Enemies decide against attacking your ship.&quot;));
+-    if (!atackd) return;
++    if (!atackd)
++	return;
+     percent = 100.0*pfac*game.shield+0.5;
+     if (!ihurt) {
+ 	/* Shields fully protect ship */
+@@ -675,9 +699,12 @@
+ 	/* Print message if starship suffered hit(s) */
+ 	skip(1);
+ 	proutn(_(&quot;Energy left %2d    shields &quot;), (int)game.energy);
+-	if (game.shldup) proutn(_(&quot;up &quot;));
+-	else if (!damaged(DSHIELD)) proutn(_(&quot;down &quot;));
+-	else proutn(_(&quot;damaged, &quot;));
++	if (game.shldup)
++	    proutn(_(&quot;up &quot;));
++	else if (!damaged(DSHIELD))
++	    proutn(_(&quot;down &quot;));
++	else
++	    proutn(_(&quot;damaged, &quot;));
+     }
+     prout(_(&quot;%d%%,   torpedoes left %d&quot;), percent, game.torps);
+     /* Check if anyone was hurt */
+@@ -759,7 +786,8 @@
+     /* For each kind of enemy, finish message to player */
+     prout(_(&quot; destroyed.&quot;));
+     game.quad[w.x][w.y] = IHDOT;
+-    if (KLINGREM==0) return;
++    if (KLINGREM==0)
++	return;
+ 
+     game.state.remtime = game.state.remres/(game.state.remkl + 4*game.state.remcom);
+ 
+@@ -767,7 +795,8 @@
+     if (is_scheduled(FCDBAS) &amp;&amp; same(game.battle, game.quadrant) &amp;&amp; type==IHC)
+ 	unschedule(FCDBAS);
+     for_local_enemies(i)
+-	if (same(game.ks[i], w)) break;
++	if (same(game.ks[i], w))
++	    break;
+     game.nenhere--;
+     if (i &lt;= game.nenhere)  {
+ 	for (j=i; j&lt;=game.nenhere; j++) {
+@@ -848,7 +877,8 @@
+ 		key = IHEOL;
+ 		return;
+ 	    }
+-	    if (n &lt;= game.torps) break;
++	    if (n &lt;= game.torps)
++		break;
+ 	    chew();
+ 	    key = IHEOL;
+ 	}
+@@ -879,7 +909,8 @@
+ 	    return;
+ 	}
+ 	targ[i][2] = aaitem;
+-	if (targetcheck(targ[i][1], targ[i][2], &amp;course[i])) return;
++	if (targetcheck(targ[i][1], targ[i][2], &amp;course[i]))
++	    return;
+     }
+     chew();
+     if (i == 1 &amp;&amp; key == IHEOL) {
+@@ -899,13 +930,15 @@
+ 	    }
+ 	    targ[i][2] = aaitem;
+ 	    chew();
+-	    if (targetcheck(targ[i][1], targ[i][2], &amp;course[i])) return;
++	    if (targetcheck(targ[i][1], targ[i][2], &amp;course[i]))
++		return;
+ 	}
+     }
+     game.ididit = true;
+     /* Loop for moving &lt;n&gt; torpedoes */
+     for (i = 1; i &lt;= n; i++) {
+-	if (game.condition != docked) game.torps--;
++	if (game.condition != docked)
++	    game.torps--;
+ 	r = (Rand()+Rand())*0.5 -0.5;
+ 	if (fabs(r) &gt;= 0.47) {
+ 	    /* misfire! */
+@@ -913,7 +946,8 @@
+ 	    if (n&gt;1) {
+ 		prouts(_(&quot;***TORPEDO NUMBER %d MISFIRES&quot;), i);
+ 	    }
+-	    else prouts(_(&quot;***TORPEDO MISFIRES.&quot;));
++	    else
++		prouts(_(&quot;***TORPEDO MISFIRES.&quot;));
+ 	    skip(1);
+ 	    if (i &lt; n)
+ 		prout(_(&quot;  Remainder of burst aborted.&quot;));
+@@ -929,7 +963,8 @@
+ 	if (game.alldone || game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+ 	    return;
+     }
+-    if (KLINGREM==0) finish(FWON);
++    if (KLINGREM==0)
++	finish(FWON);
+ }
+ 
+ 	
+@@ -1108,7 +1143,8 @@
+ 	    chew();
+ 	    proutn(_(&quot;Units to fire= &quot;));
+ 	    key = scan();
+-	    if (key!=IHREAL) return;
++	    if (key!=IHREAL)
++		return;
+ 	    rpow = aaitem;
+ 	    if (rpow &gt; (ifast?game.energy-200:game.energy)) {
+ 		proutn(_(&quot;Energy available= %.2f&quot;),
+@@ -1127,7 +1163,8 @@
+ 	}
+ 	if (ifast) {
+ 	    game.energy -= 200; /* Go and do it! */
+-	    if (checkshctrl(rpow)) return;
++	    if (checkshctrl(rpow))
++		return;
+ 	}
+ 	chew();
+ 	game.energy -= rpow;
+@@ -1137,23 +1174,28 @@
+ 	    powrem = rpow;
+ 	    for_local_enemies(i) {
+ 		hits[i] = 0.0;
+-		if (powrem &lt;= 0) continue;
++		if (powrem &lt;= 0)
++		    continue;
+ 		hits[i] = fabs(game.kpower[i])/(PHASEFAC*pow(0.90,game.kdist[i]));
+ 		over = (0.01 + 0.05*Rand())*hits[i];
+ 		temp = powrem;
+ 		powrem -= hits[i] + over;
+-		if (powrem &lt;= 0 &amp;&amp; temp &lt; hits[i]) hits[i] = temp;
+-		if (powrem &lt;= 0) over = 0.0;
++		if (powrem &lt;= 0 &amp;&amp; temp &lt; hits[i])
++		    hits[i] = temp;
++		if (powrem &lt;= 0)
++		    over = 0.0;
+ 		extra += over;
+ 	    }
+-	    if (powrem &gt; 0.0) extra += powrem;
++	    if (powrem &gt; 0.0)
++		extra += powrem;
+ 	    hittem(hits);
+ 	    game.ididit = true;
+ 	}
+ 	if (extra &gt; 0 &amp;&amp; !game.alldone) {
+ 	    if (game.ithere) {
+ 		proutn(_(&quot;*** Tholian web absorbs &quot;));
+-		if (game.nenhere&gt;0) proutn(_(&quot;excess &quot;));
++		if (game.nenhere&gt;0)
++		    proutn(_(&quot;excess &quot;));
+ 		prout(_(&quot;phaser energy.&quot;));
+ 	    }
+ 	    else {
+@@ -1205,8 +1247,10 @@
+ 			(1.01+0.05*Rand()) + 1.0;
+ 		kz = k;
+ 		proutn(&quot;(&quot;);
+-		if (!damaged(DCOMPTR)) proutn(&quot;%d&quot;, irec);
+-		else proutn(&quot;??&quot;);
++		if (!damaged(DCOMPTR))
++		    proutn(&quot;%d&quot;, irec);
++		else
++		    proutn(&quot;??&quot;);
+ 		proutn(&quot;)  &quot;);
+ 		proutn(_(&quot;units to fire at &quot;));
+ 		crmena(false, ienm, sector, aim);
+@@ -1257,7 +1301,8 @@
+ 	chew();
+ 	if (ifast) {
+ 	    game.energy -= 200.0;
+-	    if (checkshctrl(rpow)) return;
++	    if (checkshctrl(rpow))
++		return;
+ 	}
+ 	hittem(hits);
+ 	game.ididit = true;
+@@ -1294,12 +1339,14 @@
+     skip(1);
+ 
+     for (; k &lt;= nenhr2; k++, kk++) {
+-	if ((wham = hits[k])==0) continue;
++	if ((wham = hits[k])==0)
++	    continue;
+ 	dustfac = 0.9 + 0.01*Rand();
+ 	hit = wham*pow(dustfac,game.kdist[kk]);
+ 	kpini = game.kpower[kk];
+ 	kp = fabs(kpini);
+-	if (PHASEFAC*hit &lt; kp) kp = PHASEFAC*hit;
++	if (PHASEFAC*hit &lt; kp)
++	    kp = PHASEFAC*hit;
+ 	game.kpower[kk] -= (game.kpower[kk] &lt; 0 ? -kp: kp);
+ 	kpow = game.kpower[kk];
+ 	w = game.ks[kk];
+@@ -1311,13 +1358,16 @@
+ 	else
+ 	    proutn(_(&quot;Very small hit on &quot;));
+ 	ienm = game.quad[w.x][w.y];
+-	if (ienm==IHQUEST) iqengry = true;
++	if (ienm==IHQUEST)
++	    iqengry = true;
+ 	crmena(false,ienm,sector,w);
+ 	skip(1);
+ 	if (kpow == 0) {
+ 	    deadkl(w, ienm, w);
+-	    if (KLINGREM==0) finish(FWON);
+-	    if (game.alldone) return;
++	    if (KLINGREM==0)
++		finish(FWON);		
++	    if (game.alldone)
++		return;
+ 	    kk--; /* don't do the increment */
+ 	}
+ 	else /* decide whether or not to emasculate klingon */
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/events.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -97,7 +97,8 @@
+     for (;;) {
+ 	/* Select earliest extraneous event, evcode==0 if no events */
+ 	evcode = FSPY;
+-	if (game.alldone) return;
++	if (game.alldone)
++	    return;
+ 	datemin = fintim;
+ 	for (l = 1; l &lt; NEVENTS; l++)
+ 	    if (game.future[l].date &lt; datemin) {
+@@ -127,11 +128,13 @@
+ 		return;
+ 	    }
+ 	    game.lsupres -= xtime;
+-	    if (game.damage[DLIFSUP] &lt;= xtime) game.lsupres = game.inlsr;
++	    if (game.damage[DLIFSUP] &lt;= xtime)
++		game.lsupres = game.inlsr;
+ 	}
+ 	/* Fix devices */
+ 	repair = xtime;
+-	if (game.condition == docked) repair /= game.docfac;
++	if (game.condition == docked)
++	    repair /= game.docfac;
+ 	/* Don't fix Deathray here */
+ 	for (l=0; l&lt;NDEVICES; l++)
+ 	    if (game.damage[l] &gt; 0.0 &amp;&amp; l != DDRAY)
+@@ -153,11 +156,13 @@
+ 	game.optime -= xtime;
+ 	switch (evcode) {
+ 	case FSNOVA: /* Supernova */
+-	    if (!ipage) pause_game(true);
++	    if (!ipage)
++		pause_game(true);
+ 	    ipage=true;
+ 	    snova(false, NULL);
+ 	    schedule(FSNOVA, expran(0.5*game.intime));
+-	    if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova) return;
++	    if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
++		return;
+ 	    break;
+ 	case FSPY: /* Check with spy to see if S.C. should tractor beam */
+ 	    if (game.state.nscrem == 0 ||
+@@ -174,7 +179,8 @@
+ 		yank = distance(game.state.kscmdr, game.quadrant);
+ 		/********* fall through to FTBEAM code ***********/
+ 	    }
+-	    else return;
++	    else
++		return;
+ 	case FTBEAM: /* Tractor beam */
+ 	    if (evcode==FTBEAM) {
+ 		if (game.state.remcom == 0) {
+@@ -192,7 +198,8 @@
+ 	    }
+ 	    /* tractor beaming cases merge here */
+ 	    yank = sqrt(yank);
+-	    if (!ipage) pause_game(true);
++	    if (!ipage)
++		pause_game(true);
+ 	    ipage=true;
+ 	    game.optime = (10.0/(7.5*7.5))*yank; /* 7.5 is yank rate (warp 7.5) */
+ 	    ictbeam = true;
+@@ -202,7 +209,8 @@
+ 	    prout(_(&quot; caught in long range tractor beam--&quot;));
+ 	    /* If Kirk &amp; Co. screwing around on planet, handle */
+ 	    atover(true); /* atover(true) is Grab */
+-	    if (game.alldone) return;
++	    if (game.alldone)
++		return;
+ 	    if (game.icraft) { /* Caught in Galileo? */
+ 		finish(FSTRACTOR);
+ 		return;
+@@ -239,14 +247,17 @@
+ 		    doshield(true); /* raise shields */
+ 		    game.shldchg=false;
+ 		}
+-		else prout(_(&quot;(Shields not currently useable.)&quot;));
++		else
++		    prout(_(&quot;(Shields not currently useable.)&quot;));
+ 	    }
+ 	    newqad(false);
+ 	    /* Adjust finish time to time of tractor beaming */
+ 	    fintim = game.state.date+game.optime;
+ 	    attack(false);
+-	    if (game.state.remcom &lt;= 0) unschedule(FTBEAM);
+-	    else schedule(FTBEAM, game.optime+expran(1.5*game.intime/game.state.remcom));
++	    if (game.state.remcom &lt;= 0)
++		unschedule(FTBEAM);
++	    else 
++		schedule(FTBEAM, game.optime+expran(1.5*game.intime/game.state.remcom));
+ 	    break;
+ 	case FSNAP: /* Snapshot of the universe (for time warp) */
+ 	    game.snapsht = game.state;
+@@ -269,7 +280,8 @@
+ 			i = 1;
+ 			break;
+ 		    }
+-		if (i == 1) break;
++		if (i == 1)
++		    break;
+ 	    }
+ 	    if (j&gt;game.state.rembase) {
+ 		/* no match found -- try later */
+@@ -287,7 +299,8 @@
+ 	    if (!damaged(DRADIO) &amp;&amp; game.condition != docked) 
+ 		break; /* No warning :-( */
+ 	    game.iseenit = true;
+-	    if (!ipage) pause_game(true);
++	    if (!ipage)
++		pause_game(true);
+ 	    ipage = true;
+ 	    skip(1);
+ 	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
+@@ -335,7 +348,8 @@
+ 	    else if (game.state.rembase != 1 &amp;&amp;
+ 		     (!damaged(DRADIO) || game.condition == docked)) {
+ 		/* Get word via subspace radio */
+-		if (!ipage) pause_game(true);
++		if (!ipage)
++		    pause_game(true);		    
+ 		ipage = true;
+ 		skip(1);
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Command reports that&quot;));
+@@ -344,7 +358,8 @@
+ 		prout(_(&quot; has been destroyed by&quot;));
+ 		if (game.isatb == 2) 
+ 		    prout(_(&quot;the Klingon Super-Commander&quot;));
+-		else prout(_(&quot;a Klingon Commander&quot;));
++		else
++		    prout(_(&quot;a Klingon Commander&quot;));
+ 		game.state.chart[game.battle.x][game.battle.y].starbase = false;
+ 	    }
+ 	    /* Remove Starbase from galaxy */
+@@ -380,7 +395,8 @@
+ 		    game.state.galaxy[game.probec.x][game.probec.y].supernova) {
+ 		    // Left galaxy or ran into supernova
+ 		    if (!damaged(DRADIO) || game.condition == docked) {
+-			if (!ipage) pause_game(true);
++			if (!ipage)
++			    pause_game(true);
+ 			ipage = true;
+ 			skip(1);
+ 			proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe &quot;));
+@@ -394,7 +410,8 @@
+ 		    break;
+ 		}
+ 		if (!damaged(DRADIO) || game.condition == docked) {
+-		    if (!ipage) pause_game(true);
++		    if (!ipage)
++			pause_game(true);
+ 		    ipage = true;
+ 		    skip(1);
+ 		    proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe is now in &quot;));
+@@ -553,7 +570,8 @@
+     game.ididit = false;
+     for (;;) {
+ 	key = scan();
+-	if (key  != IHEOL) break;
++	if (key  != IHEOL)
++	    break;
+ 	proutn(_(&quot;How long? &quot;));
+     }
+     chew();
+@@ -562,17 +580,20 @@
+ 	return;
+     }
+     origTime = delay = aaitem;
+-    if (delay &lt;= 0.0) return;
++    if (delay &lt;= 0.0)
++	return;
+     if (delay &gt;= game.state.remtime || game.nenhere != 0) {
+ 	proutn(_(&quot;Are you sure? &quot;));
+-	if (ja() == false) return;
++	if (ja() == false)
++	    return;
+     }
+ 
+     /* Alternate resting periods (events) with attacks */
+ 
+     game.resting = true;
+     do {
+-	if (delay &lt;= 0) game.resting = false;
++	if (delay &lt;= 0)
++	    game.resting = false;
+ 	if (!game.resting) {
+ 	    prout(_(&quot;%d stardates left.&quot;), (int)game.state.remtime);
+ 	    return;
+@@ -581,14 +602,18 @@
+ 
+ 	if (game.nenhere) {
+ 	    double rtime = 1.0 + Rand();
+-	    if (rtime &lt; temp) temp = rtime;
++	    if (rtime &lt; temp)
++		temp = rtime;
+ 	    game.optime = temp;
+ 	}
+-	if (game.optime &lt; delay) attack(false);
+-	if (game.alldone) return;
++	if (game.optime &lt; delay)
++	    attack(false);
++	if (game.alldone)
++	    return;
+ 	events();
+ 	game.ididit = true;
+-	if (game.alldone) return;
++	if (game.alldone)
++	    return;
+ 	delay -= temp;
+ 	/* Repair Deathray if long rest at starbase */
+ 	if (origTime-delay &gt;= 9.99 &amp;&amp; game.condition == docked)
+@@ -641,10 +666,12 @@
+ 	for (mm = bot; mm &lt;= top; mm++) 
+ 	    for (nn = 1; nn &lt;= 3; nn++)  /* nn,j represents coordinates around current */
+ 		for (j = 1; j &lt;= 3; j++) {
+-		    if (j==2 &amp;&amp; nn== 2) continue;
++		    if (j==2 &amp;&amp; nn== 2)
++			continue;
+ 		    scratch.x = hits[mm][1]+nn-2;
+ 		    scratch.y = hits[mm][2]+j-2;
+-		    if (!VALID_SECTOR(scratch.y, scratch.x)) continue;
++		    if (!VALID_SECTOR(scratch.y, scratch.x))
++			continue;
+ 		    iquad = game.quad[scratch.x][scratch.y];
+ 		    switch (iquad) {
+ 		    // case IHDOT:	/* Empty space ends reaction
+@@ -701,7 +728,8 @@
+ 		    case IHF:
+ 			prout(_(&quot;***Starship buffeted by nova.&quot;));
+ 			if (game.shldup) {
+-			    if (game.shield &gt;= 2000.0) game.shield -= 2000.0;
++			    if (game.shield &gt;= 2000.0)
++				game.shield -= 2000.0;
+ 			    else {
+ 				double diff = 2000.0 - game.shield;
+ 				game.energy -= diff;
+@@ -711,7 +739,8 @@
+ 				game.damage[DSHIELD] += 0.005*game.damfac*Rand()*diff;
+ 			    }
+ 			}
+-			else game.energy -= 2000.0;
++			else
++			    game.energy -= 2000.0;
+ 			if (game.energy &lt;= 0) {
+ 			    finish(FNOVA);
+ 			    return;
+@@ -728,7 +757,8 @@
+ 		    case IHS:
+ 		    case IHR:
+ 			for_local_enemies(ll)
+-			    if (same(game.ks[ll], scratch)) break;
++			    if (same(game.ks[ll], scratch))
++				break;
+ 			game.kpower[ll] -= 800.0; /* If firepower is lost, die */
+ 			if (game.kpower[ll] &lt;= 0.0) {
+ 			    deadkl(scratch, iquad, scratch);
+@@ -776,11 +806,15 @@
+ 
+     /* Starship affected by nova -- kick it away. */
+     game.dist = kount*0.1;
+-    if (icx) icx = (icx &lt; 0 ? -1 : 1);
+-    if (icy) icy = (icy &lt; 0 ? -1 : 1);
++    if (icx)
++	icx = (icx &lt; 0 ? -1 : 1);
++    if (icy)
++	icy = (icy &lt; 0 ? -1 : 1);
+     game.direc = course[3*(icx+1)+icy+2];
+-    if (game.direc == 0.0) game.dist = 0.0;
+-    if (game.dist == 0.0) return;
++    if (game.direc == 0.0)
++	game.dist = 0.0;
++    if (game.dist == 0.0)
++	return;
+     game.optime = 10.0*game.dist/16.0;
+     skip(1);
+     prout(_(&quot;Force of nova displaces starship.&quot;));
+@@ -813,9 +847,11 @@
+ 	for_quadrants(nq.x) {
+ 	    for_quadrants(nq.y) {
+ 		num -= game.state.galaxy[nq.x][nq.y].stars;
+-		if (num &lt;= 0) break;
++		if (num &lt;= 0)
++		    break;
+ 	    }
+-	    if (num &lt;=0) break;
++	    if (num &lt;=0)
++		break;
+ 	}
+ 	if (idebug) {
+ 	    proutn(&quot;=== Super nova here?&quot;);
+@@ -841,10 +877,12 @@
+ 	    for_sectors(ns.y) {
+ 		if (game.quad[ns.x][ns.y]==IHSTAR) {
+ 		    num--;
+-		    if (num==0) break;
++		    if (num==0)
++			break;
+ 		}
+ 	    }
+-	    if (num==0) break;
++	    if (num==0)
++		break;
+ 	}
+ 
+ 	skip(1);
+@@ -878,7 +916,8 @@
+ 		invalidate(game.state.kcmdr[game.state.remcom]);
+ 		game.state.remcom--;
+ 		kldead--;
+-		if (game.state.remcom==0) unschedule(FTBEAM);
++		if (game.state.remcom==0)
++		    unschedule(FTBEAM);
+ 		break;
+ 	    }
+ 	}
+@@ -919,13 +958,15 @@
+     /* If supernova destroys last Klingons give special message */
+     if (KLINGREM==0 &amp;&amp; !same(nq, game.quadrant)) {
+ 	skip(2);
+-	if (!induced) prout(_(&quot;Lucky you!&quot;));
++	if (!induced)
++	    prout(_(&quot;Lucky you!&quot;));
+ 	proutn(_(&quot;A supernova in %s has just destroyed the last Klingons.&quot;),
+ 	       cramlc(quadrant, nq));
+ 	finish(FWON);
+ 	return;
+     }
+     /* if some Klingons remain, continue or die in supernova */
+-    if (game.alldone) finish(FSNOVAED);
++    if (game.alldone)
++	finish(FSNOVAED);
+     return;
+ }
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/finish.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -50,7 +50,8 @@
+ void kaboom(void) 
+ {
+     stars();
+-    if (game.ship==IHE) prouts(&quot;***&quot;);
++    if (game.ship==IHE)
++	prouts(&quot;***&quot;);
+     prouts(_(&quot;********* Entropy of &quot;));
+     crmshp();
+     prouts(_(&quot; maximized *********&quot;));
+@@ -91,9 +92,12 @@
+ 	    double badpt;
+ 	    badpt = 5.0*game.state.starkl + game.casual + 10.0*game.state.nplankl +
+ 		45.*game.nhelp+100.*game.state.basekl+3.*game.abandoned;
+-	    if (game.ship == IHF) badpt += 100.0;
+-	    else if (game.ship == 0) badpt += 200.0;
+-	    if (badpt &lt; 100.0) badpt = 0.0;	// Close enough!
++	    if (game.ship == IHF)
++		badpt += 100.0;
++	    else if (game.ship == 0)
++		badpt += 200.0;
++	    if (badpt &lt; 100.0)
++		badpt = 0.0;	// Close enough!
+ 	    if (game.state.date-game.indate &lt; 5.0 ||
+ 		// killsPerDate &gt;= RateMax
+ 		KLINGKILLED/(game.state.date-game.indate) &gt;=
+@@ -154,7 +158,8 @@
+ 	    prout(_(&quot;LIVE LONG AND PROSPER.&quot;));
+ 	}
+ 	score();
+-	if (igotit) plaque();
++	if (igotit)
++	    plaque();	    
+ 	return;
+     case FDEPLETE: // Federation Resources Depleted
+ 	prout(_(&quot;Your time has run out and the Federation has been&quot;));
+@@ -286,8 +291,10 @@
+ 	prout(_(&quot;Your last crew member has died.&quot;));
+ 	break;
+     }
+-    if (game.ship==IHF) game.ship= 0;
+-    else if (game.ship == IHE) game.ship = IHF;
++    if (game.ship==IHF)
++	game.ship= 0;
++    else if (game.ship == IHE)
++	game.ship = IHF;
+     game.alive = false;
+     if (KLINGREM != 0) {
+ 	double goodies = game.state.remres/game.inresor;
+@@ -323,19 +330,26 @@
+     int ithperd, iwon, klship;
+ 
+     iskill = game.skill;
+-    if ((timused == 0 || KLINGREM != 0) &amp;&amp; timused &lt; 5.0) timused = 5.0;
++    if ((timused == 0 || KLINGREM != 0) &amp;&amp; timused &lt; 5.0)
++	timused = 5.0;
+     perdate = KLINGKILLED/timused;
+     ithperd = 500*perdate + 0.5;
+     iwon = 0;
+-    if (game.gamewon) iwon = 100*game.skill;
+-    if (game.ship == IHE) klship = 0;
+-    else if (game.ship == IHF) klship = 1;
+-    else klship = 2;
+-    if (!game.gamewon) game.state.nromrem = 0; // None captured if no win
++    if (game.gamewon)
++	iwon = 100*game.skill;
++    if (game.ship == IHE) 
++	klship = 0;
++    else if (game.ship == IHF) 
++	klship = 1;
++    else
++	klship = 2;
++    if (!game.gamewon)
++	game.state.nromrem = 0; // None captured if no win
+     iscore = 10*NKILLK + 50*NKILLC + ithperd + iwon
+ 	- 100*game.state.basekl - 100*klship - 45*game.nhelp -5*game.state.starkl - game.casual
+ 	+ 20*NKILLROM + 200*NKILLSC - 10*game.state.nplankl - 300*game.state.nworldkl + game.state.nromrem;
+-    if (!game.alive) iscore -= 200;
++    if (!game.alive)
++	iscore -= 200;
+     skip(2);
+     prout(_(&quot;Your score --&quot;));
+     if (NKILLROM)
+@@ -408,7 +422,6 @@
+ 	char winner[128];
+ 
+ 	skip(2);
+-	
+ 	while (fp == NULL) {
+                 proutn(_(&quot;File or device name for your plaque: &quot;));
+                 cgetline(winner, sizeof(winner));
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/moving.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -64,7 +64,8 @@
+ 		     */
+ 		    if (game.skill &gt; SKILL_GOOD &amp;&amp; game.klhere &gt; 0 &amp;&amp; !game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+ 			attack(false);
+-		    if (game.alldone) return;
++		    if (game.alldone)
++			return;
+ 		}
+ 		/* compute final position -- new quadrant and sector */
+ 		x = QUADSIZE*(game.quadrant.x-1)+game.sector.x;
+@@ -91,7 +92,8 @@
+ 			w.y = (GALSIZE*QUADSIZE*2)+1 - w.y;
+ 			kink = 1;
+ 		    }
+-		    if (kink) kinks = 1;
++		    if (kink)
++			kinks = 1;
+ 		} while (kink);
+ 
+ 		if (kinks) {
+@@ -116,7 +118,8 @@
+ 		prout(_(&quot;Entering %s.&quot;), cramlc(quadrant, game.quadrant));
+ 		game.quad[game.sector.x][game.sector.y] = game.ship;
+ 		newqad(false);
+-		if (game.skill&gt;SKILL_NOVICE) attack(false);
++		if (game.skill&gt;SKILL_NOVICE)
++		    attack(false);  
+ 		return;
+ 	    }
+ 	    iquad = game.quad[w.x][w.y];
+@@ -225,9 +228,11 @@
+ 	return;
+     }
+     game.condition = docked;
+-    if (verbose) prout(_(&quot;Docked.&quot;));
++    if (verbose)
++	prout(_(&quot;Docked.&quot;));
+     game.ididit = true;
+-    if (game.energy &lt; game.inenrg) game.energy = game.inenrg;
++    if (game.energy &lt; game.inenrg)
++	game.energy = game.inenrg;
+     game.shield = game.inshld;
+     game.torps = game.intorps;
+     game.lsupres = game.inlsr;
+@@ -387,7 +392,8 @@
+ 			  cramlc(sector, incr));
+ 		}
+ 	    }
+-	    else prout(_(&quot;Ensign Chekov- \&quot;Course laid in, Captain.\&quot;&quot;));
++	    else
++		prout(_(&quot;Ensign Chekov- \&quot;Course laid in, Captain.\&quot;&quot;));
+ 	}
+ 	deltax = icolq - game.quadrant.y + 0.1*(incr.x-game.sector.y);
+ 	deltay = game.quadrant.x - irowq + 0.1*(game.sector.x-incr.y);
+@@ -423,7 +429,8 @@
+     }
+     game.dist = sqrt(deltax*deltax + deltay*deltay);
+     game.direc = atan2(deltax, deltay)*1.90985932;
+-    if (game.direc &lt; 0.0) game.direc += 12.0;
++    if (game.direc &lt; 0.0)
++	game.direc += 12.0;
+     chew();
+     return;
+ }
+@@ -445,7 +452,8 @@
+ 
+     if (game.energy &gt; 30.0) {
+ 	getcd(false, 0);
+-	if (game.direc == -1.0) return;
++	if (game.direc == -1.0)
++	    return;
+ 	power = 20.0 + 100.0*game.dist;
+     }
+     else
+@@ -473,16 +481,19 @@
+ 	prout(_(&quot;First Officer Spock- \&quot;Captain, our speed under impulse&quot;));
+ 	prout(_(&quot;power is only 0.95 sectors per stardate. Are you sure&quot;));
+ 	proutn(_(&quot;we dare spend the time?\&quot; &quot;));
+-	if (ja() == false) return;
++	if (ja() == false)
++	    return;
+     }
+     /* Activate impulse engines and pay the cost */
+     imove(false);
+     game.ididit = true;
+-    if (game.alldone) return;
++    if (game.alldone)
++	return;
+     power = 20.0 + 100.0*game.dist;
+     game.energy -= power;
+     game.optime = game.dist/0.095;
+-    if (game.energy &lt;= 0) finish(FNRG);
++    if (game.energy &lt;= 0)
++	finish(FNRG);
+     return;
+ }
+ 
+@@ -512,7 +523,8 @@
+ 			
+ 	/* Read in course and distance */
+ 	getcd(false, 0);
+-	if (game.direc == -1.0) return;
++	if (game.direc == -1.0)
++	    return;
+ 
+ 	/* Make sure starship has enough energy for the trip */
+ 	power = (game.dist+0.05)*game.warpfac*game.warpfac*game.warpfac*(game.shldup+1);
+@@ -564,11 +576,13 @@
+ 	    game.dist = Rand()*game.dist;
+ 	}
+ 	/* Decide if time warp will occur */
+-	if (0.5*game.dist*pow(7.0,game.warpfac-10.0) &gt; Rand()) twarp = true;
++	if (0.5*game.dist*pow(7.0,game.warpfac-10.0) &gt; Rand())
++	    twarp = true;
+ 	if (idebug &amp;&amp; game.warpfac==10 &amp;&amp; !twarp) {
+ 	    blooey = false;
+ 	    proutn(&quot;=== Force time warp? &quot;);
+-	    if (ja() == true) twarp = true;
++	    if (ja() == true)
++		twarp = true;
+ 	}
+ 	if (blooey || twarp) {
+ 	    /* If time warp or engine damage, check path */
+@@ -593,7 +607,8 @@
+ 		ix = x + 0.5;
+ 		y += deltay;
+ 		iy = y +0.5;
+-		if (!VALID_SECTOR(ix, iy)) break;
++		if (!VALID_SECTOR(ix, iy))
++		    break;
+ 		if (game.quad[ix][iy] != IHDOT) {
+ 		    blooey = false;
+ 		    twarp = false;
+@@ -605,11 +620,14 @@
+ 
+     /* Activate Warp Engines and pay the cost */
+     imove(false);
+-    if (game.alldone) return;
++    if (game.alldone)
++	return;
+     game.energy -= game.dist*game.warpfac*game.warpfac*game.warpfac*(game.shldup+1);
+-    if (game.energy &lt;= 0) finish(FNRG);
++    if (game.energy &lt;= 0)
++	finish(FNRG);
+     game.optime = 10.0*game.dist/game.wfacsq;
+-    if (twarp) timwrp();
++    if (twarp)
++	timwrp();
+     if (blooey) {
+ 	game.damage[DWARPEN] = game.damfac*(3.0*Rand()+1.0);
+ 	skip(1);
+@@ -711,11 +729,14 @@
+ 	    }
+ 	}
+     }
+-    if (igrab) return;
++    if (igrab)
++	return;
+ 
+     /* Check to see if captain in shuttle craft */
+-    if (game.icraft) finish(FSTRACTOR);
+-    if (game.alldone) return;
++    if (game.icraft)
++	finish(FSTRACTOR);
++    if (game.alldone)
++	return;
+ 
+     /* Inform captain of attempt to reach safety */
+     skip(1);
+@@ -748,7 +769,8 @@
+ 	power = 0.75*game.energy;
+ 	game.dist = power/(game.warpfac*game.warpfac*game.warpfac*(game.shldup+1));
+ 	distreq = 1.4142+Rand();
+-	if (distreq &lt; game.dist) game.dist = distreq;
++	if (distreq &lt; game.dist)
++	    game.dist = distreq;
+ 	game.optime = 10.0*game.dist/game.wfacsq;
+ 	game.direc = 12.0*Rand();	/* How dumb! */
+ 	game.justin = false;
+@@ -756,7 +778,8 @@
+ 	warp(true);
+ 	if (!game.justin) {
+ 	    /* This is bad news, we didn't leave quadrant. */
+-	    if (game.alldone) return;
++	    if (game.alldone)
++		return;
+ 	    skip(1);
+ 	    prout(_(&quot;Insufficient energy to leave quadrant.&quot;));
+ 	    finish(FSNOVAED);
+@@ -789,7 +812,8 @@
+ 	/* next snapshot will be sooner */
+ 	schedule(FSNAP, expran(0.25*game.state.remtime));
+ 				
+-	if (game.state.nscrem) schedule(FSCMOVE, 0.2777);
++	if (game.state.nscrem)
++	    schedule(FSCMOVE, 0.2777);	    
+ 	game.isatb = 0;
+ 	unschedule(FCDBAS);
+ 	unschedule(FSCDBAS);
+@@ -869,7 +893,8 @@
+ 	/* slow mode, so let Kirk know how many probes there are left */
+ 	prout(game.nprobes==1 ? _(&quot;%d probe left.&quot;) : _(&quot;%d probes left.&quot;), game.nprobes);
+ 	proutn(_(&quot;Are you sure you want to fire a probe? &quot;));
+-	if (ja() == false) return;
++	if (ja() == false)
++	    return;
+     }
+ 
+     game.isarmed = false;
+@@ -882,7 +907,8 @@
+ 	game.isarmed = ja();
+     }
+     getcd(true, key);
+-    if (game.direc == -1.0) return;
++    if (game.direc == -1.0)
++	return;
+     game.nprobes--;
+     angle = ((15.0 - game.direc) * 0.5235988);
+     game.probeinx = -sin(angle);
+@@ -1011,7 +1037,8 @@
+ 	}
+ 	textcolor(RED);
+ 	warble();
+-	if (Rand() &gt; probf) break;
++	if (Rand() &gt; probf)
++	    break;
+ 	prout(_(&quot;fails.&quot;));
+ 	delay(500);
+ 	textcolor(DEFAULT);
+@@ -1150,7 +1177,8 @@
+     prout(_(&quot;Starfleet puts you in command of another ship,&quot;));
+     prout(_(&quot;the Faerie Queene, which is antiquated but,&quot;));
+     prout(_(&quot;still useable.&quot;));
+-    if (game.icrystl) prout(_(&quot;The dilithium crystals have been moved.&quot;));
++    if (game.icrystl)
++	prout(_(&quot;The dilithium crystals have been moved.&quot;));
+     game.imine = false;
+     game.iscraft = offship; /* Galileo disappears */
+     /* Resupply ship */
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/planets.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -33,13 +33,15 @@
+ 	    proutn(_(&quot;   class &quot;));
+ 	    proutn(classes[game.state.plnets[i].pclass]);
+ 	    proutn(&quot;   &quot;);
+-	    if (game.state.plnets[i].crystals != present) proutn(_(&quot;no &quot;));
++	    if (game.state.plnets[i].crystals != present)
++		proutn(_(&quot;no &quot;));
+ 	    prout(_(&quot;dilithium crystals present.&quot;));
+ 	    if (game.state.plnets[i].known==shuttle_down) 
+ 		prout(_(&quot;    Shuttle Craft Galileo on surface.&quot;));
+ 	}
+     }
+-    if (!iknow) prout(_(&quot;No information available.&quot;));
++    if (!iknow)
++	prout(_(&quot;No information available.&quot;));
+ }
+ 
+ void orbit(void)
+@@ -64,7 +66,8 @@
+     game.optime = 0.02+0.03*Rand();
+     prout(_(&quot;Helmsman Sulu-  \&quot;Entering standard orbit, Sir.\&quot;&quot;));
+     newcnd();
+-    if (consumeTime()) return;
++    if (consumeTime())
++	return;
+     game.height = (1400.0+7200.0*Rand());
+     prout(_(&quot;Sulu-  \&quot;Entered orbit at altitude %.2f kilometers.\&quot;&quot;), game.height);
+     game.inorbit = true;
+@@ -93,9 +96,11 @@
+ 	if (game.state.plnets[game.iplnet].known==shuttle_down) 
+ 	    prout(_(&quot;         Sensors show Galileo still on surface.&quot;));
+ 	proutn(_(&quot;         Readings indicate&quot;));
+-	if (game.state.plnets[game.iplnet].crystals != present) proutn(_(&quot; no&quot;));
++	if (game.state.plnets[game.iplnet].crystals != present)
++	    proutn(_(&quot; no&quot;));
+ 	prout(_(&quot; dilithium crystals present.\&quot;&quot;));
+-	if (game.state.plnets[game.iplnet].known == unknown) game.state.plnets[game.iplnet].known = known;
++	if (game.state.plnets[game.iplnet].known == unknown)
++	    game.state.plnets[game.iplnet].known = known;
+     }
+ }
+ 
+@@ -109,7 +114,8 @@
+ 	if (!damaged(DSHUTTL) &amp;&amp; (game.state.plnets[game.iplnet].known==shuttle_down || game.iscraft == onship)) {
+ 	    skip(1);
+ 	    proutn(_(&quot;Spock-  \&quot;May I suggest the shuttle craft, Sir?\&quot; &quot;));
+-	    if (ja() == true) shuttle();
++	    if (ja() == true)
++		shuttle();
+ 	}
+ 	return;
+     }
+@@ -217,7 +223,8 @@
+ 	return;
+     }
+     game.optime = (0.1+0.2*Rand())*game.state.plnets[game.iplnet].pclass;
+-    if (consumeTime()) return;
++    if (consumeTime())
++	return;
+     prout(_(&quot;Mining operation complete.&quot;));
+     game.state.plnets[game.iplnet].crystals = mined;
+     game.imine = game.ididit = true;
+@@ -345,7 +352,8 @@
+ 	    prout(_(&quot; boards Galileo and swoops toward planet surface.&quot;));
+ 	    game.iscraft = offship;
+ 	    skip(1);
+-	    if (consumeTime()) return;
++	    if (consumeTime())
++		return;
+ 	    game.state.plnets[game.iplnet].known=shuttle_down;
+ 	    prout(_(&quot;Trip complete.&quot;));
+ 	    return;
+@@ -360,7 +368,8 @@
+ 	    game.icraft = true;
+ 	    skip(1);
+ 	    game.landed = false;
+-	    if (consumeTime()) return;
++	    if (consumeTime())
++		return;
+ 	    game.iscraft = onship;
+ 	    game.icraft = false;
+ 	    if (game.imine) {
+@@ -382,7 +391,8 @@
+ 	skip(1);
+ 	game.icraft = true;
+ 	game.iscraft = offship;
+-	if (consumeTime()) return;
++	if (consumeTime())
++	    return;
+ 	game.state.plnets[game.iplnet].known = shuttle_down;
+ 	game.landed = true;
+ 	game.icraft = false;
+@@ -414,7 +424,8 @@
+     prout(_(&quot;Spock-  \&quot;Captain, the 'Experimental Death Ray'&quot;));
+     prout(_(&quot;  is highly unpredictible.  Considering the alternatives,&quot;));
+     proutn(_(&quot;  are you sure this is wise?\&quot; &quot;));
+-    if (ja() == false) return;
++    if (ja() == false)
++	return;
+     prout(_(&quot;Spock-  \&quot;Acknowledged.\&quot;&quot;));
+     skip(1);
+     game.ididit = true;
+@@ -438,7 +449,8 @@
+ 	while (game.nenhere &gt; 0)
+ 	    deadkl(game.ks[1], game.quad[game.ks[1].x][game.ks[1].y],game.ks[1]);
+ 	prout(_(&quot;Ensign Chekov-  \&quot;Congratulations, Captain!\&quot;&quot;));
+-	if (KLINGREM == 0) finish(FWON);
++	if (KLINGREM == 0)
++	    finish(FWON);    
+ 	if ((game.options &amp; OPTION_PLAIN) == 0) {
+ 	    prout(_(&quot;Spock-  \&quot;Captain, I believe the `Experimental Death Ray'&quot;));
+ 	    if (Rand() &lt;= 0.05) {
+@@ -489,7 +501,8 @@
+ 	prout(_(&quot; Mr. Sulu.&quot;));
+ 	for_sectors(i)
+ 	    for_sectors(j)
+-		if (game.quad[i][j] == IHDOT) game.quad[i][j] = IHQUEST;
++		if (game.quad[i][j] == IHDOT)
++		    game.quad[i][j] = IHQUEST;
+ 	prout(_(&quot;  Captain, our quadrant is now infested with&quot;));
+ 	prouts(_(&quot; - - - - - -  *THINGS*.&quot;));
+ 	skip(1);
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/reports.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -55,40 +55,53 @@
+     skip(1);
+     prout(_(&quot;You %s a %s%s %s game.&quot;),
+ 	  game.alldone? _(&quot;were playing&quot;) : _(&quot;are playing&quot;), s1, s2, s3);
+-    if (game.skill&gt;SKILL_GOOD &amp;&amp; game.thawed &amp;&amp; !game.alldone) prout(_(&quot;No plaque is allowed.&quot;));
+-    if (game.tourn) prout(_(&quot;This is tournament game %d.&quot;), game.tourn);
++    if (game.skill&gt;SKILL_GOOD &amp;&amp; game.thawed &amp;&amp; !game.alldone)
++	prout(_(&quot;No plaque is allowed.&quot;));
++    if (game.tourn)
++	prout(_(&quot;This is tournament game %d.&quot;), game.tourn);
+     prout(_(&quot;Your secret password is \&quot;%s\&quot;&quot;),game.passwd);
+     proutn(_(&quot;%d of %d Klingons have been killed&quot;), KLINGKILLED, INKLINGTOT);
+-    if (NKILLC) prout(_(&quot;, including %d Commander%s.&quot;), NKILLC, NKILLC==1?&quot;&quot;:_(&quot;s&quot;));
+-    else if (NKILLK + NKILLSC &gt; 0) prout(_(&quot;, but no Commanders.&quot;));
+-    else prout(&quot;.&quot;);
+-    if (game.skill &gt; SKILL_FAIR) prout(_(&quot;The Super Commander has %sbeen destroyed.&quot;),
+-				  game.state.nscrem?_(&quot;not &quot;):&quot;&quot;);
++    if (NKILLC)
++	prout(_(&quot;, including %d Commander%s.&quot;), NKILLC, NKILLC==1?&quot;&quot;:_(&quot;s&quot;));
++    else if (NKILLK + NKILLSC &gt; 0)
++	prout(_(&quot;, but no Commanders.&quot;));
++    else
++	prout(&quot;.&quot;);
++    if (game.skill &gt; SKILL_FAIR)
++	prout(_(&quot;The Super Commander has %sbeen destroyed.&quot;),
++	      game.state.nscrem?_(&quot;not &quot;):&quot;&quot;);
+     if (game.state.rembase != game.inbase) {
+ 	proutn(_(&quot;There &quot;));
+-	if (game.inbase-game.state.rembase==1) proutn(_(&quot;has been 1 base&quot;));
++	if (game.inbase-game.state.rembase==1)
++	    proutn(_(&quot;has been 1 base&quot;));
+ 	else {
+ 	    proutn(_(&quot;have been %d bases&quot;), game.inbase-game.state.rembase);
+ 	}
+ 	prout(_(&quot; destroyed, %d remaining.&quot;), game.state.rembase);
+     }
+-    else prout(_(&quot;There are %d bases.&quot;), game.inbase);
++    else
++	prout(_(&quot;There are %d bases.&quot;), game.inbase);
+     if (!damaged(DRADIO) || game.condition == docked || game.iseenit) {
+ 	/* Don't report this if not seen and
+ 	   either the radio is dead or not at base! */
+ 	attakreport(false);
+ 	game.iseenit = true;
+     }
+-    if (game.casual) prout(_(&quot;%d casualt%s suffered so far.&quot;),
+-		      game.casual, game.casual==1? &quot;y&quot; : &quot;ies&quot;);
+-    if (game.nhelp) prout(_(&quot;There were %d call%s for help.&quot;),
+-		     game.nhelp, game.nhelp==1 ? &quot;&quot; : _(&quot;s&quot;));
++    if (game.casual) 
++	prout(_(&quot;%d casualt%s suffered so far.&quot;),
++	      game.casual, game.casual==1? &quot;y&quot; : &quot;ies&quot;);
++    if (game.nhelp)
++	prout(_(&quot;There were %d call%s for help.&quot;),
++	      game.nhelp, game.nhelp==1 ? &quot;&quot; : _(&quot;s&quot;));
+     if (game.ship == IHE) {
+ 	proutn(_(&quot;You have &quot;));
+-	if (game.nprobes) proutn(&quot;%d&quot;, game.nprobes);
+-	else proutn(_(&quot;no&quot;));
++	if (game.nprobes)
++	    proutn(&quot;%d&quot;, game.nprobes);
++	else
++	    proutn(_(&quot;no&quot;));
+ 	proutn(_(&quot; deep space probe&quot;));
+-	if (game.nprobes!=1) proutn(_(&quot;s&quot;));
++	if (game.nprobes!=1)
++	    proutn(_(&quot;s&quot;));
+ 	prout(&quot;.&quot;);
+     }
+     if ((!damaged(DRADIO) || game.condition == docked)
+@@ -173,7 +186,8 @@
+ 		  game.docfac*game.damage[i]+0.005);
+ 	}
+     }
+-    if (!jdam) prout(_(&quot;All devices functional.&quot;));
++    if (!jdam)
++	prout(_(&quot;All devices functional.&quot;));
+ }
+ 
+ void rechart(void)
+@@ -232,7 +246,8 @@
+ 		proutn(&quot; &quot;);
+ 	}
+ 	proutn(&quot;  |&quot;);
+-	if (i&lt;GALSIZE) skip(1);
++	if (i&lt;GALSIZE)
++	    skip(1);
+     }
+ }
+ 
+@@ -270,7 +285,8 @@
+     );
+ 
+     RQ(2,
+-	if (game.condition != docked) newcnd();
++	if (game.condition != docked)
++	    newcnd();
+ 	switch (game.condition) {
+ 	    case red: cp = _(&quot;RED&quot;); break;
+ 	    case green: cp = _(&quot;GREEN&quot;); break;
+@@ -383,7 +399,8 @@
+ 	else
+ 	    prout(_(&quot;  [Using Base's sensors]&quot;));
+     }
+-    else prout(_(&quot;     Short-range scan&quot;));
++    else
++	prout(_(&quot;     Short-range scan&quot;));
+     if (goodScan &amp;&amp; !damaged(DRADIO)) { 
+ 	game.state.chart[game.quadrant.x][game.quadrant.y].klingons = game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons;
+ 	game.state.chart[game.quadrant.x][game.quadrant.y].starbase = game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase;
+@@ -391,7 +408,8 @@
+ 	game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = true;
+     }
+     prout(&quot;    1 2 3 4 5 6 7 8 9 10&quot;);
+-    if (game.condition != docked) newcnd();
++    if (game.condition != docked)
++	newcnd();
+     for (i = 1; i &lt;= QUADSIZE; i++) {
+ 	proutn(&quot;%2d  &quot;, i);
+ 	for_sectors(j) {
+@@ -437,10 +455,14 @@
+ 	w2.x = aaitem + 0.5;
+     }
+     else {
+-	if (game.quadrant.y&gt;w1.x) w2.x = 1;
+-	else w2.x=QUADSIZE;
+-	if (game.quadrant.x&gt;w1.y) w2.y = 1;
+-	else w2.y=QUADSIZE;
++	if (game.quadrant.y&gt;w1.x)
++	    w2.x = 1;
++	else
++	    w2.x=QUADSIZE;
++	if (game.quadrant.x&gt;w1.y)
++	    w2.y = 1;
++	else
++	    w2.y=QUADSIZE;
+     }
+ 
+     if (!VALID_QUADRANT(w1.x, w1.y) || !VALID_SECTOR(w2.x, w2.y)) {
+@@ -451,7 +473,8 @@
+ 		square(w1.x-game.quadrant.x+0.1*(w2.x-game.sector.x)));
+     wfl = false;
+ 
+-    if (prompt) prout(_(&quot;Answer \&quot;no\&quot; if you don't know the value:&quot;));
++    if (prompt)
++	prout(_(&quot;Answer \&quot;no\&quot; if you don't know the value:&quot;));
+     for (;;) {
+ 	chew();
+ 	proutn(_(&quot;Time or arrival date? &quot;));
+@@ -464,7 +487,8 @@
+ 		chew();
+ 		return;
+ 	    }
+-	    if (twarp &lt; 1.0) twarp = 1.0;
++	    if (twarp &lt; 1.0)
++		twarp = 1.0;
+ 	    break;
+ 	}
+ 	chew();
+@@ -487,7 +511,8 @@
+ 	if (tpower &gt;= game.energy) {
+ 	    prout(_(&quot;Insufficient energy, sir.&quot;));
+ 	    if (!game.shldup || tpower &gt; game.energy*2.0) {
+-		if (!wfl) return;
++		if (!wfl)
++		    return;
+ 		proutn(_(&quot;New warp factor to try? &quot;));
+ 		if (scan() == IHREAL) {
+ 		    wfl = true;
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/setup.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -296,7 +296,8 @@
+     do {
+ 	double r = Rand();
+ 	int klump = (1.0 - r*r)*klumper;
+-	if (klump &gt; krem) klump = krem;
++	if (klump &gt; krem)
++	    klump = krem;
+ 	krem -= klump;
+ 	do w = randplace(GALSIZE);
+ 	while (game.state.galaxy[w.x][w.y].supernova ||
+@@ -389,7 +390,8 @@
+ 	skip(1);
+ 	prout(_(&quot;%d Klingons.&quot;), INKLINGTOT);
+ 	prout(_(&quot;An unknown number of Romulans.&quot;));
+-	if (game.state.nscrem) prout(_(&quot;And one (GULP) Super-Commander.&quot;));
++	if (game.state.nscrem)
++	    prout(_(&quot;And one (GULP) Super-Commander.&quot;));
+ 	prout(_(&quot;%d stardates.&quot;),(int)game.intime);
+ 	proutn(_(&quot;%d starbases in &quot;), game.inbase);
+     }
+@@ -404,11 +406,14 @@
+     proutn(cramlc(sector, game.sector));
+     skip(2);
+     prout(_(&quot;Good Luck!&quot;));
+-    if (game.state.nscrem) prout(_(&quot;  YOU'LL NEED IT.&quot;));
++    if (game.state.nscrem)
++	prout(_(&quot;  YOU'LL NEED IT.&quot;));
+     waitfor();
+     newqad(false);
+-    if (game.nenhere-iqhere-game.ithere) game.shldup = true;
+-    if (game.neutz) attack(false);	// bad luck to start in a Romulan Neutral Zone
++    if (game.nenhere-iqhere-game.ithere)
++	game.shldup = true;
++    if (game.neutz)	// bad luck to start in a Romulan Neutral Zone
++	attack(false);
+ }
+ 
+ bool choose(bool needprompt) 
+@@ -437,15 +442,19 @@
+ 	    break;
+ 	}
+ 	if (isit(&quot;saved&quot;) || isit(&quot;frozen&quot;)) {
+-	    if (thaw()) continue;
++	    if (thaw())
++		continue;
+ 	    chew();
+-	    if (*game.passwd==0) continue;
+-	    if (!game.alldone) game.thawed = 1; // No plaque if not finished
++	    if (*game.passwd==0)
++		continue;
++	    if (!game.alldone)
++		game.thawed = true; // No plaque if not finished
+ 	    report();
+ 	    waitfor();
+ 	    return true;
+ 	}
+-	if (isit(&quot;regular&quot;)) break;
++	if (isit(&quot;regular&quot;))
++	    break;
+ 	proutn(_(&quot;What is \&quot;&quot;));
+ 	proutn(citem);
+ 	prout(&quot;\&quot;?&quot;);
+@@ -453,14 +462,22 @@
+     }
+     while (game.length==0 || game.skill==SKILL_NONE) {
+ 	if (scan() == IHALPHA) {
+-	    if (isit(&quot;short&quot;)) game.length = 1;
+-	    else if (isit(&quot;medium&quot;)) game.length = 2;
+-	    else if (isit(&quot;long&quot;)) game.length = 4;
+-	    else if (isit(&quot;novice&quot;)) game.skill = SKILL_NOVICE;
+-	    else if (isit(&quot;fair&quot;)) game.skill = SKILL_FAIR;
+-	    else if (isit(&quot;good&quot;)) game.skill = SKILL_GOOD;
+-	    else if (isit(&quot;expert&quot;)) game.skill = SKILL_EXPERT;
+-	    else if (isit(&quot;emeritus&quot;)) game.skill = SKILL_EMERITUS;
++	    if (isit(&quot;short&quot;))
++		game.length = 1;
++	    else if (isit(&quot;medium&quot;))
++		game.length = 2;
++	    else if (isit(&quot;long&quot;))
++		game.length = 4;
++	    else if (isit(&quot;novice&quot;))
++		game.skill = SKILL_NOVICE;
++	    else if (isit(&quot;fair&quot;))
++		game.skill = SKILL_FAIR;
++	    else if (isit(&quot;good&quot;))
++		game.skill = SKILL_GOOD;
++	    else if (isit(&quot;expert&quot;))
++		game.skill = SKILL_EXPERT;
++	    else if (isit(&quot;emeritus&quot;))
++		game.skill = SKILL_EMERITUS;
+ 	    else {
+ 		proutn(_(&quot;What is \&quot;&quot;));
+ 		proutn(citem);
+@@ -469,8 +486,10 @@
+ 	}
+ 	else {
+ 	    chew();
+-	    if (game.length==0) proutn(_(&quot;Would you like a Short, Medium, or Long game? &quot;));
+-	    else if (game.skill == SKILL_NONE) proutn(_(&quot;Are you a Novice, Fair, Good, Expert, or Emeritus player? &quot;));
++	    if (game.length==0)
++		proutn(_(&quot;Would you like a Short, Medium, or Long game? &quot;));
++	    else if (game.skill == SKILL_NONE)
++		proutn(_(&quot;Are you a Novice, Fair, Good, Expert, or Emeritus player? &quot;));
+ 	}
+     }
+     // Choose game options -- added by ESR for SST2K
+@@ -538,10 +557,12 @@
+ /* update our alert status */
+ {
+     game.condition = green;
+-    if (game.energy &lt; 1000.0) game.condition = yellow;
++    if (game.energy &lt; 1000.0)
++	game.condition = yellow;
+     if (game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons || game.state.galaxy[game.quadrant.x][game.quadrant.y].romulans)
+ 	game.condition = red;
+-    if (!game.alive) game.condition=dead;
++    if (!game.alive)
++	game.condition=dead;
+ }
+ 
+ coord newkling(int i)
+@@ -697,10 +718,14 @@
+ 		distance(game.sector, game.tholian);
+ 	    game.kpower[game.nenhere] = Rand()*400.0 +100.0 +25.0*game.skill;
+ 	    /* Reserve unocupied corners */
+-	    if (game.quad[1][1]==IHDOT) game.quad[1][1] = 'X';
+-	    if (game.quad[1][QUADSIZE]==IHDOT) game.quad[1][QUADSIZE] = 'X';
+-	    if (game.quad[QUADSIZE][1]==IHDOT) game.quad[QUADSIZE][1] = 'X';
+-	    if (game.quad[QUADSIZE][QUADSIZE]==IHDOT) game.quad[QUADSIZE][QUADSIZE] = 'X';
++	    if (game.quad[1][1]==IHDOT)
++		game.quad[1][1] = 'X';
++	    if (game.quad[1][QUADSIZE]==IHDOT)
++		game.quad[1][QUADSIZE] = 'X';
++	    if (game.quad[QUADSIZE][1]==IHDOT)
++		game.quad[QUADSIZE][1] = 'X';
++	    if (game.quad[QUADSIZE][QUADSIZE]==IHDOT)
++		game.quad[QUADSIZE][QUADSIZE] = 'X';
+ 	}
+     }
+ 
+@@ -713,10 +738,14 @@
+ 
+     // Take out X's in corners if Tholian present
+     if (game.ithere) {
+-	if (game.quad[1][1]=='X') game.quad[1][1] = IHDOT;
+-	if (game.quad[1][QUADSIZE]=='X') game.quad[1][QUADSIZE] = IHDOT;
+-	if (game.quad[QUADSIZE][1]=='X') game.quad[QUADSIZE][1] = IHDOT;
+-	if (game.quad[QUADSIZE][QUADSIZE]=='X') game.quad[QUADSIZE][QUADSIZE] = IHDOT;
++	if (game.quad[1][1]=='X')
++	    game.quad[1][1] = IHDOT;
++	if (game.quad[1][QUADSIZE]=='X')
++	    game.quad[1][QUADSIZE] = IHDOT;
++	if (game.quad[QUADSIZE][1]=='X')
++	    game.quad[QUADSIZE][1] = IHDOT;
++	if (game.quad[QUADSIZE][QUADSIZE]=='X')
++	    game.quad[QUADSIZE][QUADSIZE] = IHDOT;
+     }		
+ }
+ 
+@@ -729,7 +758,8 @@
+ 
+     // The author liked bubble sort. So we will use it. :-(
+ 
+-    if (game.nenhere-iqhere-game.ithere &lt; 2) return;
++    if (game.nenhere-iqhere-game.ithere &lt; 2)
++	return;
+ 
+     do {
+ 	sw = false;
+@@ -764,11 +794,13 @@
+ 	    proutn(_(&quot;Please type in a secret password- &quot;));
+ 	    scan();
+ 	    strcpy(game.passwd, citem);
+-	    if (*game.passwd != 0) break;
++	    if (*game.passwd != 0)
++		break;
+ 	}
+     } else {
+ 	int i;
+-        for(i=0;i&lt;3;i++) game.passwd[i]=(char)(97+(int)(Rand()*25));
++        for(i=0;i&lt;3;i++)
++	    game.passwd[i]=(char)(97+(int)(Rand()*25));
+         game.passwd[3]=0;
+     }
+ }
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/sst.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -318,14 +318,16 @@
+ 	    key = scan();
+ 	}
+ 	setwnd(message_window);
+-	if (key == IHEOL) return;
++	if (key == IHEOL)
++	    return;
+ 	for (i = 0; i &lt; NUMCOMMANDS; i++) {
+ 	    if (ACCEPT(i) &amp;&amp; strcasecmp(commands[i].name, citem)==0) {
+ 		i = commands[i].value;
+ 		break;
+ 	    }
+ 	}
+-	if (i != NUMCOMMANDS) break;
++	if (i != NUMCOMMANDS)
++	    break;
+ 	skip(1);
+ 	listCommands();
+ 	key = IHEOL;
+@@ -446,11 +448,13 @@
+ 	    break;
+ 	case PHASERS:			// phasers
+ 	    phasers();
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case TORPEDO:			// photons
+ 	    photon();
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case MOVE:			// move
+ 	    warp(false);
+@@ -464,7 +468,8 @@
+ 	    break;
+ 	case DOCK:			// dock
+ 	    dock(true);
+-	    if (game.ididit) attack(false);
++	    if (game.ididit)
++		attack(false);		
+ 	    break;
+ 	case DAMAGES:			// damages
+ 	    dreprt();
+@@ -477,7 +482,8 @@
+ 	    break;
+ 	case REST:			// rest
+ 	    wait();
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case WARP:			// warp
+ 	    setwrp();
+@@ -490,22 +496,26 @@
+ 	    break;
+ 	case ORBIT:			// orbit
+ 	    orbit();
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case TRANSPORT:			// transport &quot;beam&quot;
+ 	    beam();
+ 	    break;
+ 	case MINE:			// mine
+ 	    mine();
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case CRYSTALS:			// crystals
+ 	    usecrystals();
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case SHUTTLE:			// shuttle
+ 	    shuttle();
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case PLANETS:			// Planet list
+ 	    preport();
+@@ -526,7 +536,8 @@
+ 	    break;
+ 	case PROBE:
+ 	    probe();			// Launch probe
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case ABANDON:			// Abandon Ship
+ 	    abandn();
+@@ -542,14 +553,16 @@
+ 	    break;
+ 	case DEATHRAY:			// Try a desparation measure
+ 	    deathray();
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case DEBUGCMD:			// What do we want for debug???
+ 	    debugme();
+ 	    break;
+ 	case MAYDAY:			// Call for help
+ 	    mayday();
+-	    if (game.ididit) hitme = true;
++	    if (game.ididit)
++		hitme = true;
+ 	    break;
+ 	case QUIT:
+ 	    game.alldone = true;		// quit the game
+@@ -581,7 +594,8 @@
+ 	    }
+ 	    if (hitme &amp;&amp; !game.justin) {
+ 		attack(true);
+-		if (game.alldone) break;
++		if (game.alldone)
++		    break;
+ 		if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova) {	// went NOVA! 
+ 		    atover(false);
+ 		    hitme = true;
+@@ -590,9 +604,11 @@
+ 	    }
+ 	    break;
+ 	}
+-	if (game.alldone) break;
++	if (game.alldone)
++	    break;
+     }
+-    if (idebug) prout(&quot;=== Ending&quot;);
++    if (idebug)
++	prout(&quot;=== Ending&quot;);
+ }
+ 
+ 
+@@ -613,11 +629,11 @@
+ 	    replayfp = fopen(optarg, &quot;r&quot;);
+ 	    if (replayfp == NULL) {
+ 		fprintf(stderr, &quot;sst: can't open replay file %s\n&quot;, optarg);
+-		exit(1);	
++		exit(1);
+ 	    }
+ 	    if (fscanf(replayfp, &quot;seed %d\n&quot;, &amp;seed) != 1) {
+ 		fprintf(stderr, &quot;sst: replay file %s is ill-formed\n&quot;, optarg);
+-		exit(1);	
++		exit(1);
+ 	    }
+ 	    /* FALL THROUGH */
+ 	case 't':
+@@ -656,7 +672,8 @@
+ 	    score();
+ 	    game.alldone = false;
+ 	}
+-	else makemoves();
++	else
++	    makemoves();
+ 	skip(1);
+ 	stars();
+ 	skip(1);
+@@ -669,7 +686,8 @@
+ 	    }
+ 	}
+ 	proutn(_(&quot;Do you want to play again? &quot;));
+-	if (!ja()) break;
++	if (!ja())
++	    break;
+     }
+     skip(1);
+     prout(_(&quot;May the Great Bird of the Galaxy roost upon your home planet.&quot;));
+@@ -706,8 +724,10 @@
+ {
+     static char buf[32];
+     buf[0] = '\0';
+-    if (key == quadrant) strcpy(buf, _(&quot;Quadrant &quot;));
+-    else if (key == sector) strcpy(buf, _(&quot;Sector &quot;));
++    if (key == quadrant)
++	strcpy(buf, _(&quot;Quadrant &quot;));
++    else if (key == sector)
++	strcpy(buf, _(&quot;Sector &quot;));
+     sprintf(buf+strlen(buf), &quot;%d - %d&quot;, w.x, w.y);
+     return buf;
+ }
+@@ -715,7 +735,8 @@
+ void crmena(bool stars, feature enemy, enum loctype key, coord w) 
+ /* print an enemy and his location */
+ {
+-    if (stars) proutn(&quot;***&quot;);
++    if (stars)
++	proutn(&quot;***&quot;);
+     cramen(enemy);
+     proutn(_(&quot; at &quot;));
+     proutn(cramlc(key, w));
+@@ -820,7 +841,8 @@
+     // Treat as alpha
+     cp = citem;
+     while (*linep &amp;&amp; *linep!=' ') {
+-	if ((cp - citem) &lt; 9) *cp++ = tolower(*linep);
++	if ((cp - citem) &lt; 9)
++	    *cp++ = tolower(*linep);
+ 	linep++;
+     }
+     *cp = 0;
+@@ -834,8 +856,10 @@
+     for(;;) {
+ 	scan();
+ 	chew();
+-	if (*citem == 'y') return true;
+-	if (*citem == 'n') return false;
++	if (*citem == 'y')
++	    return true;
++	if (*citem == 'n')
++	    return false;
+ 	proutn(_(&quot;Please answer with \&quot;y\&quot; or \&quot;n\&quot;: &quot;));
+     }
+ }
+@@ -859,7 +883,8 @@
+ {
+     proutn(&quot;Reset levels? &quot;);
+     if (ja() == true) {
+-	if (game.energy &lt; game.inenrg) game.energy = game.inenrg;
++	if (game.energy &lt; game.inenrg)
++	    game.energy = game.inenrg;
+ 	game.shield = game.inshld;
+ 	game.torps = game.intorps;
+ 	game.lsupres = game.inlsr;
+@@ -874,8 +899,10 @@
+     proutn(&quot;Toggle debug flag? &quot;);
+     if (ja() == true) {
+ 	idebug = !idebug;
+-	if (idebug) prout(&quot;Debug output ON&quot;);
+-	else prout(&quot;Debug output OFF&quot;);
++	if (idebug)
++	    prout(&quot;Debug output ON&quot;);	    
++	else
++	    prout(&quot;Debug output OFF&quot;);
+     }
+     proutn(&quot;Cause selective damage? &quot;);
+     if (ja() == true) {
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/sst.py	2006-09-28 08:01:45 UTC (rev 637)
+@@ -7,7 +7,7 @@
+ 
+ Note that the game.quad, game.snap.galaxy and game.snap.chart members
+ are not actually arrays but dictioaries indixed by coord tuples.  Be setting
+-the hash of a coord exual to the hash of a literal tuple containing its
++the hash of a coord equal to the hash of a literal tuple containing its
+ coordinate data, we ensure these can be indexed both ways.
+ 
+ &quot;&quot;&quot;
+@@ -61,13 +61,14 @@
+         return &quot;%d - %d&quot; % (self.x, self.y)
+ 
+ class feature:
+-    &quot;A feature in the current quadrant (ship, star, black hole, etc).&quot; 
++    &quot;A feature in the current quadrant (ship, star, black hole, base, etc).&quot; 
+     def __init__(self):
+         self.type = None	# name of feature type
+         self.sector = None	# sector location
+     def distance(self):
+         return self.sector.distance(game.sector)
+     def __str__(self):
++        &quot;This will be overridden by subclasses.&quot;
+         return self.name[0]
+     def sectormove(self, dest):
+         &quot;Move this feature within the current quadrant.&quot; 
+@@ -76,15 +77,14 @@
+         game.quad[dest] = self
+         self.sector = dest
+ 
+-empty = None	# Value of empty space in game.quad
+-
+ class ship(feature):
+-    &quot;An enemy ship in the current quadrant.&quot; 
+-    def __init__(self):
++    &quot;A starship, frindly or enemy.&quot; 
++    def __init__(self, type, power):
+         feature.__init__(self)
+-        self.type = None	# klingon, romulan, commander,
+-        			# supercommander, tholian
+-        self.power = None	# power
++        self.type = type	# klingon, romulan, commander,
++        			# supercommander, tholian,
++                                # enterprise, faerie queene.
++        self.power = power	# power
+         if self.type in (&quot;Klingon&quot;, &quot;Commander&quot;, &quot;Super-Commander&quot;):
+             game.remkl += 1
+         elif self.type == &quot;Romulan&quot;:
+@@ -95,6 +95,16 @@
+         elif self.type == &quot;Romulan&quot;:
+             game.romrem -= 1
+ 
++class space(feature):
++    &quot;Empty space.  Has no state, just knows how to identify iself.&quot;
++    def __str__(self):
++        return '*'
++
++class star(feature):
++    &quot;A star.  Has no state, just knows how to identify iself.&quot;
++    def __str__(self):
++        return '*'
++
+ class planet(feature):
+     &quot;A planet.  May be inhabited or not, may hold dilithium crystals or not.&quot;
+     def __init(self):
+@@ -103,32 +113,24 @@
+         self.crystals = None	# &quot;absent&quot;, &quot;present&quot;, or &quot;mined&quot;
+         self.inhabited = False
+         self.known = &quot;unknown&quot;	# Other values: &quot;known&quot; and &quot;shuttle down&quot;
++        game.state.planets.append(self)
++    def __del__(self):
++        game.state.planets.remove(self)
+     def __str__(self):
+         if self.inhabited:
+             return '@'
+         else:
+             return 'P'
+ 
+-class star(feature):
+-    &quot;A star.  Has no state, just knows how to identify iself.&quot;
+-    def __init(self):
+-        feature.__init__(self)
+-    def __str__(self):
+-        return '*'
+-
+ class web(feature):
+     &quot;A bit of Tholian web.  Has no state, just knows how to identify iself.&quot;
+-    def __init(self):
+-        feature.__init__(self)
+     def __str__(self):
+         return '*'
+ 
+ class blackhole(feature):
+     &quot;A black hole.  Has no hair, just knows how to identify iself.&quot;
+-    def __init(self):
+-        feature.__init__(self)
+     def __str__(self):
+-        return '*'
++        return ' '
+ 
+ class starbase(feature):
+     &quot;Starbases also have no features, just a location.&quot;
+@@ -140,8 +142,6 @@
+         game.state.bases.remove(self)
+     def __str__(self):
+         return 'B'
+-    def __del__(self):
+-        feature.__del__(self)
+ 
+ class quadrant:
+     def __init__(self):
+@@ -180,9 +180,8 @@
+ 	self.starkl = None	# destroyed stars
+ 	self.basekl = None	# destroyed bases
+ 	self.nromrem = None	# Romulans remaining
+-	self.nplankl = None	# destroyed uninhabited planets
+-	self.nworldkl = None	# destroyed inhabited planets
+-        self.plnets = [];	# List of planets known
++	self.nplankl = None	# destroyed uninhabited planets self.nworldkl = None	# destroyed inhabited planets
++        self.planets = [];	# List of planets known
+         self.date = None	# stardate
+ 	self.remres = None	# remaining resources
+ 	self. remtime = None	# remaining time
+@@ -571,10 +570,10 @@
+     game.state.kscmdr = iq
+     game.state.galaxy[game.state.kscmdr].klingons += 1
+     # check for a helpful planet in the destination quadrant
+-    for planet in game.state.plnets:
++    for planet in game.state.planets:
+ 	if planet.location == game.state.kscmdr and planet.crystals==&quot;present&quot;:
+ 	    # destroy the planet
+-	    game.state.plnets.remove(planet)
++	    del planet
+             if communicating():
+                 if not ipage:
+                     pause_game(True)
+@@ -596,12 +595,12 @@
+     passive = ((NKILLC+NKILLK)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) \
+                or (game.state.date-game.indate) &lt; 3.0)
+     if not game.iscate and passive:
+-	# compute move away from Enterprise
+-	idelta = game.state.kscmdr - game.quadrant
++	# coxmpute move away from Enterprise
++	delta = game.state.kscmdr - game.quadrant
+         if distance(game.state.kscmdr) &gt; 2.0:
+ 	    # circulate in space
+-	    idelta,x = game.state.kscmdr.y-game.quadrant.y
+-	    idelta,y = game.quadrant.x-game.state.kscmdr.x
++	    delta.x = game.state.kscmdr.y-game.quadrant.y
++	    delta.y = game.quadrant.x-game.state.kscmdr.x
+     else:
+         if len(game.state.bases):
+             unschedule(&quot;FSCMOVE&quot;)
+@@ -627,16 +626,16 @@
+         if len(nearest) == 0:
+             return	# Nothing suitable -- wait until next time
+ 	# decide how to move toward base
+-	idelta = ibq - game.state.kscmdr
++	delta = ibq - game.state.kscmdr
+     # maximum movement is 1 quadrant in either or both axis
+     delta = delta.sgn()
+     # try moving in both x and y directions
+-    iq = game.state.kscmdr + idelta
++    iq = game.state.kscmdr + delta
+     if movescom(iq, passive):
+ 	# failed -- try some other maneuvers
+-        if ideltax==0 or ideltay==0:
++        if delta.x==0 or delta.y==0:
+ 	    # attempt angle move
+-            if ideltax != 0:
++            if delta.x != 0:
+ 		iq.y = game.state.kscmdr.y + 1
+                 if movescom(iq, passive):
+ 		    iq.y = game.state.kscmdr.y - 1
+@@ -650,7 +649,7 @@
+ 	    # try moving just in x or y
+ 	    iq.y = game.state.kscmdr.y
+             if movescom(iq, passive):
+-		iq.y = game.state.kscmdr.y + ideltay
++		iq.y = game.state.kscmdr.y + delta.y
+ 		iq.x = game.state.kscmdr.x
+ 		movescom(iq, passive)
+     # check for a base
+@@ -720,7 +719,7 @@
+ 	game.tholian = None
+ 	return
+     # Do nothing if we are blocked
+-    if game.quad[next] != empty and not isinstance(game.quad[next]. web):
++    if not (isinstance(game.quad[next], space) or isinstance(game.quad[next], web)):
+         return
+     # Now place some web
+     im = (next - game.tholian.location).sgn()
+@@ -728,13 +727,13 @@
+ 	# move in x axis
+ 	while game.tholian.location.x != next.x:
+ 	    game.tholian.location.x += im.x
+-            if game.quad[game.tholian.location] == empty:
++            if isinstance(game.quad[game.tholian.location], space):
+                 game.quad[game.tholian.location] = web()
+     elif game.tholian.y != next.y:
+ 	# move in y axis
+ 	while game.tholian.y != next.y:
+ 	    game.tholian.y += im.y
+-            if game.quad[game.tholian.location] == empty:
++            if isinstance(game.quad[game.tholian.location], space):
+                 game.quad[game.tholian.location] = web()
+     # web is done, move ship
+     game.tholian.movesector(next)
+
+Modified: trunk/src/sstlinux.c
+===================================================================
+--- trunk/src/sstlinux.c	2006-09-27 21:46:35 UTC (rev 636)
++++ trunk/src/sstlinux.c	2006-09-28 08:01:45 UTC (rev 637)
+@@ -14,14 +14,17 @@
+ void sound(unsigned int freq)
+ {
+ #ifdef HAVE_LINUX_KD_H
+-    if(fd==0) fd=open(&quot;/dev/console&quot;, O_RDONLY);
+-    if(fd&gt;0) ioctl(fd, KDMKTONE, 1193180/freq + (0xFFFF&lt;&lt;16));
++    if (fd==0)
++	fd=open(&quot;/dev/console&quot;, O_RDONLY);
++    if (fd&gt;0)
++	ioctl(fd, KDMKTONE, 1193180/freq + (0xFFFF&lt;&lt;16));
+ #endif
+ }
+ 
+ void nosound(void)
+ {
+ #ifdef HAVE_LINUX_KD_H
+-    if(fd&gt;0) ioctl(fd, KDMKTONE, 0);
++    if(fd&gt;0)
++	ioctl(fd, KDMKTONE, 0);
+ #endif
+ }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000103.html">[Sst-commit-watch] r636 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000105.html">[Sst-commit-watch] r638 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#104">[ date ]</a>
+              <a href="thread.html#104">[ thread ]</a>
+              <a href="subject.html#104">[ subject ]</a>
+              <a href="author.html#104">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

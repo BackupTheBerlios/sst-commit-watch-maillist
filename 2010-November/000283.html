@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r814 - in trunk: . c-version/src doc
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2010-November/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r814%20-%20in%20trunk%3A%20.%20c-version/src%20doc&In-Reply-To=%3C20101130085712.8CB1D480149%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000282.html">
+   <LINK REL="Next"  HREF="000284.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r814 - in trunk: . c-version/src doc</H1>
+    <B>esr at mail.berlios.de</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r814%20-%20in%20trunk%3A%20.%20c-version/src%20doc&In-Reply-To=%3C20101130085712.8CB1D480149%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r814 - in trunk: . c-version/src doc">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Nov 30 09:57:12 CET 2010</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000282.html">[Sst-commit-watch] r813 - trunk/doc
+</A></li>
+        <LI>Next message: <A HREF="000284.html">[Sst-commit-watch] r815 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#283">[ date ]</a>
+              <a href="thread.html#283">[ thread ]</a>
+              <a href="subject.html#283">[ subject ]</a>
+              <a href="author.html#283">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2010-11-30 09:57:12 +0100 (Tue, 30 Nov 2010)
+New Revision: 814
+
+Added:
+   trunk/replay
+Removed:
+   trunk/c-version/src/replay
+   trunk/doc/Makefile.am
+Log:
+Move the replay debugging script iup from the C sources directory.
+
+
+Deleted: trunk/c-version/src/replay
+===================================================================
+--- trunk/c-version/src/replay	2010-11-30 08:53:27 UTC (rev 813)
++++ trunk/c-version/src/replay	2010-11-30 08:57:12 UTC (rev 814)
+@@ -1,14 +0,0 @@
+-#!/bin/sh
+-# Replay the last SST game. With arg, use only that many lines of the log
+-#
+-# Because the replay log captures the random-number seed,
+-# repeating this any number of times should produce identical games,
+-# unless the code changes.
+-#
+-if [ $1 ]
+-then
+-    head -n `expr $1 + 2` &lt;/usr/tmp/sst-input.log &gt;replay.log
+-else
+-    mv /usr/tmp/sst-input.log replay.log
+-fi
+-python sst.py -t -r replay.log
+
+Deleted: trunk/doc/Makefile.am
+===================================================================
+--- trunk/doc/Makefile.am	2010-11-30 08:53:27 UTC (rev 813)
++++ trunk/doc/Makefile.am	2010-11-30 08:57:12 UTC (rev 814)
+@@ -1,15 +0,0 @@
+-man_MANS = sst.6
+-pkgdata_DATA = sst-doc.txt sst.doc
+-CLEANFILES = $(pkgdata_DATA) $(man_MANS)
+-EXTRA_DIST = makehelp.py sst-doc.xml sst-layer.xsl sst.xml
+-
+-sst.6: sst.xml
+-	xmlto man sst.xml
+-
+-sst-doc.txt: sst-doc.xml
+-	xmlto -m sst-layer.xsl txt sst-doc.xml
+-sst.doc: sst-doc.txt
+-	./makehelp.py &gt;sst.doc
+-
+-sst-doc.html: sst-doc.xml
+-	xmlto xhtml-nochunks sst-doc.xml
+
+Copied: trunk/replay (from rev 810, trunk/c-version/src/replay)
+===================================================================
+--- trunk/replay	                        (rev 0)
++++ trunk/replay	2010-11-30 08:57:12 UTC (rev 814)
+@@ -0,0 +1,14 @@
++#!/bin/sh
++# Replay the last SST game. With arg, use only that many lines of the log
++#
++# Because the replay log captures the random-number seed,
++# repeating this any number of times should produce identical games,
++# unless the code changes.
++#
++if [ $1 ]
++then
++    head -n `expr $1 + 2` &lt;/usr/tmp/sst-input.log &gt;replay.log
++else
++    mv /usr/tmp/sst-input.log replay.log
++fi
++python sst.py -t -r replay.log
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000282.html">[Sst-commit-watch] r813 - trunk/doc
+</A></li>
+	<LI>Next message: <A HREF="000284.html">[Sst-commit-watch] r815 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#283">[ date ]</a>
+              <a href="thread.html#283">[ thread ]</a>
+              <a href="subject.html#283">[ subject ]</a>
+              <a href="author.html#283">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

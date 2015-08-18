@@ -1,0 +1,487 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r608 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r608%20-%20trunk/src&In-Reply-To=%3C200609200357.k8K3v5RR013197%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000074.html">
+   <LINK REL="Next"  HREF="000076.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r608 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r608%20-%20trunk/src&In-Reply-To=%3C200609200357.k8K3v5RR013197%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r608 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 05:57:05 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000074.html">[Sst-commit-watch] r607 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000076.html">[Sst-commit-watch] r609 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#75">[ date ]</a>
+              <a href="thread.html#75">[ thread ]</a>
+              <a href="subject.html#75">[ subject ]</a>
+              <a href="author.html#75">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 05:57:04 +0200 (Wed, 20 Sep 2006)
+New Revision: 608
+
+Modified:
+   trunk/src/battle.c
+   trunk/src/io.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+More uses of distance() macro. Eliminate some magic numbers.  
+
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-20 03:26:16 UTC (rev 607)
++++ trunk/src/battle.c	2006-09-20 03:57:04 UTC (rev 608)
+@@ -181,7 +181,7 @@
+ void torpedo(double course, double r, int inx, int iny, double *hit, int i, int n)
+ /* let a photon torpedo fly */
+ {
+-    int l, iquad=0, jx=0, jy=0, ll;
++    int l, iquad=0, ll;
+     bool shoved = false;
+     double ac=course + 0.25*r;
+     double angle = (15.0-ac)*0.5235988;
+@@ -189,9 +189,9 @@
+     double deltax=-sin(angle), deltay=cos(angle), x=inx, y=iny, bigger;
+     double ang, temp, xx, yy, kp, h1;
+     struct quadrant *q = &amp;game.state.galaxy[game.quadrant.x][game.quadrant.y];
+-    coord w;
++    coord w, jw;
+ 
+-    w.x = w.y = 0;
++    w.x = w.y = jw.x = jw.y = 0;
+     bigger = fabs(deltax);
+     if (fabs(deltay) &gt; bigger) bigger = fabs(deltay);
+     deltax /= bigger;
+@@ -208,7 +208,7 @@
+ 	w.y = y + 0.5;
+ 	if (!VALID_SECTOR(w.x, w.y)) break;
+ 	iquad=game.quad[w.x][w.y];
+-	tracktorpedo(w.x, w.y, l, i, n, iquad);
++	tracktorpedo(w, l, i, n, iquad);
+ 	if (iquad==IHDOT) continue;
+ 	/* hit something */
+ 	setwnd(message_window);
+@@ -232,19 +232,19 @@
+ 	    if (fabs(cos(ang)) &gt; temp) temp = fabs(cos(ang));
+ 	    xx = -sin(ang)/temp;
+ 	    yy = cos(ang)/temp;
+-	    jx=w.x+xx+0.5;
+-	    jy=w.y+yy+0.5;
+-	    if (!VALID_SECTOR(jx, jy)) return;
+-	    if (game.quad[jx][jy]==IHBLANK) {
++	    jw.x=w.x+xx+0.5;
++	    jw.y=w.y+yy+0.5;
++	    if (!VALID_SECTOR(jw.x, jw.y)) return;
++	    if (game.quad[jw.x][jw.y]==IHBLANK) {
+ 		finish(FHOLE);
+ 		return;
+ 	    }
+-	    if (game.quad[jx][jy]!=IHDOT) {
++	    if (game.quad[jw.x][jw.y]!=IHDOT) {
+ 		/* can't move into object */
+ 		return;
+ 	    }
+-	    game.sector.x = jx;
+-	    game.sector.y = jy;
++	    game.sector.x = jw.x;
++	    game.sector.y = jw.y;
+ 	    crmshp();
+ 	    shoved = true;
+ 	    break;
+@@ -280,25 +280,25 @@
+ 	    if (fabs(cos(ang)) &gt; temp) temp = fabs(cos(ang));
+ 	    xx = -sin(ang)/temp;
+ 	    yy = cos(ang)/temp;
+-	    jx=w.x+xx+0.5;
+-	    jy=w.y+yy+0.5;
+-	    if (!VALID_SECTOR(jx, jy)) {
++	    jw.x=w.x+xx+0.5;
++	    jw.y=w.y+yy+0.5;
++	    if (!VALID_SECTOR(jw.x, jw.y)) {
+ 		prout(_(&quot; damaged but not destroyed.&quot;));
+ 		return;
+ 	    }
+-	    if (game.quad[jx][jy]==IHBLANK) {
++	    if (game.quad[jw.x][jw.y]==IHBLANK) {
+ 		prout(_(&quot; buffeted into black hole.&quot;));
+-		deadkl(w, iquad, jx, jy);
++		deadkl(w, iquad, jw.x, jw.y);
+ 		return;
+ 	    }
+-	    if (game.quad[jx][jy]!=IHDOT) {
++	    if (game.quad[jw.x][jw.y]!=IHDOT) {
+ 		/* can't move into object */
+ 		prout(_(&quot; damaged but not destroyed.&quot;));
+ 		return;
+ 	    }
+ 	    proutn(_(&quot; damaged--&quot;));
+-	    game.ks[ll].x = jx;
+-	    game.ks[ll].y = jy;
++	    game.ks[ll].x = jw.x;
++	    game.ks[ll].y = jw.y;
+ 	    shoved = true;
+ 	    break;
+ 	case IHB: /* Hit a base */
+@@ -426,9 +426,8 @@
+     }
+     if (shoved) {
+ 	game.quad[w.x][w.y]=IHDOT;
+-	game.quad[jx][jy]=iquad;
+-	w.x = jx; w.y = jy;
+-	prout(_(&quot; displaced by blast to %s &quot;), cramlc(sector, w));
++	game.quad[jw.x][jw.y]=iquad;
++	prout(_(&quot; displaced by blast to %s &quot;), cramlc(sector, jw));
+ 	for_local_enemies(ll)
+ 	    game.kdist[ll] = game.kavgd[ll] = distance(game.sector,game.ks[ll]);
+ 	sortkl();
+@@ -1227,7 +1226,7 @@
+ 	w = game.ks[kk];
+ 	if (hit &gt; 0.005) {
+ 	    if (!damaged(DSRSENS))
+-		boom(w.x, w.y);
++		boom(w);
+ 	    proutn(_(&quot;%d unit hit on &quot;), (int)hit);
+ 	}
+ 	else
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-20 03:26:16 UTC (rev 607)
++++ trunk/src/io.c	2006-09-20 03:57:04 UTC (rev 608)
+@@ -340,26 +340,26 @@
+     }
+ }
+ 
+-static void put_srscan_sym(int x, int y, char sym)
++static void put_srscan_sym(coord w, char sym)
+ {
+-    wmove(srscan_window, x+1, y*2+2);
++    wmove(srscan_window, w.x+1, w.y*2+2);
+     waddch(srscan_window, sym);
+     wrefresh(srscan_window);
+ }
+ 
+-void boom(int ii, int jj)
++void boom(coord w)
+ /* enemy fall down, go boom */ 
+ {
+     if (game.options &amp; OPTION_CURSES) {
+ 	drawmaps(2);
+ 	setwnd(srscan_window);
+ 	wattron(srscan_window, A_REVERSE);
+-	put_srscan_sym(ii, jj, game.quad[ii][jj]);
++	put_srscan_sym(w, game.quad[w.x][w.y]);
+ 	sound(500);
+ 	delay(1000);
+ 	nosound();
+ 	wattroff(srscan_window, A_REVERSE);
+-	put_srscan_sym(ii, jj, game.quad[ii][jj]);
++	put_srscan_sym(w, game.quad[w.x][w.y]);
+ 	delay(500);
+ 	setwnd(message_window);
+     }
+@@ -380,7 +380,7 @@
+     }
+ }
+ 
+-void tracktorpedo(int ix, int iy, int l, int i, int n, int iquad)
++void tracktorpedo(coord w, int l, int i, int n, int iquad)
+ /* torpedo-track animation */
+ {
+     if (!game.options &amp; OPTION_CURSES) {
+@@ -395,7 +395,7 @@
+ 	    }
+ 	} else if (l==4 || l==9) 
+ 	    skip(1);
+-	proutn(&quot;%d - %d   &quot;, ix, iy);
++	proutn(&quot;%d - %d   &quot;, w.x, w.y);
+     } else {
+ 	if (!damaged(DSRSENS) || game.condit==IHDOCKED) {
+ 	    if (i != 1 &amp;&amp; l == 1) {
+@@ -403,23 +403,23 @@
+ 		delay(400);
+ 	    }
+ 	    if ((iquad==IHDOT)||(iquad==IHBLANK)){
+-		put_srscan_sym(ix, iy, '+');
++		put_srscan_sym(w, '+');
+ 		sound(l*10);
+ 		delay(100);
+ 		nosound();
+-		put_srscan_sym(ix, iy, iquad);
++		put_srscan_sym(w, iquad);
+ 	    }
+ 	    else {
+ 		wattron(curwnd, A_REVERSE);
+-		put_srscan_sym(ix, iy, iquad);
++		put_srscan_sym(w, iquad);
+ 		sound(500);
+ 		delay(1000);
+ 		nosound();
+ 		wattroff(curwnd, A_REVERSE);
+-		put_srscan_sym(ix, iy, iquad);
++		put_srscan_sym(w, iquad);
+ 	    }
+ 	} else {
+-	    proutn(&quot;%d - %d   &quot;, ix, iy);
++	    proutn(&quot;%d - %d   &quot;, w.x, w.y);
+ 	}
+     }
+ }
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-20 03:26:16 UTC (rev 607)
++++ trunk/src/moving.c	2006-09-20 03:57:04 UTC (rev 608)
+@@ -8,10 +8,10 @@
+ /* movement execution for warp, impule, supernova, and tractor-beam events */
+ {
+     double angle, deltax, deltay, bigger, x, y,
+-        finald, finalx, finaly, stopegy, probf;
++        finald, stopegy, probf;
+     int n, m, kink, kinks, iquad;
+-    coord w;
+-    bool trbeam = 0;
++    coord w, final;
++    bool trbeam = false;
+ 
+     w.x = w.y = 0;
+     if (game.inorbit) {
+@@ -53,9 +53,8 @@
+ 		if (game.nenhere != 0 &amp;&amp; game.iattak != 2) {
+ 		    newcnd();
+ 		    for_local_enemies(m) {
+-			finald = sqrt((w.x-game.ks[m].x)*(double)(w.x-game.ks[m].x) +
+-				      (w.y-game.ks[m].y)*(double)(w.y-game.ks[m].y));
+-			game.kavgd[m] = 0.5 * (finald+game.kdist[m]);
++			finald = distance(w, game.ks[m]);
++			game.kavgd[m] = 0.5 * (finald + game.kdist[m]);
+ 		    }
+ 		    /*
+ 		     * Stas Sergeev added the game.condition
+@@ -123,8 +122,7 @@
+ 	    if (iquad != IHDOT) {
+ 		/* object encountered in flight path */
+ 		stopegy = 50.0*game.dist/game.optime;
+-		game.dist=0.1*sqrt((game.sector.x-w.x)*(double)(game.sector.x-w.x) +
+-			      (game.sector.y-w.y)*(double)(game.sector.y-w.y));
++		game.dist = distance(game.sector, w) / (QUADSIZE * 1.0);
+ 		switch (iquad) {
+ 		case IHT: /* Ram a Tholian */
+ 		case IHK: /* Ram enemy ship */
+@@ -132,11 +130,9 @@
+ 		case IHS:
+ 		case IHR:
+ 		case IHQUEST:
+-		    game.sector.x = w.x;
+-		    game.sector.y = w.y;
++		    game.sector = w;
+ 		    ram(0, iquad, game.sector);
+-		    finalx = game.sector.x;
+-		    finaly = game.sector.y;
++		    final = game.sector;
+ 		    break;
+ 		case IHBLANK:
+ 		    skip(1);
+@@ -174,10 +170,9 @@
+ 		    proutn(_(&quot;Emergency stop required &quot;));
+ 		    prout(_(&quot;%2d units of energy.&quot;), (int)stopegy);
+ 		    game.energy -= stopegy;
+-		    finalx = x-deltax+0.5;
+-		    game.sector.x = finalx;
+-		    finaly = y-deltay+0.5;
+-		    game.sector.y = finaly;
++		    final.x = x-deltax+0.5;
++		    final.y = y-deltay+0.5;
++		    game.sector = final;
+ 		    if (game.energy &lt;= 0) {
+ 			finish(FNRG);
+ 			return;
+@@ -187,20 +182,16 @@
+ 		goto no_quad_change;	/* sorry! */
+ 	    }
+ 	}
+-	game.dist = 0.1*sqrt((game.sector.x-w.x)*(double)(game.sector.x-w.x) +
+-			(game.sector.y-w.y)*(double)(game.sector.y-w.y));
+-	game.sector.x = w.x;
+-	game.sector.y = w.y;
++	game.dist = distance(game.sector, w) / (QUADSIZE * 1.0);
++	game.sector = w;
+     }
+-    finalx = game.sector.x;
+-    finaly = game.sector.y;
++    final = game.sector;
+ no_quad_change:
+     /* No quadrant change -- compute new avg enemy distances */
+     game.quad[game.sector.x][game.sector.y] = game.ship;
+     if (game.nenhere) {
+ 	for_local_enemies(m) {
+-	    finald = sqrt((w.x-game.ks[m].x)*(double)(w.x-game.ks[m].x) +
+-			  (w.y-game.ks[m].y)*(double)(w.y-game.ks[m].y));
++	    finald = distance(w, game.ks[m]);
+ 	    game.kavgd[m] = 0.5 * (finald+game.kdist[m]);
+ 	    game.kdist[m] = finald;
+ 	}
+@@ -718,7 +709,7 @@
+ 	    }
+ 	    else {
+ 		prout(_(&quot;saved.&quot;));
+-		game.icrystl = 1;
++		game.icrystl = true;
+ 	    }
+ 	}
+     }
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-20 03:26:16 UTC (rev 607)
++++ trunk/src/planets.c	2006-09-20 03:57:04 UTC (rev 608)
+@@ -181,7 +181,7 @@
+ 	prout(_(&quot;The shuttle craft Galileo is here!&quot;));
+     }
+     if (game.landed!=1 &amp;&amp; game.imine) {
+-	game.icrystl = 1;
++	game.icrystl = true;
+ 	game.cryprob = 0.05;
+     }
+     game.imine = false;
+@@ -209,7 +209,7 @@
+ 	prout(_(&quot;You've already mined enough crystals for this trip.&quot;));
+ 	return;
+     }
+-    if (game.icrystl == 1 &amp;&amp; game.cryprob == 0.05) {
++    if (game.icrystl &amp;&amp; game.cryprob == 0.05) {
+ 	proutn(_(&quot;With all those fresh crystals aboard the &quot;));
+ 	crmshp();
+ 	skip(1);
+@@ -229,7 +229,7 @@
+     game.ididit = false;
+     skip(1);
+     chew();
+-    if (game.icrystl!=1) {
++    if (!game.icrystl) {
+ 	prout(_(&quot;No dilithium crystals available.&quot;));
+ 	return;
+     }
+@@ -364,7 +364,7 @@
+ 	    game.iscraft = 1;
+ 	    game.icraft = false;
+ 	    if (game.imine) {
+-		game.icrystl = 1;
++		game.icrystl = true;
+ 		game.cryprob = 0.05;
+ 	    }
+ 	    game.imine = false;
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-20 03:26:16 UTC (rev 607)
++++ trunk/src/setup.c	2006-09-20 03:57:04 UTC (rev 608)
+@@ -177,7 +177,7 @@
+ 
+ 	/* If at least one base left, give 'em the Faerie Queene */
+ 	skip(1);
+-	game.icrystl = 0; /* crystals are lost */
++	game.icrystl = false; /* crystals are lost */
+ 	game.nprobes = 0; /* No probes */
+ 	prout(&quot;You are captured by Klingons and released to&quot;);
+ 	prout(&quot;the Federation in a prisoner-of-war exchange.&quot;);
+@@ -209,7 +209,7 @@
+     prout(&quot;Starfleet puts you in command of another ship,&quot;);
+     prout(&quot;the Faerie Queene, which is antiquated but,&quot;);
+     prout(&quot;still useable.&quot;);
+-    if (game.icrystl!=0) prout(&quot;The dilithium crystals have been moved.&quot;);
++    if (game.icrystl) prout(&quot;The dilithium crystals have been moved.&quot;);
+     game.imine = false;
+     game.iscraft=0; /* Galileo disappears */
+     /* Resupply ship */
+@@ -256,8 +256,8 @@
+     game.battle.x = game.battle.y = 0;
+     game.state.date = game.indate = 100.0*(int)(31.0*Rand()+20.0);
+     game.nkinks = game.nhelp = game.casual = game.abandoned = 0;
+-    game.resting = game.imine = game.icraft = false;
+-    game.isatb = game.iscate = game.icrystl = game.state.nplankl = 0;
++    game.resting = game.imine = game.icrystl = game.icraft = false;
++    game.isatb = game.iscate = game.state.nplankl = 0;
+     game.state.starkl = game.state.basekl = 0;
+     game.iscraft = 1;
+     game.landed = -1;
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-20 03:26:16 UTC (rev 607)
++++ trunk/src/sst.h	2006-09-20 03:57:04 UTC (rev 608)
+@@ -222,6 +222,7 @@
+ 	isarmed,	// probe is armed
+ 	inorbit,	// orbiting a planet
+ 	imine,		// mining
++	icrystl,	// dilithium crystals aboard
+ 	thawed;		// thawed game
+     int inkling,	// initial number of klingons
+ 	inbase,		// initial number of bases
+@@ -251,7 +252,6 @@
+ 	isatb,		// =1 if super commander is attacking base
+ 	iscate,		// super commander is here
+ 	iattak,		// attack recursion elimination (was cracks[4])
+-	icrystl,	// dilithium crystals aboard
+ 	tourn,		// tournament number
+ 	iseenit,	// seen base attack report
+ 	proben,		// number of moves for probe
+@@ -411,8 +411,8 @@
+ void iostart(void);
+ void setwnd(WINDOW *);
+ void warble(void);
+-void boom(int, int);
+-void tracktorpedo(int, int, int, int, int, int);
++void boom(coord);
++void tracktorpedo(coord, int, int, int, int);
+ void cgetline(char *, int);
+ void waitfor(void);
+ void setpassword(void);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000074.html">[Sst-commit-watch] r607 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000076.html">[Sst-commit-watch] r609 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#75">[ date ]</a>
+              <a href="thread.html#75">[ thread ]</a>
+              <a href="subject.html#75">[ subject ]</a>
+              <a href="author.html#75">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

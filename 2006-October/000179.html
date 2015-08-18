@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r712 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r712%20-%20trunk/src&In-Reply-To=%3C200610082228.k98MSW3U003231%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000178.html">
+   <LINK REL="Next"  HREF="000180.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r712 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r712%20-%20trunk/src&In-Reply-To=%3C200610082228.k98MSW3U003231%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r712 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Oct  9 00:28:32 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000178.html">[Sst-commit-watch] r711 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000180.html">[Sst-commit-watch] r713 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#179">[ date ]</a>
+              <a href="thread.html#179">[ thread ]</a>
+              <a href="subject.html#179">[ subject ]</a>
+              <a href="author.html#179">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-09 00:28:32 +0200 (Mon, 09 Oct 2006)
+New Revision: 712
+
+Modified:
+   trunk/src/sst.py
+Log:
+More refactoring of the Python version.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-08 22:18:25 UTC (rev 711)
++++ trunk/src/sst.py	2006-10-08 22:28:32 UTC (rev 712)
+@@ -201,6 +201,7 @@
+ FULLCREW	= 428	# BSD Trek was 387, that's wrong 
+ FOREVER 	= 1e30
+ MAXBURST	= 3
++MINCMDR 	= 10
+ 
+ # These functions hide the difference between 0-origin and 1-origin addressing.
+ def VALID_QUADRANT(x, y):	return ((x)&gt;=0 and (x)&lt;GALSIZE and (y)&gt;=0 and (y)&lt;GALSIZE)
+@@ -605,15 +606,20 @@
+ 
+ # Code from ai.c begins here
+ 
++def welcoming(iq):
++    # Would this quadrant welcome another Klingon?
++    return VALID_QUADRANT(iq.x,iq.y) and \
++	not game.state.galaxy[iq.x][iq.y].supernova or \
++	game.state.galaxy[iq.x][iq.y].klingons &lt; MAXKLQUAD
++
++
+ def tryexit(enemy, look, irun):
+     # a bad guy attempts to bug out 
+     iq = coord()
+     iq.x = game.quadrant.x+(look.x+(QUADSIZE-1))/QUADSIZE - 1
+     iq.y = game.quadrant.y+(look.y+(QUADSIZE-1))/QUADSIZE - 1
+-    if not VALID_QUADRANT(iq.x,iq.y) or \
+-	game.state.galaxy[iq.x][iq.y].supernova or \
+-	game.state.galaxy[iq.x][iq.y].klingons &gt; MAXKLQUAD-1:
+-	return False; # no can do -- neg energy, supernovae, or &gt;MAXKLQUAD-1 Klingons 
++    if not welcoming(iq):
++	return False;
+     if enemy.type == IHR:
+ 	return False; # Romulans cannot escape! 
+     if not irun:
+@@ -870,13 +876,9 @@
+ 
+ def movescom(iq, avoid):
+     # commander movement helper 
+-    if iq == game.quadrant or not VALID_QUADRANT(iq.x, iq.y) or \
+-	game.state.galaxy[iq.x][iq.y].supernova or \
+-	game.state.galaxy[iq.x][iq.y].klingons &gt; MAXKLQUAD-1:
+-	return 1
+     # Avoid quadrants with bases if we want to avoid Enterprise 
+-    if avoid and iq in game.state.baseq:
+-        return True
++    if not welcoming(iq) or (avoid and iq in game.state.baseq):
++	return True
+     if game.justin and not game.iscate:
+ 	return True
+     # do the move 
+@@ -944,9 +946,7 @@
+ 	ifindit = iwhichb = 0
+ 	for (i2, base) in enumerate(game.state.baseq):
+ 	    i = basetbl[i2][0];	# bug in original had it not finding nearest
+-	    if base == game.quadrant or base == game.battle or \
+-		game.state.galaxy[base.x][base.y].supernova or \
+-		game.state.galaxy[base.x][base.y].klingons &gt; MAXKLQUAD-1:
++	    if base==game.quadrant or base==game.battle or not welcoming(base):
+ 		continue
+ 	    # if there is a commander, and no other base is appropriate,
+ 	    # we will take the one with the commander
+@@ -5842,7 +5842,7 @@
+     if game.state.nscrem &gt; 0:
+         while True:
+             w = randplace(GALSIZE)
+-            if not game.state.galaxy[w.x][w.y].supernova and game.state.galaxy[w.x][w.y].klingons &lt;= MAXKLQUAD:
++            if not welcoming(w):
+                 break
+ 	game.state.kscmdr = w
+ 	game.state.galaxy[w.x][w.y].klingons += 1
+@@ -6008,7 +6008,7 @@
+     game.state.remtime = 7.0 * game.length
+     game.intime = game.state.remtime
+     game.state.remkl = game.inkling = 2.0*game.intime*((game.skill+1 - 2*randreal())*game.skill*0.1+.15)
+-    game.incom = min(10, int(game.skill + 0.0625*game.inkling*randreal()))
++    game.incom = min(MINCMDR, int(game.skill + 0.0625*game.inkling*randreal()))
+     game.state.remres = (game.inkling+4*game.incom)*game.intime
+     game.inresor = game.state.remres
+     if game.inkling &gt; 50:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000178.html">[Sst-commit-watch] r711 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000180.html">[Sst-commit-watch] r713 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#179">[ date ]</a>
+              <a href="thread.html#179">[ thread ]</a>
+              <a href="subject.html#179">[ subject ]</a>
+              <a href="author.html#179">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

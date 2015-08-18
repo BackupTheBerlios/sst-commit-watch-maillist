@@ -1,0 +1,496 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r638 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r638%20-%20trunk/src&In-Reply-To=%3C200609280820.k8S8Krm5015383%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000104.html">
+   <LINK REL="Next"  HREF="000106.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r638 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r638%20-%20trunk/src&In-Reply-To=%3C200609280820.k8S8Krm5015383%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r638 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 28 10:20:53 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000104.html">[Sst-commit-watch] r637 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000106.html">[Sst-commit-watch] r639 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#105">[ date ]</a>
+              <a href="thread.html#105">[ thread ]</a>
+              <a href="subject.html#105">[ subject ]</a>
+              <a href="author.html#105">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-28 10:20:52 +0200 (Thu, 28 Sep 2006)
+New Revision: 638
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+   trunk/src/sst.py
+Log:
+Change some ugly and misleading names.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-28 08:01:45 UTC (rev 637)
++++ trunk/src/ai.c	2006-09-28 08:20:52 UTC (rev 638)
+@@ -267,7 +267,7 @@
+     }
+ }
+ 
+-void movcom(void) 
++void moveklings(void) 
+ /* move a commander */
+ {
+     coord w; 
+@@ -351,10 +351,10 @@
+     }
+     /* check for a helpful planet */
+     for (i = 0; i &lt; game.inplan; i++) {
+-	if (same(game.state.plnets[i].w, game.state.kscmdr) &amp;&amp;
+-	    game.state.plnets[i].crystals == present) {
++	if (same(game.state.planets[i].w, game.state.kscmdr) &amp;&amp;
++	    game.state.planets[i].crystals == present) {
+ 	    /* destroy the planet */
+-	    DESTROY(&amp;game.state.plnets[i]);
++	    DESTROY(&amp;game.state.planets[i]);
+ 	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET;
+ 	    if (!damaged(DRADIO) || game.condition == docked) {
+ 		if (!*ipage)
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-28 08:01:45 UTC (rev 637)
++++ trunk/src/battle.c	2006-09-28 08:20:52 UTC (rev 638)
+@@ -399,7 +399,7 @@
+ 	    prout(_(&quot; destroyed.&quot;));
+ 	    game.state.nplankl++;
+ 	    q-&gt;planet = NOPLANET;
+-	    DESTROY(&amp;game.state.plnets[game.iplnet]);
++	    DESTROY(&amp;game.state.planets[game.iplnet]);
+ 	    game.iplnet = 0;
+ 	    invalidate(game.plnet);
+ 	    game.quad[w.x][w.y] = IHDOT;
+@@ -413,7 +413,7 @@
+ 	    prout(_(&quot; destroyed.&quot;));
+ 	    game.state.nworldkl++;
+ 	    q-&gt;planet = NOPLANET;
+-	    DESTROY(&amp;game.state.plnets[game.iplnet]);
++	    DESTROY(&amp;game.state.planets[game.iplnet]);
+ 	    game.iplnet = 0;
+ 	    invalidate(game.plnet);
+ 	    game.quad[w.x][w.y] = IHDOT;
+@@ -579,7 +579,7 @@
+ 
+     /* commanders get a chance to tac-move towards you */
+     if ((((game.comhere || game.ishere) &amp;&amp; !game.justin) || game.skill == SKILL_EMERITUS) &amp;&amp; torps_ok) 
+-	movcom();
++	moveklings();
+ 
+     /* if no enemies remain after movement, we're done */
+     if (game.nenhere==0 || (game.nenhere==1 &amp;&amp; iqhere &amp;&amp; !iqengry)) 
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-28 08:01:45 UTC (rev 637)
++++ trunk/src/events.c	2006-09-28 08:20:52 UTC (rev 638)
+@@ -701,7 +701,7 @@
+ 			game.state.nplankl++;
+ 			crmena(true, IHP, sector, scratch);
+ 			prout(_(&quot; destroyed.&quot;));
+-			DESTROY(&amp;game.state.plnets[game.iplnet]);
++			DESTROY(&amp;game.state.planets[game.iplnet]);
+ 			game.iplnet = 0;
+ 			invalidate(game.plnet);
+ 			if (game.landed) {
+@@ -931,8 +931,8 @@
+     if (npdead) {
+ 	int loop;
+ 	for (loop = 0; loop &lt; game.inplan; loop++)
+-	    if (same(game.state.plnets[loop].w, nq)) {
+-		DESTROY(&amp;game.state.plnets[loop]);
++	    if (same(game.state.planets[loop].w, nq)) {
++		DESTROY(&amp;game.state.planets[loop]);
+ 	    }
+     }
+     /* Destroy any base in supernovaed quadrant */
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-28 08:01:45 UTC (rev 637)
++++ trunk/src/moving.c	2006-09-28 08:20:52 UTC (rev 638)
+@@ -823,7 +823,7 @@
+ 	   when on planet, which would give us two Galileos! */
+ 	gotit = false;
+ 	for (l = 0; l &lt; game.inplan; l++) {
+-	    if (game.state.plnets[l].known == shuttle_down) {
++	    if (game.state.planets[l].known == shuttle_down) {
+ 		gotit = true;
+ 		if (game.iscraft == onship &amp;&amp; game.ship==IHE) {
+ 		    prout(_(&quot;Checkov-  \&quot;Security reports the Galileo has disappeared, Sir!&quot;));
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-28 08:01:45 UTC (rev 637)
++++ trunk/src/planets.c	2006-09-28 08:20:52 UTC (rev 638)
+@@ -22,21 +22,21 @@
+     prout(_(&quot;Spock-  \&quot;Planet report follows, Captain.\&quot;&quot;));
+     skip(1);
+     for (i = 0; i &lt; game.inplan; i++) {
+-	if ((game.state.plnets[i].known != unknown
+-	    &amp;&amp; game.state.plnets[i].inhabited == UNINHABITED)
+-	    || (idebug &amp;&amp; game.state.plnets[i].w.x !=0)
++	if ((game.state.planets[i].known != unknown
++	    &amp;&amp; game.state.planets[i].inhabited == UNINHABITED)
++	    || (idebug &amp;&amp; game.state.planets[i].w.x !=0)
+ 	    ) {
+ 	    iknow = true;
+-	    if (idebug &amp;&amp; game.state.plnets[i].known==unknown)
++	    if (idebug &amp;&amp; game.state.planets[i].known==unknown)
+ 		proutn(&quot;(Unknown) &quot;);
+-	    proutn(cramlc(quadrant, game.state.plnets[i].w));
++	    proutn(cramlc(quadrant, game.state.planets[i].w));
+ 	    proutn(_(&quot;   class &quot;));
+-	    proutn(classes[game.state.plnets[i].pclass]);
++	    proutn(classes[game.state.planets[i].pclass]);
+ 	    proutn(&quot;   &quot;);
+-	    if (game.state.plnets[i].crystals != present)
++	    if (game.state.planets[i].crystals != present)
+ 		proutn(_(&quot;no &quot;));
+ 	    prout(_(&quot;dilithium crystals present.&quot;));
+-	    if (game.state.plnets[i].known==shuttle_down) 
++	    if (game.state.planets[i].known==shuttle_down) 
+ 		prout(_(&quot;    Shuttle Craft Galileo on surface.&quot;));
+ 	}
+     }
+@@ -87,20 +87,20 @@
+ 	prout(_(&quot;Spock- \&quot;No planet in this quadrant, Captain.\&quot;&quot;));
+ 	return;
+     }
+-    if ((game.plnet.x != 0)&amp;&amp; (game.state.plnets[game.iplnet].known == unknown)) {
++    if ((game.plnet.x != 0)&amp;&amp; (game.state.planets[game.iplnet].known == unknown)) {
+ 	prout(_(&quot;Spock-  \&quot;Sensor scan for %s-&quot;), cramlc(quadrant, game.quadrant));
+ 	skip(1);
+ 	prout(_(&quot;         Planet at %s is of class %s.&quot;),
+ 	      cramlc(sector,game.plnet),
+-	      classes[game.state.plnets[game.iplnet].pclass]);
+-	if (game.state.plnets[game.iplnet].known==shuttle_down) 
++	      classes[game.state.planets[game.iplnet].pclass]);
++	if (game.state.planets[game.iplnet].known==shuttle_down) 
+ 	    prout(_(&quot;         Sensors show Galileo still on surface.&quot;));
+ 	proutn(_(&quot;         Readings indicate&quot;));
+-	if (game.state.plnets[game.iplnet].crystals != present)
++	if (game.state.planets[game.iplnet].crystals != present)
+ 	    proutn(_(&quot; no&quot;));
+ 	prout(_(&quot; dilithium crystals present.\&quot;&quot;));
+-	if (game.state.plnets[game.iplnet].known == unknown)
+-	    game.state.plnets[game.iplnet].known = known;
++	if (game.state.planets[game.iplnet].known == unknown)
++	    game.state.planets[game.iplnet].known = known;
+     }
+ }
+ 
+@@ -111,7 +111,7 @@
+     skip(1);
+     if (damaged(DTRANSP)) {
+ 	prout(_(&quot;Transporter damaged.&quot;));
+-	if (!damaged(DSHUTTL) &amp;&amp; (game.state.plnets[game.iplnet].known==shuttle_down || game.iscraft == onship)) {
++	if (!damaged(DSHUTTL) &amp;&amp; (game.state.planets[game.iplnet].known==shuttle_down || game.iscraft == onship)) {
+ 	    skip(1);
+ 	    proutn(_(&quot;Spock-  \&quot;May I suggest the shuttle craft, Sir?\&quot; &quot;));
+ 	    if (ja() == true)
+@@ -128,7 +128,7 @@
+ 	prout(_(&quot;Impossible to transport through shields.&quot;));
+ 	return;
+     }
+-    if (game.state.plnets[game.iplnet].known==unknown) {
++    if (game.state.planets[game.iplnet].known==unknown) {
+ 	prout(_(&quot;Spock-  \&quot;Captain, we have no information on this planet&quot;));
+ 	prout(_(&quot;  and Starfleet Regulations clearly state that in this situation&quot;));
+ 	prout(_(&quot;  you may not go down.\&quot;&quot;));
+@@ -136,7 +136,7 @@
+     }
+     if (game.landed) {
+ 	/* Coming from planet */
+-	if (game.state.plnets[game.iplnet].known==shuttle_down) {
++	if (game.state.planets[game.iplnet].known==shuttle_down) {
+ 	    proutn(_(&quot;Spock-  \&quot;Wouldn't you rather take the Galileo?\&quot; &quot;));
+ 	    if (ja() == true) {
+ 		chew();
+@@ -153,7 +153,7 @@
+     }
+     else {
+ 	/* Going to planet */
+-	if (game.state.plnets[game.iplnet].crystals==absent) {
++	if (game.state.planets[game.iplnet].crystals==absent) {
+ 	    prout(_(&quot;Spock-  \&quot;Captain, I fail to see the logic in&quot;));
+ 	    prout(_(&quot;  exploring a planet with no dilithium crystals.&quot;));
+ 	    proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;));
+@@ -183,7 +183,7 @@
+     skip(2);
+     prout(_(&quot;Transport complete.&quot;));
+     game.landed = !game.landed;
+-    if (game.landed &amp;&amp; game.state.plnets[game.iplnet].known==shuttle_down) {
++    if (game.landed &amp;&amp; game.state.planets[game.iplnet].known==shuttle_down) {
+ 	prout(_(&quot;The shuttle craft Galileo is here!&quot;));
+     }
+     if (!game.landed &amp;&amp; game.imine) {
+@@ -203,11 +203,11 @@
+ 	prout(_(&quot;Mining party not on planet.&quot;));
+ 	return;
+     }
+-    if (game.state.plnets[game.iplnet].crystals == mined) {
++    if (game.state.planets[game.iplnet].crystals == mined) {
+ 	prout(_(&quot;This planet has already been strip-mined for dilithium.&quot;));
+ 	return;
+     }
+-    else if (game.state.plnets[game.iplnet].crystals == absent) {
++    else if (game.state.planets[game.iplnet].crystals == absent) {
+ 	prout(_(&quot;No dilithium crystals on this planet.&quot;));
+ 	return;
+     }
+@@ -222,11 +222,11 @@
+ 	prout(_(&quot;there's no reason to mine more at this time.&quot;));
+ 	return;
+     }
+-    game.optime = (0.1+0.2*Rand())*game.state.plnets[game.iplnet].pclass;
++    game.optime = (0.1+0.2*Rand())*game.state.planets[game.iplnet].pclass;
+     if (consumeTime())
+ 	return;
+     prout(_(&quot;Mining operation complete.&quot;));
+-    game.state.plnets[game.iplnet].crystals = mined;
++    game.state.planets[game.iplnet].crystals = mined;
+     game.imine = game.ididit = true;
+ }
+ 
+@@ -289,7 +289,7 @@
+     skip(1);
+     if(damaged(DSHUTTL)) {
+ 	if (game.damage[DSHUTTL] == -1.0) {
+-	    if (game.inorbit &amp;&amp; game.state.plnets[game.iplnet].known == shuttle_down)
++	    if (game.inorbit &amp;&amp; game.state.planets[game.iplnet].known == shuttle_down)
+ 		prout(_(&quot;Ye Faerie Queene has no shuttle craft bay to dock it at.&quot;));
+ 	    else
+ 		prout(_(&quot;Ye Faerie Queene had no shuttle craft.&quot;));
+@@ -305,11 +305,11 @@
+ 	prout(_(&quot; not in standard orbit.&quot;));
+ 	return;
+     }
+-    if ((game.state.plnets[game.iplnet].known != shuttle_down) &amp;&amp; game.iscraft != onship) {
++    if ((game.state.planets[game.iplnet].known != shuttle_down) &amp;&amp; game.iscraft != onship) {
+ 	prout(_(&quot;Shuttle craft not currently available.&quot;));
+ 	return;
+     }
+-    if (!game.landed &amp;&amp; game.state.plnets[game.iplnet].known==shuttle_down) {
++    if (!game.landed &amp;&amp; game.state.planets[game.iplnet].known==shuttle_down) {
+ 	prout(_(&quot;You will have to beam down to retrieve the shuttle craft.&quot;));
+ 	return;
+     }
+@@ -317,7 +317,7 @@
+ 	prout(_(&quot;Shuttle craft cannot pass through shields.&quot;));
+ 	return;
+     }
+-    if (game.state.plnets[game.iplnet].known==unknown) {
++    if (game.state.planets[game.iplnet].known==unknown) {
+ 	prout(_(&quot;Spock-  \&quot;Captain, we have no information on this planet&quot;));
+ 	prout(_(&quot;  and Starfleet Regulations clearly state that in this situation&quot;));
+ 	prout(_(&quot;  you may not fly down.\&quot;&quot;));
+@@ -354,7 +354,7 @@
+ 	    skip(1);
+ 	    if (consumeTime())
+ 		return;
+-	    game.state.plnets[game.iplnet].known=shuttle_down;
++	    game.state.planets[game.iplnet].known=shuttle_down;
+ 	    prout(_(&quot;Trip complete.&quot;));
+ 	    return;
+ 	}
+@@ -364,7 +364,7 @@
+ 	    prout(_(&quot;shuttle craft for the trip back to the Enterprise.&quot;));
+ 	    skip(1);
+ 	    prout(_(&quot;The short hop begins . . .&quot;));
+-	    game.state.plnets[game.iplnet].known=known;
++	    game.state.planets[game.iplnet].known=known;
+ 	    game.icraft = true;
+ 	    skip(1);
+ 	    game.landed = false;
+@@ -393,7 +393,7 @@
+ 	game.iscraft = offship;
+ 	if (consumeTime())
+ 	    return;
+-	game.state.plnets[game.iplnet].known = shuttle_down;
++	game.state.planets[game.iplnet].known = shuttle_down;
+ 	game.landed = true;
+ 	game.icraft = false;
+ 	prout(_(&quot;Trip complete.&quot;));
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-28 08:01:45 UTC (rev 637)
++++ trunk/src/reports.c	2006-09-28 08:20:52 UTC (rev 638)
+@@ -350,7 +350,7 @@
+     RQ(10,
+ 	if (game.options &amp; OPTION_WORLDS) {
+ 	    int plnet = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet;
+-	    if (plnet != NOPLANET &amp;&amp; game.state.plnets[plnet].inhabited != UNINHABITED)
++	    if (plnet != NOPLANET &amp;&amp; game.state.planets[plnet].inhabited != UNINHABITED)
+ 		prstat(_(&quot;Major system&quot;), &quot;%s&quot;, systnames[plnet]);
+ 	    else
+ 		prout(_(&quot;Sector is uninhabited&quot;));
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-28 08:01:45 UTC (rev 637)
++++ trunk/src/setup.c	2006-09-28 08:20:52 UTC (rev 638)
+@@ -335,17 +335,17 @@
+     for (i = 0; i &lt; game.inplan; i++) {
+ 	do w = randplace(GALSIZE); 
+ 	while (game.state.galaxy[w.x][w.y].planet != NOPLANET);
+-	game.state.plnets[i].w = w;
++	game.state.planets[i].w = w;
+ 	if (i &lt; NINHAB) {
+-	    game.state.plnets[i].pclass = M;	// All inhabited planets are class M
+-	    game.state.plnets[i].crystals = absent;
+-	    game.state.plnets[i].known = known;
+-	    game.state.plnets[i].inhabited = i;
++	    game.state.planets[i].pclass = M;	// All inhabited planets are class M
++	    game.state.planets[i].crystals = absent;
++	    game.state.planets[i].known = known;
++	    game.state.planets[i].inhabited = i;
+ 	} else {
+-	    game.state.plnets[i].pclass = Rand()*3.0; // Planet class M N or O
+-	    game.state.plnets[i].crystals = Rand()*1.5;		// 1 in 3 chance of crystals
+-	    game.state.plnets[i].known = unknown;
+-	    game.state.plnets[i].inhabited = UNINHABITED;
++	    game.state.planets[i].pclass = Rand()*3.0; // Planet class M N or O
++	    game.state.planets[i].crystals = Rand()*1.5;		// 1 in 3 chance of crystals
++	    game.state.planets[i].known = unknown;
++	    game.state.planets[i].inhabited = UNINHABITED;
+ 	}
+ 	if ((game.options &amp; OPTION_WORLDS) || i &gt;= NINHAB)
+ 	    game.state.galaxy[w.x][w.y].planet = i;
+@@ -657,7 +657,7 @@
+     // If quadrant needs a planet, put it in
+     if (q-&gt;planet != NOPLANET) {
+ 	game.iplnet = q-&gt;planet;
+-	if (game.state.plnets[q-&gt;planet].inhabited == UNINHABITED)
++	if (game.state.planets[q-&gt;planet].inhabited == UNINHABITED)
+ 	    game.plnet = dropin(IHP);
+ 	else
+ 	    game.plnet = dropin(IHW);
+@@ -669,7 +669,7 @@
+ 	dropin(IHSTAR);
+ 
+     // Check for RNZ
+-    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (q-&gt;planet == NOPLANET || game.state.plnets[q-&gt;planet].inhabited == UNINHABITED)) {
++    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (q-&gt;planet == NOPLANET || game.state.planets[q-&gt;planet].inhabited == UNINHABITED)) {
+ 	game.neutz = true;
+ 	if (!damaged(DRADIO)) {
+ 	    skip(1);
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-28 08:01:45 UTC (rev 637)
++++ trunk/src/sst.h	2006-09-28 08:20:52 UTC (rev 638)
+@@ -81,8 +81,8 @@
+ } feature;
+ 
+ typedef struct {
+-    bool snap;		// snapshot taken
+-    int crew,		// crew complement
++    bool snap;			// snapshot taken
++    int crew,			// crew complement
+ #define FULLCREW	428	/* BSD Trek was 387, that's wrong */
+ 	remkl,			// remaining klingons
+ 	remcom,			// remaining commanders
+@@ -93,9 +93,9 @@
+ 	nromrem,		// Romulans remaining
+ 	nplankl,		// destroyed uninhabited planets
+ 	nworldkl;		// destroyed inhabited planets
+-    planet plnets[PLNETMAX];  // Planet information
++    planet planets[PLNETMAX];	// Planet information
+     double date,		// stardate
+-	remres,		// remaining resources
++	remres,			// remaining resources
+ 	remtime;		// remaining time
+     coord baseq[BASEMAX+1];	// Base quadrant coordinates
+     coord kcmdr[QUADSIZE+1];	// Commander quadrant coordinates
+@@ -403,7 +403,7 @@
+ void crmena(bool, feature, enum loctype, coord w);
+ void deadkl(coord, feature, coord);
+ void timwrp(void);
+-void movcom(void);
++void moveklings(void);
+ void torpedo(double, double, coord, double *, int, int);
+ void huh(void);
+ void pause_game(bool);
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-09-28 08:01:45 UTC (rev 637)
++++ trunk/src/sst.py	2006-09-28 08:20:52 UTC (rev 638)
+@@ -297,7 +297,7 @@
+ 
+ def communicating():
+     &quot;Are we in communication with Starfleet Command?&quot;
+-    return (not damaged(&quot;DRADIO&quot;)) or game.condition == docked
++    return (not damaged(&quot;DRADIO&quot;)) or game.condition == &quot;docked&quot;
+ 
+ # Code corresponding to ai.c begins here
+ 
+@@ -523,7 +523,7 @@
+                 prout(&quot; retreats to sector %s&quot; % ship.location)
+         ship.sectormove(next)
+ 
+-def movcom(): 
++def moveklings(): 
+     &quot;Allow enemies to move.&quot;
+     for enemy in self.quad.enemies():
+         if enemy.type == &quot;Commander&quot;:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000104.html">[Sst-commit-watch] r637 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000106.html">[Sst-commit-watch] r639 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#105">[ date ]</a>
+              <a href="thread.html#105">[ thread ]</a>
+              <a href="subject.html#105">[ subject ]</a>
+              <a href="author.html#105">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

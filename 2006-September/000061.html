@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r594 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r594%20-%20trunk/src&In-Reply-To=%3C200609190856.k8J8uq0q013173%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000060.html">
+   <LINK REL="Next"  HREF="000062.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r594 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r594%20-%20trunk/src&In-Reply-To=%3C200609190856.k8J8uq0q013173%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r594 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 19 10:56:52 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000060.html">[Sst-commit-watch] r593 - in trunk: . src
+</A></li>
+        <LI>Next message: <A HREF="000062.html">[Sst-commit-watch] r595 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#61">[ date ]</a>
+              <a href="thread.html#61">[ thread ]</a>
+              <a href="subject.html#61">[ subject ]</a>
+              <a href="author.html#61">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-19 10:56:52 +0200 (Tue, 19 Sep 2006)
+New Revision: 594
+
+Modified:
+   trunk/src/events.c
+Log:
+FDISTR/FENSLV/FREPRO sequence looks like it's working.
+
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-19 08:28:19 UTC (rev 593)
++++ trunk/src/events.c	2006-09-19 08:56:52 UTC (rev 594)
+@@ -1,3 +1,11 @@
++/*
++ * events.c -- event-queue handling
++ *
++ * This isn't a real event queue a la BSD Trek yet -- you can only have one 
++ * event of each type active at any given time.  Mostly these means we can 
++ * only have one FDISTR/FENSLV/FREPRO sequence going at any given time;
++ * BSD Trek, from which we swiped the idea, can have up to 5.
++ */
+ #include &quot;sst.h&quot;
+ #include &lt;math.h&gt;
+ 
+@@ -55,7 +63,7 @@
+     int radio_was_broken;
+     struct quadrant *pdest, *q;
+     coord w, hold;
+-    event *ev;
++    event *ev, *ev2;
+ 
+     if (idebug) {
+ 	prout(&quot;=== EVENTS from %.2f to %.2f:&quot;, game.state.date, fintim);
+@@ -438,13 +446,14 @@
+ 	    /* tell the captain about it if we can */
+ 	    if (game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED)
+ 	    {
+-		prout(&quot;Uhura: Captain, starsystem %s in quadrant %d - %d is under attack.&quot;,
+-		      systemname(q-&gt;planet), w.x, w.y);
++		prout(&quot;Uhura- Captain, starsystem %s in quadrant %s&quot;,
++		      systemname(q-&gt;planet), cramlc(quadrant, w));
++		prout(&quot;is under attack.&quot;);
+ 		if (cancelrest())
+ 		    return;
+ 	    }
+ 	    break;
+-      case FENSLV:		/* starsystem is enslaved */
++	case FENSLV:		/* starsystem is enslaved */
+ 	    ev = unschedule(FENSLV);
+ 	    /* see if current distress call still active */
+ 	    q = &amp;game.state.galaxy[ev-&gt;quadrant.x][ev-&gt;quadrant.y];
+@@ -455,17 +464,22 @@
+ 	    q-&gt;status = enslaved;
+ 
+ 	    /* play stork and schedule the first baby */
+-	    ev = schedule(FREPRO, expran(2.0 * game.intime));
++	    ev2 = schedule(FREPRO, expran(2.0 * game.intime));
++	    ev2-&gt;quadrant = ev-&gt;quadrant;
+ 
+ 	    /* report the disaster if we can */
+ 	    if (game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED)
+ 	    {
+-		prout(&quot;\nUhura:  We've lost contact with starsystem %s\n&quot;,
++		prout(&quot;Uhura- We've lost contact with starsystem %s&quot;,
+ 		      systemname(q-&gt;planet));
+-		prout(&quot;  in quadrant %d,%d.\n&quot;, ev-&gt;quadrant.x,ev-&gt;quadrant.y);
++		prout(&quot;in quadrant %s.\n&quot;, cramlc(quadrant, ev-&gt;quadrant));
+ 	    }
+ 	    break;
+-      case FREPRO:		/* Klingon reproduces */
++	case FREPRO:		/* Klingon reproduces */
++	    /*
++	     * If we ever switch to a real event queue, we'll need to
++	     * explicitly retrieve and restore the x and y.
++	     */
+ 	    ev = schedule(FREPRO, expran(1.0 * game.intime));
+ 	    /* see if current distress call still active */
+ 	    q = &amp;game.state.galaxy[ev-&gt;quadrant.x][ev-&gt;quadrant.y];
+@@ -892,11 +906,9 @@
+ 	game.state.nplankl += npdead;
+     }
+     /* mark supernova in galaxy and in star chart */
+-    if ((game.quadrant.x == nq.x &amp;&amp; game.quadrant.y == nq.y) ||
+-	game.damage[DRADIO] == 0 ||
+-	game.condit == IHDOCKED)
++    if (same(game.quadrant, nq) || game.damage[DRADIO] == 0 || game.condit == IHDOCKED)
+ 	game.state.galaxy[nq.x][nq.y].supernova = true;
+-    /* If supernova destroys last klingons give special message */
++    /* If supernova destroys last Klingons give special message */
+     if (KLINGREM==0 &amp;&amp; (nq.x != game.quadrant.x || nq.y != game.quadrant.y)) {
+ 	skip(2);
+ 	if (insx == 0) prout(_(&quot;Lucky you!&quot;));
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000060.html">[Sst-commit-watch] r593 - in trunk: . src
+</A></li>
+	<LI>Next message: <A HREF="000062.html">[Sst-commit-watch] r595 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#61">[ date ]</a>
+              <a href="thread.html#61">[ thread ]</a>
+              <a href="subject.html#61">[ subject ]</a>
+              <a href="author.html#61">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,315 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r785 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2008-May/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r785%20-%20trunk/src&In-Reply-To=%3C200805081115.m48BFlim027441%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000253.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r785 - trunk/src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r785%20-%20trunk/src&In-Reply-To=%3C200805081115.m48BFlim027441%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r785 - trunk/src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Thu May  8 13:15:47 CEST 2008</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000253.html">[Sst-commit-watch] r786 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#252">[ date ]</a>
+              <a href="thread.html#252">[ thread ]</a>
+              <a href="subject.html#252">[ subject ]</a>
+              <a href="author.html#252">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2008-05-08 13:15:44 +0200 (Thu, 08 May 2008)
+New Revision: 785
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/reports.c
+   trunk/src/sst.py
+Log:
+- Allow startchart updates by sr and lr scans.
+Otherwise if you kill the enemies in the quadrant
+and the radio is not working, the evemies are still
+on a chart, etc.
+- Fix bug that the message about base under attack
+sticks when the base is killed by supernova.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2008-03-14 14:44:09 UTC (rev 784)
++++ trunk/src/ai.c	2008-05-08 11:15:44 UTC (rev 785)
+@@ -82,7 +82,7 @@
+ 346*K + 400*R + 500*(C+S) - 400 for expert and emeritus.
+ 
+ Attacker Initial energy levels (nominal):
+-Klingon   Romulan   Commander   Super-Commander
++        Klingon    Romulan    Commander   Super-Commander
+ Novice    400        700        1200        
+ Fair      425        750        1250
+ Good      450        800        1300        1750
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2008-03-14 14:44:09 UTC (rev 784)
++++ trunk/src/events.c	2008-05-08 11:15:44 UTC (rev 785)
+@@ -62,10 +62,11 @@
+ {
+     int evcode, i=0, j, k, l;
+     double fintim = game.state.date + game.optime, datemin, xtime, repair, yank=0;
+-    bool radio_was_broken, ictbeam = false, istract = false;
++    bool ictbeam = false, istract = false;
+     struct quadrant *pdest, *q;
+     coord w, hold;
+     event *ev, *ev2;
++    bool fixed_dev[NDEVICES];
+ 
+     if (idebug) {
+ 	prout(&quot;=== EVENTS from %.2f to %.2f:&quot;, game.state.date, fintim);
+@@ -91,8 +92,6 @@
+ 	}
+     }
+ 
+-    radio_was_broken = damaged(DRADIO);
+-
+     hold.x = hold.y = 0;
+     for (;;) {
+ 	/* Select earliest extraneous event, evcode==0 if no events */
+@@ -137,11 +136,18 @@
+ 	if (game.condition == docked)
+ 	    repair /= game.docfac;
+ 	/* Don't fix Deathray here */
+-	for (l=0; l&lt;NDEVICES; l++)
+-	    if (game.damage[l] &gt; 0.0 &amp;&amp; l != DDRAY)
+-		game.damage[l] -= (game.damage[l]-repair &gt; 0.0 ? repair : game.damage[l]);
++	for (l=0; l&lt;NDEVICES; l++) {
++	    fixed_dev[l] = false;
++	    if (game.damage[l] &gt; 0.0 &amp;&amp; l != DDRAY) {
++		double reminder = (game.damage[l] &gt; repair ?
++			game.damage[l] - repair : .0);
++		game.damage[l] = reminder;
++		if (!(reminder &gt; 0))
++		    fixed_dev[l] = true;
++	    }
++	}
+ 	/* If radio repaired, update star chart and attack reports */
+-	if (radio_was_broken &amp;&amp; !damaged(DRADIO)) {
++	if (fixed_dev[DRADIO]) {
+ 	    prout(_(&quot;Lt. Uhura- \&quot;Captain, the sub-space radio is working and&quot;));
+ 	    prout(_(&quot;   surveillance reports are coming in.&quot;));
+ 	    skip(1);
+@@ -149,10 +155,11 @@
+ 		attackreport(false);
+ 		game.iseenit = true;
+ 	    }
+-	    rechart();
+ 	    prout(_(&quot;   The star chart is now up to date.\&quot;&quot;));
+ 	    skip(1);
+ 	}
++	if (fixed_dev[DRADIO] || fixed_dev[DLRSENS] || fixed_dev[DSRSENS])
++	    rechart();
+ 	/* Cause extraneous event EVCODE to occur */
+ 	game.optime -= xtime;
+ 	switch (evcode) {
+@@ -541,7 +548,7 @@
+ 		} else {
+ 		    prout(_(&quot;Uhura- Starfleet reports increased Klingon activity&quot;));
+ 		    if (q-&gt;planet != NOPLANET)
+-			proutn(_(&quot;near %s&quot;), systnames[q-&gt;planet]);
++			proutn(_(&quot;near %s &quot;), systnames[q-&gt;planet]);
+ 		    prout(_(&quot;in %s.\n&quot;), cramlc(quadrant, w));
+ 		}
+ 	    }
+@@ -895,7 +902,11 @@
+ 	game.state.nscrem = game.state.kscmdr.x = game.state.kscmdr.y = game.isatb =  0;
+ 	game.iscate = false;
+ 	unschedule(FSCMOVE);
++    }
++    if (same(nq, game.battle)) {
+ 	unschedule(FSCDBAS);
++	unschedule(FCDBAS);
++	invalidate(game.battle);
+     }
+     if (game.state.remcom) {
+ 	int maxloop = game.state.remcom, l;
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2008-03-14 14:44:09 UTC (rev 784)
++++ trunk/src/moving.c	2008-05-08 11:15:44 UTC (rev 785)
+@@ -759,8 +759,7 @@
+ 	crmshp();
+ 	skip(1);
+ 	prout(_(&quot;safely out of quadrant.&quot;));
+-	if (!damaged(DRADIO))
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = true;
++	game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = true;
+ 	/* Try to use warp engines */
+ 	if (damaged(DWARPEN)) {
+ 	    skip(1);
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2008-03-14 14:44:09 UTC (rev 784)
++++ trunk/src/reports.c	2008-05-08 11:15:44 UTC (rev 785)
+@@ -153,8 +153,7 @@
+ 	    if (!VALID_QUADRANT(x, y))
+ 		proutn(&quot;  -1&quot;);
+ 	    else {
+-		if (!damaged(DRADIO))
+-		    game.state.galaxy[x][y].charted = true;
++		game.state.galaxy[x][y].charted = true;
+ 		game.state.chart[x][y].klingons = game.state.galaxy[x][y].klingons;
+ 		game.state.chart[x][y].starbase = game.state.galaxy[x][y].starbase;
+ 		game.state.chart[x][y].stars = game.state.galaxy[x][y].stars;
+@@ -192,34 +191,67 @@
+ 	prout(_(&quot;All devices functional.&quot;));
+ }
+ 
+-void rechart(void)
++static void rechart_quad(int x, int y)
++{
++    if (game.state.galaxy[x][y].charted) {
++	game.state.chart[x][y].klingons = game.state.galaxy[x][y].klingons;
++	game.state.chart[x][y].starbase = game.state.galaxy[x][y].starbase;
++	game.state.chart[x][y].stars = game.state.galaxy[x][y].stars;
++    }
++}
++
++static void rechart_dsradio(void)
+ /* update the chart in the Enterprise's computer from galaxy data */
+ {
+     int i, j;
+     game.lastchart = game.state.date;
+     for (i = 1; i &lt;= GALSIZE; i++)
+ 	for (j = 1; j &lt;= GALSIZE; j++)
+-	    if (game.state.galaxy[i][j].charted) {
+-		game.state.chart[i][j].klingons = game.state.galaxy[i][j].klingons;
+-		game.state.chart[i][j].starbase = game.state.galaxy[i][j].starbase;
+-		game.state.chart[i][j].stars = game.state.galaxy[i][j].stars;
+-	    }
++	    rechart_quad(i, j);
+ }
+ 
++static void rechart_lr(void)
++/* update the chart in the Enterprise's computer from galaxy data */
++{
++    int i, j;
++    for (i = game.quadrant.x-1; i &lt;= game.quadrant.x+1; i++) {
++	for (j = game.quadrant.y-1; j &lt;= game.quadrant.y+1; j++) {
++	    if (i == game.quadrant.x &amp;&amp; j == game.quadrant.y)
++		continue;
++	    rechart_quad(i, j);
++	}
++    }
++}
++
++static void rechart_sr(void)
++/* update the chart in the Enterprise's computer from galaxy data */
++{
++    rechart_quad(game.quadrant.x, game.quadrant.y);
++}
++
++void rechart(void)
++{
++    if (!damaged(DRADIO) || game.condition == docked) {
++	if (game.lastchart &lt; game.state.date &amp;&amp; game.condition == docked)
++	    prout(_(&quot;Spock-  \&quot;I revised the Star Chart from the &quot;
++		    &quot;starbase's records.\&quot;&quot;));
++	rechart_dsradio();
++    } else {
++	if (!damaged(DLRSENS))
++	    rechart_lr();
++	if (!damaged(DSRSENS))
++	    rechart_sr();
++    }
++}
++
+ void chart(void)
+ /* display the star chart */ 
+ {
+     int i,j;
+     chew();
+ 
+-    if (!damaged(DRADIO))
+-	rechart();
++    rechart();
+ 
+-    if (game.lastchart &lt; game.state.date &amp;&amp; game.condition == docked) {
+-	prout(_(&quot;Spock-  \&quot;I revised the Star Chart from the starbase's records.\&quot;&quot;));
+-	rechart();
+-    }
+-
+     prout(_(&quot;       STAR CHART FOR THE KNOWN GALAXY&quot;));
+     if (game.state.date &gt; game.lastchart)
+ 	prout(_(&quot;(Last surveillance update %d stardates ago).&quot;),
+@@ -403,11 +435,9 @@
+     }
+     else
+ 	prout(_(&quot;     Short-range scan&quot;));
+-    if (goodScan &amp;&amp; !damaged(DRADIO)) { 
+-	game.state.chart[game.quadrant.x][game.quadrant.y].klingons = game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons;
+-	game.state.chart[game.quadrant.x][game.quadrant.y].starbase = game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase;
+-	game.state.chart[game.quadrant.x][game.quadrant.y].stars = game.state.galaxy[game.quadrant.x][game.quadrant.y].stars;
++    if (goodScan) {
+ 	game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = true;
++	rechart();
+     }
+     prout(&quot;    1 2 3 4 5 6 7 8 9 10&quot;);
+     if (game.condition != docked)
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2008-03-14 14:44:09 UTC (rev 784)
++++ trunk/src/sst.py	2008-05-08 11:15:44 UTC (rev 785)
+@@ -2326,7 +2326,7 @@
+ 		else:
+ 		    prout(_(&quot;Uhura- Starfleet reports increased Klingon activity&quot;))
+ 		    if q.planet != None:
+-			proutn(_(&quot;near %s&quot;) % q.planet)
++			proutn(_(&quot;near %s &quot;) % q.planet)
+ 		    prout(_(&quot;in Quadrant %s.&quot;) % w)
+ 				
+ def wait():
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000253.html">[Sst-commit-watch] r786 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#252">[ date ]</a>
+              <a href="thread.html#252">[ thread ]</a>
+              <a href="subject.html#252">[ subject ]</a>
+              <a href="author.html#252">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

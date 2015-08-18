@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r576 - trunk/doc
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r576%20-%20trunk/doc&In-Reply-To=%3C200609170048.k8H0mRP9021542%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000041.html">
+   <LINK REL="Next"  HREF="000043.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r576 - trunk/doc</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r576%20-%20trunk/doc&In-Reply-To=%3C200609170048.k8H0mRP9021542%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r576 - trunk/doc">esr at mail.berlios.de
+       </A><BR>
+    <I>Sun Sep 17 02:48:27 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000041.html">[Sst-commit-watch] r575 - branches
+</A></li>
+        <LI>Next message: <A HREF="000043.html">[Sst-commit-watch] r577 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#42">[ date ]</a>
+              <a href="thread.html#42">[ thread ]</a>
+              <a href="subject.html#42">[ subject ]</a>
+              <a href="author.html#42">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-17 02:48:26 +0200 (Sun, 17 Sep 2006)
+New Revision: 576
+
+Modified:
+   trunk/doc/sst-doc.xml
+Log:
+Added more history.
+
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2006-09-16 18:50:30 UTC (rev 575)
++++ trunk/doc/sst-doc.xml	2006-09-17 00:48:26 UTC (rev 576)
+@@ -718,8 +718,9 @@
+ &lt;para&gt;and it will be done.  In automatic mode, either two or four numbers
+ must be supplied.&lt;/para&gt;
+ 
+-&lt;para&gt;Automatic mode utilizes the ship's &lt;quote&gt;battle computer.&lt;/quote&gt;  If the
+-computer is damaged, manual movement must be used.&lt;/para&gt;
++&lt;para&gt;Automatic mode utilizes the ship's &lt;quote&gt;battle
++computer.&lt;/quote&gt; If the computer is damaged, manual movement must be
++used.&lt;/para&gt;
+ 
+ &lt;para&gt;If warp engines are damaged less than 10 stardates (undocked) you can
+ still go warp 4.&lt;/para&gt;
+@@ -1646,28 +1647,35 @@
+ &lt;para&gt;Dave Matuszek, Paul Reynolds et. al. at UT Austin played the
+ Hicks version on a CDC6600, but disliked the long load time and
+ extreme slowness of the BASIC program. (David Matuszek notes that the
+-Hicks version he played had a habit of throwing long
+-quotes from Marcus Aurelius at the users, a feature he found
+-intolerable on a TTY at 110 baud.  It must, therefore, have been
+-rather longer than  the one we have.)  The Austin crew proceeded to
+-write their own Trek game, loosely based on the Hicks version, in
+-CDC6600 FORTRAN.  At that time, it was just called &quot;Star Trek&quot;; the
+-&quot;Super&quot; was added by later developers. In the rest of this history
+-we'll call it the &quot;UT FORTRAN&quot; version.&lt;/para&gt;
++Hicks version he played had a habit of throwing long quotes from
++Marcus Aurelius at the users, a feature he found intolerable on a TTY
++at 110 baud.  It must, therefore, have been rather longer than the one
++we have.)&lt;/para&gt;
+ 
++&lt;para&gt;The Austin crew proceeded to write their own Trek game, loosely
++based on the Hicks version, in CDC6600 FORTRAN.  Most of the code was
++written in 1973-1974. At that time, the game was just called &quot;Star
++Trek&quot;; the &quot;Super&quot; was added by later developers. In the rest of this
++history we'll call it the &quot;UT FORTRAN&quot; version.&lt;/para&gt;
++
++&lt;para&gt;Dave Matuszek reports that the UT FORTRAN codebase he worked on
++in 1973-1974 was like Mayfield's original and most later versions in
++BASIC, in that it used used polar coordinates (a clockface angle
++and a distance) for manual navigation.&lt;/para&gt;
++
+ &lt;para&gt;At the time the UT FORTRAN source was last translated to C it emitted
+ the message &quot;Latest update-21 Sept 78&quot;.  Thus, it actually predated
+ (and may have influenced) the best-known BASIC version, the &quot;Super
+ Star Trek&quot; published by David Ahl in his November 1978 sequel
+ &lt;citetitle&gt;BASIC Computer Games&lt;/citetitle&gt;.&lt;/para&gt;
+ 
+-&lt;para&gt;This 1978 &quot;Super Star Trek&quot; had been reworked by Robert Leedom and
+-friends from (according to Leedom) Mayfield's HP port. There is
++&lt;para&gt;This 1978 &quot;Super Star Trek&quot; had been reworked by Robert Leedom
++and friends from (according to Leedom) Mayfield's HP port. There is
+ internal evidence to suggest that at least some features of Leedom's
+ SST may have derived from the UT FORTRAN version.  In particular, Dave
+ Matuszek recalls implementing command words to replace the original
+-numeric command codes, a feature Leedom's SST also had but the
+-1973 and 1975 SPACWRs did not.&lt;/para&gt;
++numeric command codes during 1973-1974, a feature Leedom's SST also
++had but the 1973 and 1975 SPACWRs did not.&lt;/para&gt;
+ 
+ &lt;para&gt;One signature trait of the UT FORTRAN game and its descendants
+ is that the sectors are 10x10 (rather than the 8x8 in Mike Mayfield's
+@@ -1676,9 +1684,6 @@
+ astronomically-named quadrants introduced in Ahl's SST and its
+ descendants.&lt;/para&gt;
+ 
+-&lt;!-- Dave thinks his Fortran Star Trek used the clockface for quadrant --&gt;
+-&lt;!-- navigation. --&gt;
+-
+ &lt;para&gt;Eric Allman's BSD Trek game is one of these, also descended from
+ the UT FORTRAN version via translation to C.  However, the mainline version
+ (now SST2K) has had a lot more stuff folded into it over the years
+@@ -1853,7 +1858,7 @@
+ command descriptions, and changed some logic in sst.c to match.
+ &lt;/para&gt;&lt;/listitem&gt;
+ &lt;listitem&gt;&lt;para&gt;
+-I've cleaned up a lot of grubby FORTRANisms in the code internals --
++I've cleaned up a lot of grubby FORTRANisms in the code internals &mdash;
+ used sizeof(), replaced magic numeric constants with #defines,
+ that sort of thing.
+ &lt;/para&gt;&lt;/listitem&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000041.html">[Sst-commit-watch] r575 - branches
+</A></li>
+	<LI>Next message: <A HREF="000043.html">[Sst-commit-watch] r577 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#42">[ date ]</a>
+              <a href="thread.html#42">[ thread ]</a>
+              <a href="subject.html#42">[ subject ]</a>
+              <a href="author.html#42">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r737 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r737%20-%20trunk/src&In-Reply-To=%3C200610100925.k9A9PsvQ012157%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000203.html">
+   <LINK REL="Next"  HREF="000205.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r737 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r737%20-%20trunk/src&In-Reply-To=%3C200610100925.k9A9PsvQ012157%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r737 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 11:25:54 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000203.html">[Sst-commit-watch] r736 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000205.html">[Sst-commit-watch] r738 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#204">[ date ]</a>
+              <a href="thread.html#204">[ thread ]</a>
+              <a href="subject.html#204">[ subject ]</a>
+              <a href="author.html#204">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 11:25:53 +0200 (Tue, 10 Oct 2006)
+New Revision: 737
+
+Added:
+   trunk/src/replay
+Modified:
+   trunk/src/io.c
+   trunk/src/sst.py
+Log:
+Put a timestamp an email in lofiles.  Add the replay debugging script.
+And a tiny tweak to io.c.
+
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-10-10 08:51:43 UTC (rev 736)
++++ trunk/src/io.c	2006-10-10 09:25:53 UTC (rev 737)
+@@ -86,7 +86,7 @@
+ /* wait for user action -- OK to do nothing if on a TTY */
+ {
+     if (game.options &amp; OPTION_CURSES)
+-	getch();
++	wgetch(prompt_window);
+ }
+ 
+ void announce(void)
+
+Added: trunk/src/replay
+===================================================================
+--- trunk/src/replay	2006-10-10 08:51:43 UTC (rev 736)
++++ trunk/src/replay	2006-10-10 09:25:53 UTC (rev 737)
+@@ -0,0 +1,14 @@
++#!/bin/sh
++# Replay the last SST game. With arg, use only that many lines of the log
++#
++# Because the replay log captures the random-number seed,
++# repeating this any number of times should produce identical games,
++# unless the code changes.
++#
++if [ $1 ]
++then
++    head -n `expr $1 + 2` &lt;/usr/tmp/sst-input.log &gt;replay.log
++else
++    mv /usr/tmp/sst-input.log replay.log
++fi
++python sst.py -t -r replay.log
+
+
+Property changes on: trunk/src/replay
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 08:51:43 UTC (rev 736)
++++ trunk/src/sst.py	2006-10-10 09:25:53 UTC (rev 737)
+@@ -180,7 +180,7 @@
+ the LRSCAN command is no longer needed.  (Controlled by OPTION_AUTOSCAN
+ and turned off if game type is &quot;plain&quot; or &quot;almy&quot;.)
+ &quot;&quot;&quot;
+-import os,sys,math,curses,time,atexit,readline,cPickle,random,getopt,copy
++import os, sys, math, curses, time, readline, cPickle, random, copy
+ 
+ SSTDOC  	= &quot;/usr/share/doc/sst/sst.doc&quot;
+ DOC_NAME	= &quot;sst.doc&quot;
+@@ -6517,6 +6517,7 @@
+ 	atover(True)
+ 
+ if __name__ == '__main__':
++    import getopt, socket
+     try:
+         global line, thing, game, idebug
+         game = None
+@@ -6568,6 +6569,8 @@
+         if logfp:
+             logfp.write(&quot;# seed %s\n&quot; % seed)
+             logfp.write(&quot;# options %s\n&quot; % &quot; &quot;.join(arguments))
++            logfp.write(&quot;# recorded by %s@%s on %s\n&quot; % \
++                    (os.getenv(&quot;LOGNAME&quot;),socket.gethostname(),time.ctime()))
+         random.seed(seed)
+         scanner = sstscanner()
+         map(scanner.append, arguments)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000203.html">[Sst-commit-watch] r736 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000205.html">[Sst-commit-watch] r738 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#204">[ date ]</a>
+              <a href="thread.html#204">[ thread ]</a>
+              <a href="subject.html#204">[ subject ]</a>
+              <a href="author.html#204">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

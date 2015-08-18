@@ -1,0 +1,351 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r669 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r669%20-%20trunk/src&In-Reply-To=%3C200610050421.k954LuV4011496%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000135.html">
+   <LINK REL="Next"  HREF="000137.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r669 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r669%20-%20trunk/src&In-Reply-To=%3C200610050421.k954LuV4011496%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r669 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct  5 06:21:56 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000135.html">[Sst-commit-watch] r668 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000137.html">[Sst-commit-watch] r670 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#136">[ date ]</a>
+              <a href="thread.html#136">[ thread ]</a>
+              <a href="subject.html#136">[ subject ]</a>
+              <a href="author.html#136">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-05 06:21:56 +0200 (Thu, 05 Oct 2006)
+New Revision: 669
+
+Modified:
+   trunk/src/sst.py
+Log:
+Python IO queue appears to work.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-05 03:38:44 UTC (rev 668)
++++ trunk/src/sst.py	2006-10-05 04:21:56 UTC (rev 669)
+@@ -187,6 +187,7 @@
+ MAXUNINHAB	= 10
+ PLNETMAX	= (NINHAB + MAXUNINHAB)
+ QUADSIZE	= 10
++BASEMIN		= 2
+ BASEMAX 	= (GALSIZE * GALSIZE / 12)
+ MAXKLGAME	= 127
+ MAXKLQUAD	= 9
+@@ -227,7 +228,7 @@
+ IHALPHA = &quot; &quot;
+ 
+ class coord:
+-    def __init(self, x=None, y=None):
++    def __init__(self, x=None, y=None):
+         self.x = x
+         self.y = y
+     def invalidate(self):
+@@ -247,22 +248,22 @@
+     def __hash__(self):
+         return hash((x, y))
+     def __str__(self):
+-        return &quot;%d - %d&quot; % (self.x, self.y)
++        return &quot;%s - %s&quot; % (self.x, self.y)
+ 
+ class planet:
+-    def __init(self):
++    def __init__(self):
+         self.name = None	# string-valued if inhabited
+         self.w = coord()	# quadrant located
+         self.pclass = None	# could be &quot;&quot;M&quot;, &quot;N&quot;, &quot;O&quot;, or &quot;destroyed&quot;
+-        self.crystals = None	# could be &quot;mined&quot;, &quot;present&quot;, &quot;absent&quot;
+-        self.known = None	# could be &quot;unknown&quot;, &quot;known&quot;, &quot;shuttle_down&quot;
+-        self.inhabited		# is it inhabites?
++        self.crystals = &quot;absent&quot;# could be &quot;mined&quot;, &quot;present&quot;, &quot;absent&quot;
++        self.known = &quot;unknown&quot;	# could be &quot;unknown&quot;, &quot;known&quot;, &quot;shuttle_down&quot;
++        self.inhabited = False	# is it inhabites?
+     def __str__(self):
+         return self.name
+ 
+ NOPLANET = None
+ class quadrant:
+-    def __init(self):
++    def __init__(self):
+         self.stars = None
+         self.planet = None
+ 	self.starbase = None
+@@ -273,28 +274,28 @@
+         self.status = None	# Could be &quot;secure&quot;, &quot;distressed&quot;, &quot;enslaved&quot;
+ 
+ class page:
+-    def __init(self):
++    def __init__(self):
+ 	self.stars = None
+ 	self.starbase = None
+ 	self.klingons = None
+ 
+ class snapshot:
+-    def __init(self):
++    def __init__(self):
+         self.snap = False	# snapshot taken
+-        self.crew = None	# crew complement
+-	self.remkl = None	# remaining klingons
+-	self.remcom = None	# remaining commanders
+-	self.nscrem = None	# remaining super commanders
+-	self.rembase = None	# remaining bases
+-	self.starkl = None	# destroyed stars
+-	self.basekl = None	# destroyed bases
+-	self.nromrem = None	# Romulans remaining
+-	self.nplankl = None	# destroyed uninhabited planets
+-	self.nworldkl = None	# destroyed inhabited planets
++        self.crew = 0   	# crew complement
++	self.remkl = 0  	# remaining klingons
++	self.remcom = 0  	# remaining commanders
++	self.nscrem = 0		# remaining super commanders
++	self.rembase = 0	# remaining bases
++	self.starkl = 0 	# destroyed stars
++	self.basekl = 0 	# destroyed bases
++	self.nromrem = 0	# Romulans remaining
++	self.nplankl = 0	# destroyed uninhabited planets
++	self.nworldkl = 0	# destroyed inhabited planets
+         self.planets = []	# Planet information
+-        self.date = None	# stardate
+-	self.remres = None	# remaining resources
+-	self.remtime = None	# remaining time
++        self.date = 0.0   	# stardate
++	self.remres = 0 	# remaining resources
++	self.remtime = 0	# remaining time
+         self.baseq = [] 	# Base quadrant coordinates
+         for i in range(BASEMAX+1):
+             self.baseq.append(coord())
+@@ -304,7 +305,7 @@
+ 	self.kscmdr = coord()	# Supercommander quadrant coordinates
+         self.galaxy = [] 	# The Galaxy (subscript 0 not used)
+         for i in range(GALSIZE+1):
+-            self.chart.append([])
++            self.galaxy.append([])
+             for j in range(GALSIZE+1):
+                 self.galaxy[i].append(quadrant())
+     	self.chart = [] 	# the starchart (subscript 0 not used)
+@@ -390,14 +391,14 @@
+ class gamestate:
+     def __init__(self):
+         self.options = None	# Game options
+-        self.state = None	# A snapshot structure
+-        self.snapsht = None	# Last snapshot taken for time-travel purposes
++        self.state = snapshot()	# A snapshot structure
++        self.snapsht = snapshot()	# Last snapshot taken for time-travel purposes
+         self.quad = [[IHDOT * (QUADSIZE+1)] * (QUADSIZE+1)]	# contents of our quadrant
+         self.kpower = [[0 * (QUADSIZE+1)] * (QUADSIZE+1)]	# enemy energy levels
+         self.kdist = [[0 * (QUADSIZE+1)] * (QUADSIZE+1)]	# enemy distances
+         self.kavgd = [[0 * (QUADSIZE+1)] * (QUADSIZE+1)]	# average distances
+         self.damage = [0.0] * NDEVICES	# damage encountered
+-        self.future = [0.0] * NEVENTS	# future events
++        self.future = []		# future events
+         for i in range(NEVENTS):
+             self.future.append(event())
+         self.passwd  = None;		# Self Destruct password
+@@ -2271,7 +2272,7 @@
+     return game.future[evtype].date
+ 
+ def schedule(evtype, offset):
+-    # schedule an event of specified type 
++    # schedule an event of specified type
+     game.future[evtype].date = game.state.date + offset
+     return game.future[evtype]
+ 
+@@ -5920,7 +5921,7 @@
+     for i in range(0, NDEVICES): 
+ 	game.damage[i] = 0.0
+     # Set up assorted game parameters
+-    invalidate(game.battle)
++    game.battle = coord()
+     game.state.date = game.indate = 100.0*int(31.0*random.random()+20.0)
+     game.nkinks = game.nhelp = game.casual = game.abandoned = 0
+     game.iscate = game.resting = game.imine = game.icrystl = game.icraft = False
+@@ -5977,9 +5978,9 @@
+ 	    contflag = False
+             # C version: for (j = i-1; j &gt; 0; j--)
+             # so it did them in the opposite order.
+-            for j in range(i):
+-		# Improved placement algorithm to spread out bases 
+-		distq = w.distance(baseq[j])
++            for j in range(1, i):
++		# Improved placement algorithm to spread out bases
++		distq = w.distance(game.state.baseq[j])
+ 		if distq &lt; 6.0*(BASEMAX+1-game.inbase) and random.random() &lt; 0.75:
+ 		    contflag = True
+ 		    if idebug:
+@@ -6039,13 +6040,13 @@
+             new.name = systnames[i]
+ 	    new.inhabited = True
+ 	else:
+-	    new.pclass = (&quot;M&quot;, &quot;N&quot;, &quot;O&quot;)[random.random()*3.0]
++	    new.pclass = (&quot;M&quot;, &quot;N&quot;, &quot;O&quot;)[random.randint(0, 2)]
+             if random.random()*1.5:		# 1 in 3 chance of crystals
+                 new.crystals = &quot;present&quot;
+ 	    new.known = &quot;unknown&quot;
+ 	    new.inhabited = False
+ 	game.state.galaxy[w.x][w.y].planet = new
+-        game.state.plnets.append(new)
++        game.state.planets.append(new)
+     # Locate Romulans
+     for i in range(1, game.state.nromrem+1):
+ 	w = randplace(GALSIZE)
+@@ -6054,15 +6055,14 @@
+     if game.state.nscrem &gt; 0:
+         while True:
+             w = randplace(GALSIZE)
+-            if not game.state.galaxy[w.x][w.y].supernova and game.state.galaxy[w.x][w.y].klingons &lt;= MXKLQUAD:
++            if not game.state.galaxy[w.x][w.y].supernova and game.state.galaxy[w.x][w.y].klingons &lt;= MAXKLQUAD:
+                 break
+ 	game.state.kscmdr = w
+ 	game.state.galaxy[w.x][w.y].klingons += 1
+     # Place thing (in tournament game, thingx == -1, don't want one!)
+-    if thing.x != -1:
++    global thing
++    if thing == None:
+ 	thing = randplace(GALSIZE)
+-    else:
+-	invalidate(thing)
+     skip(2)
+     game.state.snap = False
+     if game.skill == SKILL_NOVICE:
+@@ -6102,7 +6102,8 @@
+ 	attack(False)
+ 
+ def choose(needprompt):
+-    # choose your game type 
++    # choose your game type
++    global thing
+     while True:
+ 	game.tourn = 0
+ 	game.thawed = False
+@@ -6120,7 +6121,6 @@
+ 		chew()
+ 		continue # We don't want a blank entry
+ 	    game.tourn = int(aaitem)
+-	    thing.x = -1
+ 	    random.seed(aaitem)
+ 	    break
+         if isit(&quot;saved&quot;) or isit(&quot;frozen&quot;):
+@@ -6190,7 +6190,7 @@
+ 
+     # Use parameters to generate initial values of things
+     game.damfac = 0.5 * game.skill
+-    game.state.rembase = 2.0 + random.random()*(BASEMAX-2.0)
++    game.state.rembase = random.randint(BASEMIN, BASEMAX)
+     game.inbase = game.state.rembase
+     game.inplan = 0
+     if game.options &amp; OPTION_PLANETS:
+@@ -6435,7 +6435,7 @@
+     else:
+         game.passwd = &quot;&quot;
+         for i in range(3):
+-	    game.passwd[i] += chr(97+int(random.random()*25))
++	    game.passwd += chr(97+int(random.random()*25))
+ 
+ # Code from sst.c begins here
+ 
+@@ -6802,6 +6802,9 @@
+         line = line.lstrip()
+         if line:
+             inqueue = line.split()
++        else:
++            inqueue = []
++            return IHEOL
+     elif not inqueue:
+         return IHEOL
+     # From here on in it's all looking at the queue
+@@ -6934,6 +6937,7 @@
+     line = ''
+     thing = coord()
+     game = gamestate()
++    idebug = 0
+ 
+     game.options = OPTION_ALL &amp;~ (OPTION_IOMODES | OPTION_SHOWME | OPTION_PLAIN | OPTION_ALMY)
+     # Disable curses mode until the game logic is working.
+@@ -6945,7 +6949,7 @@
+     seed = time.time()
+     (options, arguments) = getopt.getopt(sys.argv[1:], &quot;r:tx&quot;)
+     for (switch, val) in options:
+-        if switch == 'r':
++        if switch == '-r':
+             try:
+                 replayfp = open(optarg, &quot;r&quot;)
+             except IOError:
+@@ -6960,10 +6964,10 @@
+ 		os.exit(1)
+ 	    game.options |= OPTION_TTY
+ 	    game.options &amp;=~ OPTION_CURSES
+-	elif switch == 't':
++	elif switch == '-t':
+ 	    game.options |= OPTION_TTY
+ 	    game.options &amp;=~ OPTION_CURSES
+-	elif switch == 'x':
++	elif switch == '-x':
+ 	    idebug = True
+ 	else:
+ 	    sys.stderr.write(&quot;usage: sst [-t] [-x] [startcommand...].\n&quot;)
+@@ -6979,11 +6983,11 @@
+     random.seed(seed)
+ 
+     iostart()
++    if arguments:
++        inqueue = arguments
++    else:
++        inqueue = None
+ 
+-    for tok in arguments:
+-	line += tok
+-	line += &quot; &quot;
+-
+     while True: # Play a game 
+ 	setwnd(fullscreen_window)
+ 	clrscr()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000135.html">[Sst-commit-watch] r668 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000137.html">[Sst-commit-watch] r670 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#136">[ date ]</a>
+              <a href="thread.html#136">[ thread ]</a>
+              <a href="subject.html#136">[ subject ]</a>
+              <a href="author.html#136">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

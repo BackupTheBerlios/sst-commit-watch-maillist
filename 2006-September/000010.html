@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r543 - in trunk: . src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r543%20-%20in%20trunk%3A%20.%20src&In-Reply-To=%3C200609131732.k8DHW19Q023617%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000008.html">
+   <LINK REL="Next"  HREF="000011.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r543 - in trunk: . src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r543%20-%20in%20trunk%3A%20.%20src&In-Reply-To=%3C200609131732.k8DHW19Q023617%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r543 - in trunk: . src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 13 19:32:01 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000008.html">[Sst-commit-watch] r542 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000011.html">[Sst-commit-watch] r544 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#10">[ date ]</a>
+              <a href="thread.html#10">[ thread ]</a>
+              <a href="subject.html#10">[ subject ]</a>
+              <a href="author.html#10">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2006-09-13 19:32:01 +0200 (Wed, 13 Sep 2006)
+New Revision: 543
+
+Added:
+   trunk/src/xio.c
+Removed:
+   trunk/xio.c
+Log:
+move xio.c to src
+
+Copied: trunk/src/xio.c (from rev 542, trunk/xio.c)
+
+Deleted: trunk/xio.c
+===================================================================
+--- trunk/xio.c	2006-09-13 17:29:04 UTC (rev 542)
++++ trunk/xio.c	2006-09-13 17:32:01 UTC (rev 543)
+@@ -1,40 +0,0 @@
+-#include &lt;stdlib.h&gt;
+-#include &lt;X11/Intrinsic.h&gt;
+-#include &lt;X11/StringDefs.h&gt;
+-#include &lt;X11/Shell.h&gt;
+-#include &lt;X11/Xaw/Form.h&gt;
+-#include &lt;X11/Xaw/Command.h&gt;
+-#include &lt;X11/Xaw/AsciiText.h&gt;
+-
+-XtAppContext app_context;
+-Widget toplevel, form, quit, text;
+-
+-void quit_proc (Widget w, XtPointer client_data, XtPointer call_data)
+-{ 
+-    XtDestroyApplicationContext (app_context);
+-    exit (0);
+-}
+-
+-int main (int argc, char **argv)
+-{ 
+-    toplevel = XtVaOpenApplication (&amp;app_context, &quot;XThird&quot;, NULL, 0, &amp;argc,
+-				    argv, NULL, applicationShellWidgetClass,
+-				    XtNallowShellResize, True, NULL);
+-    form = XtVaCreateManagedWidget (&quot;form&quot;, formWidgetClass, toplevel, NULL); 
+-    quit = XtVaCreateManagedWidget (&quot;quit&quot;, commandWidgetClass, form, XtNlabel,
+-				    &quot;Quit&quot;, NULL);
+-    text = XtVaCreateManagedWidget (&quot;text&quot;, asciiTextWidgetClass, form, 
+-				    XtNfromVert, quit, XtNresize,
+-				    XawtextResizeBoth, XtNresizable, True, NULL);
+-    XtAddCallback (quit, XtNcallback, quit_proc, NULL);
+-    if (argc &lt;= 1)
+-	XtVaSetValues (text, XtNtype, XawAsciiString, 
+-		       XtNstring, &quot;Fool! You should&quot;
+-		       &quot; supply a file name!&quot;, NULL); 
+-    else
+-	XtVaSetValues (text, XtNtype, XawAsciiFile, XtNstring, argv [1], NULL);
+-    XtVaSetValues (text, XtNeditType, XawtextRead, XtNdisplayCaret, False, NULL);
+-    XtRealizeWidget (toplevel);
+-    XtAppMainLoop (app_context);
+-    exit(0);
+-}
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000008.html">[Sst-commit-watch] r542 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000011.html">[Sst-commit-watch] r544 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#10">[ date ]</a>
+              <a href="thread.html#10">[ thread ]</a>
+              <a href="subject.html#10">[ subject ]</a>
+              <a href="author.html#10">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

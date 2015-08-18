@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r549 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r549%20-%20trunk/src&In-Reply-To=%3C200609131945.k8DJjnnP006242%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000015.html">
+   <LINK REL="Next"  HREF="000017.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r549 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r549%20-%20trunk/src&In-Reply-To=%3C200609131945.k8DJjnnP006242%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r549 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 13 21:45:49 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000015.html">[Sst-commit-watch] r548 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000017.html">[Sst-commit-watch] r550 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#16">[ date ]</a>
+              <a href="thread.html#16">[ thread ]</a>
+              <a href="subject.html#16">[ subject ]</a>
+              <a href="author.html#16">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-13 21:45:48 +0200 (Wed, 13 Sep 2006)
+New Revision: 549
+
+Modified:
+   trunk/src/xio.c
+Log:
+Multiple-button layout, but with some &quot;Cannot convert string&quot; messages.
+
+
+Modified: trunk/src/xio.c
+===================================================================
+--- trunk/src/xio.c	2006-09-13 18:28:02 UTC (rev 548)
++++ trunk/src/xio.c	2006-09-13 19:45:48 UTC (rev 549)
+@@ -5,67 +5,131 @@
+ #include &lt;X11/Xaw/Form.h&gt;
+ #include &lt;X11/Xaw/Command.h&gt;
+ #include &lt;X11/Xaw/AsciiText.h&gt;
++#include &quot;sst.h&quot;
+ 
+-XtAppContext app_context;
+-Widget toplevel, form, text; 
+-Widget buttons, phasers, photons, destruct, quit;
++static XtAppContext app_context;
++static Widget toplevel, form, text, buttons; 
+ 
+ String fallback[] = {
+-    /* button labels */
+-    &quot;*phasers.label: Phasers&quot;,
+-    &quot;*photons.label: Torps&quot;,
+-    &quot;*destruct.label: Destruct&quot;,
+-    &quot;*quit.label: Quit&quot;,
+     /* text window resources */
+     &quot;*text.resizable: true&quot;,
+     &quot;*text.resize: ResizeBoth&quot;,
+     /* layout constraints */
+-    &quot;*photons.fromHoriz: phasers&quot;,
+-    &quot;*destruct.fromHoriz: photons&quot;,
+-    &quot;*quit.fromHoriz: destruct&quot;,
++    /* navigation row */
++    //&quot;*Move.fromHoriz:&quot;,
++    &quot;*Impulse.fromHoriz: Move&quot;,
++    &quot;*Rest.fromHoriz: Impulse&quot;,
++    &quot;*Warp.fromHoriz: Rest&quot;,
++    &quot;*Dock.fromHoriz: Warp&quot;,
++    &quot;*Chart.fromHoriz: Dock&quot;,
++    // Weapons row
++    &quot;*Phasers.fromVert: Move&quot;,
++    &quot;*Torpedo.fromHoriz: Phasers&quot;,
++    &quot;*Shields.fromHoriz: Torpedo&quot;,
++    &quot;*Damages.fromHoriz: Shields&quot;,
++    &quot;*Crystals.fromHoriz: Damages&quot;,
++    &quot;*Deathray.fromHoriz: Damages&quot;,
++    &quot;*Mayday.fromHoriz: Deathray&quot;,
++    &quot;*Abandon.fromHoriz: Mayday&quot;,
++    // Planet row
++    &quot;*Sensors.fromVert: Phasers&quot;,
++    &quot;*Orbit.fromHoriz: Sensors&quot;,
++    &quot;*Transport.fromHoriz: Orbit&quot;,
++    &quot;*Mine.fromHoriz: Transport&quot;,
++    &quot;*Shuttle.fromHoriz: Transport&quot;,
++    &quot;*Planets.fromHoriz: Shuttle&quot;,
++    // Miscellany row
++    &quot;*Report.fromVert: Sensors&quot;,
++    &quot;*Computer.fromHoriz: Report&quot;,
++    &quot;*Probe.fromHoriz: Computer&quot;,
++    &quot;*Help.fromHoriz: Computer&quot;,
++    // Ending it all
++    &quot;*Score.fromVert: Report&quot;,
++    &quot;*Destruct.fromHoriz: Score&quot;,
++    &quot;*Quit.fromHoriz: Destruct&quot;,
++    &quot;*Emexit.fromHoriz: Quit&quot;,
++    &quot;*Save.fromHoriz: Emexit&quot;,
+     NULL,
+ };
+ 
+-static void quit_proc (Widget w, XtPointer client_data, XtPointer call_data)
++struct cmd_t {
++    char *name;
++    void (*callback)(Widget, XtPointer, XtPointer);
++    int enable;
++    Widget widget;
++};
++
++static void quit_proc(Widget w, XtPointer client_data, XtPointer call_data)
+ { 
+     XtDestroyApplicationContext (app_context);
+     exit (0);
+ }
+ 
+-int main (int argc, char **argv)
++static struct cmd_t commands[] = {
++    {&quot;Phasers&quot;,		NULL,		0},
++    {&quot;Torpedo&quot;,		NULL,		0},
++    {&quot;Move&quot;,		NULL,		0},
++    {&quot;Shields&quot;,		NULL,		0},
++    {&quot;Dock&quot;,		NULL,		0},
++    {&quot;Damages&quot;,		NULL,		0},
++    {&quot;Chart&quot;,		NULL,		0},
++    {&quot;Impulse&quot;,		NULL,		0},
++    {&quot;Rest&quot;,		NULL,		0},
++    {&quot;Warp&quot;,		NULL,		0},
++    {&quot;Score&quot;,		NULL,		0},
++    {&quot;Sensors&quot;,		NULL,		OPTION_PLANETS},
++    {&quot;Orbit&quot;,		NULL,		OPTION_PLANETS},
++    {&quot;Transport&quot;,	NULL,		OPTION_PLANETS},
++    {&quot;Mine&quot;,		NULL,		OPTION_PLANETS},
++    {&quot;Crystals&quot;,	NULL,		OPTION_PLANETS},
++    {&quot;Shuttle&quot;,		NULL,		OPTION_PLANETS},
++    {&quot;Planets&quot;,		NULL,		OPTION_PLANETS},
++    {&quot;Report&quot;,		NULL,		0},
++    {&quot;Computer&quot;,	NULL,      	0},
++    {&quot;Emexit&quot;,		NULL,		0},
++    {&quot;Probe&quot;,		NULL,		OPTION_PROBE},
++    {&quot;Save&quot;,		NULL,		0},
++    {&quot;Abandon&quot;,		NULL,		0},
++    {&quot;Destruct&quot;,	NULL,		0},
++    {&quot;Deathray&quot;,	NULL,		0},
++    {&quot;Mayday&quot;,		NULL,		0},
++    {&quot;Quit&quot;,		quit_proc,	0},
++    {&quot;Help&quot;,		NULL,		0},
++};
++
++int main(int argc, char **argv)
+ { 
+-    toplevel = XtVaOpenApplication (&amp;app_context, &quot;sst2k&quot;, NULL, 0, &amp;argc,
++    struct cmd_t *cp;
++
++    toplevel = XtVaOpenApplication(&amp;app_context, &quot;sst2k&quot;, NULL, 0, &amp;argc,
+ 				    argv, fallback, 
+ 				    applicationShellWidgetClass,
+ 				    XtNallowShellResize, True, NULL);
+-    form = XtVaCreateManagedWidget (&quot;form&quot;, formWidgetClass, toplevel, NULL);
+-    /* The button panel */
+-    buttons  = XtVaCreateManagedWidget (&quot;form&quot;, formWidgetClass, form, NULL); 
+-    phasers  = XtVaCreateManagedWidget(&quot;phasers&quot;, 
+-				       commandWidgetClass, buttons, 
+-				       NULL);
+-    photons  = XtVaCreateManagedWidget(&quot;photons&quot;, 
+-				       commandWidgetClass, buttons, 
+-				       NULL);
+-    destruct = XtVaCreateManagedWidget(&quot;destruct&quot;, 
+-				       commandWidgetClass, buttons, 
+-				       NULL);
+-    quit     = XtVaCreateManagedWidget(&quot;quit&quot;, 
+-				       commandWidgetClass, buttons, 
+-				       NULL);
+-    XtAddCallback (quit, XtNcallback, quit_proc, NULL);
++    form = XtVaCreateManagedWidget(&quot;form&quot;, formWidgetClass, toplevel, NULL);
+     /* the command window */
+-    text = XtVaCreateManagedWidget (&quot;text&quot;, asciiTextWidgetClass, form, 
+-				    XtNfromVert, buttons, 
++    text = XtVaCreateManagedWidget(&quot;text&quot;, asciiTextWidgetClass, form, 
+ 				    NULL);
+ 
++    /* The button panel */
++    buttons  = XtVaCreateManagedWidget(&quot;form&quot;, 
++					formWidgetClass, form, 
++					XtNfromVert, text, 
++					NULL); 
++    for (cp = commands; cp &lt; commands + sizeof(commands)/sizeof(commands[0]); cp++) {
++	cp-&gt;widget = XtVaCreateManagedWidget(cp-&gt;name, 
++					     commandWidgetClass, buttons, 
++					     XtNlabel, cp-&gt;name,
++					     NULL);
++	if (cp-&gt;callback)
++	    XtAddCallback (cp-&gt;widget, XtNcallback, cp-&gt;callback, NULL);
++    }
+     /* sample text so the widget will be identifiable */
+-    XtVaSetValues (text, XtNtype, XawAsciiString, 
++    XtVaSetValues(text, XtNtype, XawAsciiString, 
+ 		       XtNstring, &quot;Command window&quot;, NULL); 
+-    XtVaSetValues (text, XtNeditType, XawtextRead, XtNdisplayCaret, False, NULL);
+-    XtRealizeWidget (toplevel);
+-    XtAppMainLoop (app_context);
++    XtVaSetValues(text, XtNeditType, XawtextRead, XtNdisplayCaret, False, NULL);
++    XtRealizeWidget(toplevel);
++    XtAppMainLoop(app_context);
+     /* loop may be interrupted */
+-    XtDestroyApplicationContext (app_context);
++    XtDestroyApplicationContext(app_context);
+     exit(0);
+ }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000015.html">[Sst-commit-watch] r548 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000017.html">[Sst-commit-watch] r550 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#16">[ date ]</a>
+              <a href="thread.html#16">[ thread ]</a>
+              <a href="subject.html#16">[ subject ]</a>
+              <a href="author.html#16">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

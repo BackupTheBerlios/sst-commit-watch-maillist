@@ -1,0 +1,153 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r533 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r533%20-%20trunk&In-Reply-To=%3C200609121752.k8CHqC1i021638%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000001.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r533 - trunk</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r533%20-%20trunk&In-Reply-To=%3C200609121752.k8CHqC1i021638%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r533 - trunk">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 12 19:52:12 CEST 2006</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000001.html">[Sst-commit-watch] r534 - trunk/www
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#0">[ date ]</a>
+              <a href="thread.html#0">[ thread ]</a>
+              <a href="subject.html#0">[ subject ]</a>
+              <a href="author.html#0">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-12 19:52:11 +0200 (Tue, 12 Sep 2006)
+New Revision: 533
+
+Modified:
+   trunk/sst.c
+Log:
+Reotganize documentatioin of changes, Add some stuff from Tom Amy's
+web page.
+
+
+Modified: trunk/sst.c
+===================================================================
+--- trunk/sst.c	2006-09-12 17:43:25 UTC (rev 532)
++++ trunk/sst.c	2006-09-12 17:52:11 UTC (rev 533)
+@@ -42,25 +42,21 @@
+ 
+ Here are Tom Almy's changes:
+ 
+-   Compared to original version, I've changed the &quot;help&quot; command to
+-   &quot;call&quot; and the &quot;terminate&quot; command to &quot;quit&quot; to better match
+-   user expectations. The DECUS version apparently made those changes
+-   as well as changing &quot;freeze&quot; to &quot;save&quot;. However I like &quot;freeze&quot;.
+-   (Both &quot;freeze&quot; and &quot;save&quot; work in SST2K.)
++   In early 1997, I got the bright idea to look for references to
++   &quot;Super Star Trek&quot; on the World Wide Web. There weren't many hits,
++   but there was one that came up with 1979 Fortran sources! This
++   version had a few additional features that mine didn't have,
++   however mine had some feature it didn't have. So I merged its
++   features that I liked. I also took a peek at the DECUS version (a
++   port, less sources, to the PDP-10), and some other variations.
+ 
+-   When I got a later (1979) version of Super Star Trek that I was converting
+-   from, I added the emexit command from it.
++   1, Compared to the original UT version, I've changed the &quot;help&quot; command to
++      &quot;call&quot; and the &quot;terminate&quot; command to &quot;quit&quot; to better match
++      user expectations. The DECUS version apparently made those changes
++      as well as changing &quot;freeze&quot; to &quot;save&quot;. However I like &quot;freeze&quot;.
++      (Both &quot;freeze&quot; and &quot;save&quot; work in SST2K.)
+ 
+-   That 1979 version also mentions srscan and lrscan working when
+-   docked (using the starbase's scanners), so I made some changes here
+-   to do this (and indicating that fact to the player), and then realized
+-   the base would have a subspace radio as well -- doing a Chart when docked
+-   updates the star chart, and all radio reports will be heard. The Dock
+-   command will also give a report if a base is under attack.
+-
+-   Also added:
+-
+-   1. The experimental deathray originally had only a 5% chance of
++   2. The experimental deathray originally had only a 5% chance of
+       success, but could be used repeatedly. I guess after a couple
+       years of use, it was less &quot;experimental&quot; because the 1979
+       version had a 70% success rate. However it was prone to breaking
+@@ -68,23 +64,32 @@
+       failure modes (great humor!).  (Now controlled by OPTION_DEATHRAY
+       and turned off if game type is &quot;plain&quot;.)
+ 
+-   2. Tholian Web from the 1979 version.  (Now controlled by
++   3. The 1979 version also mentions srscan and lrscan working when
++      docked (using the starbase's scanners), so I made some changes here
++      to do this (and indicating that fact to the player), and then realized
++      the base would have a subspace radio as well -- doing a Chart when docked
++      updates the star chart, and all radio reports will be heard. The Dock
++      command will also give a report if a base is under attack.
++
++   4. Tholian Web from the 1979 version.  (Now controlled by
+       OPTION_THOLIAN and turned off if game type is &quot;plain&quot;.)
+ 
+-   3. Enemies can ram the Enterprise. (Now controlled by OPTION_RAMMING
++   5. Enemies can ram the Enterprise. (Now controlled by OPTION_RAMMING
+       and turned off if game type is &quot;plain&quot;.)
+ 
+-   4. Regular Klingons and Romulans can move in Expert and Emeritus games. 
++   6. Regular Klingons and Romulans can move in Expert and Emeritus games. 
+       This code could use improvement. (Now controlled by OPTION_MVBADDY
+       and turned off if game type is &quot;plain&quot;.)
+ 
+-   5. The deep-space probe feature from the DECUS version.  (Now controlled
++   7. The deep-space probe feature from the DECUS version.  (Now controlled
+       by OPTION_PROBE and turned off if game type is &quot;plain&quot;).
+ 
+-   6. Bugfix: Klingon commander movements are no longer reported if long-range 
++   8. 'emexit' command from the 1979 version.
++
++   9. Bugfix: Klingon commander movements are no longer reported if long-range 
+       sensors are damaged.
+ 
+-   7. Bugfix: Better base positioning at startup (more spread out).
++   10. Bugfix: Better base positioning at startup (more spread out).
+       That made sense to add because most people abort games with 
+       bad base placement.
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000001.html">[Sst-commit-watch] r534 - trunk/www
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#0">[ date ]</a>
+              <a href="thread.html#0">[ thread ]</a>
+              <a href="subject.html#0">[ subject ]</a>
+              <a href="author.html#0">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

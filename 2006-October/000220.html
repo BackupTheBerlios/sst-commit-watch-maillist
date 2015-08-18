@@ -1,0 +1,278 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r753 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r753%20-%20trunk/src&In-Reply-To=%3C200610121327.k9CDREF9019134%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000219.html">
+   <LINK REL="Next"  HREF="000221.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r753 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r753%20-%20trunk/src&In-Reply-To=%3C200610121327.k9CDREF9019134%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r753 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct 12 15:27:14 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000219.html">[Sst-commit-watch] r752 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000221.html">[Sst-commit-watch] r754 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#220">[ date ]</a>
+              <a href="thread.html#220">[ thread ]</a>
+              <a href="subject.html#220">[ subject ]</a>
+              <a href="author.html#220">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-12 15:27:13 +0200 (Thu, 12 Oct 2006)
+New Revision: 753
+
+Modified:
+   trunk/src/sst.py
+Log:
+Eliminate traces of some macros.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-12 12:01:04 UTC (rev 752)
++++ trunk/src/sst.py	2006-10-12 13:27:13 UTC (rev 753)
+@@ -201,10 +201,6 @@
+ MAXBURST	= 3
+ MINCMDR 	= 10
+ 
+-# These functions hide the difference between 0-origin and 1-origin addressing.
+-def VALID_QUADRANT(x, y):	return ((x)&gt;=0 and (x)&lt;GALSIZE and (y)&gt;=0 and (y)&lt;GALSIZE)
+-def VALID_SECTOR(x, y):	return ((x)&gt;=0 and (x)&lt;QUADSIZE and (y)&gt;=0 and (y)&lt;QUADSIZE)
+-
+ # How to represent features
+ IHR = 'R',
+ IHK = 'K',
+@@ -232,6 +228,10 @@
+     def __init__(self, x=None, y=None):
+         self.i = x
+         self.j = y
++    def valid_quadrant(self):
++        return self.i&gt;=0 and self.i&lt;GALSIZE and self.j&gt;=0 and self.j&lt;GALSIZE
++    def valid_sector(self):
++	return self.i&gt;=0 and self.i&lt;QUADSIZE and self.j&gt;=0 and self.j&lt;QUADSIZE
+     def invalidate(self):
+         self.i = self.j = None
+     def is_valid(self):
+@@ -602,7 +602,7 @@
+ 
+ def welcoming(iq):
+     &quot;Would this quadrant welcome another Klingon?&quot;
+-    return VALID_QUADRANT(iq.i,iq.j) and \
++    return iq.valid_quadrant() and \
+ 	not game.state.galaxy[iq.i][iq.j].supernova and \
+ 	game.state.galaxy[iq.i][iq.j].klingons &lt; MAXKLQUAD
+ 
+@@ -1276,7 +1276,7 @@
+     for step in range(1, QUADSIZE*2):
+ 	track.next()
+         w = track.sector()
+-	if not VALID_SECTOR(w.i, w.j):
++	if not w.valid_sector():
+ 	    break
+ 	iquad=game.quad[w.i][w.j]
+ 	tracktorpedo(origin, w, step, number, nburst, iquad)
+@@ -1303,7 +1303,7 @@
+ 	    yy = math.cos(ang)/temp
+ 	    jw.i = int(w.i+xx+0.5)
+ 	    jw.j = int(w.j+yy+0.5)
+-	    if not VALID_SECTOR(jw.i, jw.j):
++	    if not jw.valid_sector():
+ 		return hit
+ 	    if game.quad[jw.i][jw.j]==IHBLANK:
+ 		finish(FHOLE)
+@@ -1346,7 +1346,7 @@
+ 	    yy = math.cos(ang)/temp
+ 	    jw.i = int(w.i+xx+0.5)
+ 	    jw.j = int(w.j+yy+0.5)
+-	    if not VALID_SECTOR(jw.i, jw.j):
++            if not jw.valid_sector():
+ 		prout(_(&quot; damaged but not destroyed.&quot;))
+ 		return
+ 	    if game.quad[jw.i][jw.j]==IHBLANK:
+@@ -1697,7 +1697,7 @@
+ 
+ def targetcheck(w):
+     &quot;Return None if target is invalid, otherwise return a course angle.&quot;
+-    if not VALID_SECTOR(w.i, w.j):
++    if not w.valid_sector():
+ 	huh()
+ 	return None
+     delta = coord()
+@@ -2453,14 +2453,14 @@
+ 	elif evcode == FDSPROB: # Move deep space probe 
+ 	    schedule(FDSPROB, 0.01)
+             if game.probe.next(grain=QUADSIZE):
+-		if not VALID_QUADRANT(game.probe.quadrant().i, game.probe.quadrant().j) or \
++		if not game.probe.quadrant().valid_quadrant() or \
+ 		    game.state.galaxy[game.probe.quadrant().i][game.probe.quadrant().j].supernova:
+ 		    # Left galaxy or ran into supernova
+                     if communicating():
+ 			announce()
+ 			skip(1)
+ 			proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe &quot;))
+-			if not VALID_QUADRANT(game.probe.quadrant().i, game.probe.quadrant().j):
++			if not game.probe.quadrant().valid_quadrant():
+ 			    prout(_(&quot;has left the galaxy.\&quot;&quot;))
+ 			else:
+ 			    prout(_(&quot;is no longer transmitting.\&quot;&quot;))
+@@ -2544,14 +2544,15 @@
+ 		continue		# full right now 
+ 	    # reproduce one Klingon 
+ 	    w = ev.quadrant
++            m = coord()
+ 	    if game.klhere &gt;= MAXKLQUAD:
+                 try:
+                     # this quadrant not ok, pick an adjacent one 
+-                    for i in range(w.i - 1, w.i + 2):
+-                        for j in range(w.j - 1, w.j + 2):
+-                            if not VALID_QUADRANT(i, j):
++                    for m.i in range(w.i - 1, w.i + 2):
++                        for m.j in range(w.j - 1, w.j + 2):
++                            if not m.valid_quadrant():
+                                 continue
+-                            q = game.state.galaxy[w.i][w.j]
++                            q = game.state.galaxy[m.i][m.j]
+                             # check for this quad ok (not full &amp; no snova) 
+                             if q.klingons &gt;= MAXKLQUAD or q.supernova:
+                                 continue
+@@ -2559,7 +2560,7 @@
+                     else:
+                         continue	# search for eligible quadrant failed
+                 except &quot;FOUNDIT&quot;:
+-                    w.i = i; w.j = j
++                    w = m
+ 	    # deliver the child 
+ 	    game.state.remkl += 1
+ 	    q.klingons += 1
+@@ -2568,7 +2569,6 @@
+ 		game.enemies.append(newkling())
+ 	    # recompute time left
+             game.recompute()
+-	    # report the disaster if we can 
+ 	    if communicating():
+ 		if game.quadrant == w:
+ 		    prout(_(&quot;Spock- sensors indicate the Klingons have&quot;))
+@@ -2654,7 +2654,7 @@
+                 if offset.j==0 and offset.i==0:
+                     continue
+                 neighbor = start + offset
+-                if not VALID_SECTOR(neighbor.j, neighbor.i):
++                if not neighbor.valid_sector():
+                     continue
+                 iquad = game.quad[neighbor.i][neighbor.j]
+                 # Empty space ends reaction
+@@ -2726,7 +2726,7 @@
+                         break
+                     newc = neighbor + neighbor - hits[mm]
+                     proutn(crmena(True, iquad, &quot;sector&quot;, neighbor) + _(&quot; damaged&quot;))
+-                    if not VALID_SECTOR(newc.i, newc.j):
++                    if not newc.valid_sector():
+                         # can't leave quadrant 
+                         skip(1)
+                         break
+@@ -3630,7 +3630,7 @@
+             y += deltay
+ 	    w.i = int(round(x))
+ 	    w.j = int(round(y))
+-	    if not VALID_SECTOR(w.i, w.j):
++	    if not w.valid_sector():
+ 		# Leaving quadrant -- allow final enemy attack 
+ 		# Don't do it if being pushed by Nova 
+ 		if len(game.enemies) != 0 and not novapush:
+@@ -3890,7 +3890,7 @@
+ 		dsect.i = xi
+ 		dsect.j = xj
+ 	    itemp = &quot;normal&quot;
+-	if not VALID_QUADRANT(dquad.i,dquad.j) or not VALID_SECTOR(dsect.i,dsect.j):
++	if not dquad.valid_quadrant() or not dsect.valid_sector():
+ 	    huh()
+ 	    raise TrekError
+ 	skip(1)
+@@ -4108,7 +4108,7 @@
+ 		ix = x + 0.5
+ 		y += deltay
+ 		iy = y +0.5
+-		if not VALID_SECTOR(ix, iy):
++		if not coord(ix, iy).valid_sector():
+ 		    break
+ 		if game.quad[ix][iy] != IHDOT:
+ 		    blooey = False
+@@ -4390,7 +4390,7 @@
+     game.sector.invalidate()
+     for m in range(1, 5+1):
+         w = game.base.scatter() 
+-	if VALID_SECTOR(w.i,w.j) and game.quad[w.i][w.j]==IHDOT:
++	if w.valid_sector() and game.quad[w.i][w.j]==IHDOT:
+ 	    # found one -- finish up 
+             game.sector = w
+ 	    break
+@@ -4493,7 +4493,7 @@
+ 	    game.quad[game.sector.i][game.sector.j] = IHDOT
+ 	    for l in range(QUADSIZE):
+ 		game.sector = game.base.scatter()
+-		if VALID_SECTOR(game.sector.i, game.sector.j) and \
++		if game.sector.valid_sector() and \
+                        game.quad[game.sector.i][game.sector.j] == IHDOT:
+                     break
+ 	    if l &lt; QUADSIZE+1:
+@@ -5089,7 +5089,7 @@
+         if not silent:
+             proutn(&quot; &quot;)
+         for y in range(game.quadrant.j-1, game.quadrant.j+2):
+-	    if not VALID_QUADRANT(x, y):
++	    if not coord(x, y).valid_quadrant():
+                 if not silent:
+                     proutn(&quot;  -1&quot;)
+ 	    else:
+@@ -5314,7 +5314,7 @@
+ 	    w2.j = 0
+ 	else:
+ 	    w2.j=QUADSIZE-1
+-    if not VALID_QUADRANT(w1.i, w1.j) or not VALID_SECTOR(w2.i, w2.j):
++    if not w1.valid_quadrant() or not w2.valid_sector():
+ 	huh()
+ 	return
+     dist = math.sqrt((w1.j-game.quadrant.j+(w2.j-game.sector.j)/(QUADSIZE*1.0))**2+
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000219.html">[Sst-commit-watch] r752 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000221.html">[Sst-commit-watch] r754 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#220">[ date ]</a>
+              <a href="thread.html#220">[ thread ]</a>
+              <a href="subject.html#220">[ subject ]</a>
+              <a href="author.html#220">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,992 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r589 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r589%20-%20trunk/src&In-Reply-To=%3C200609181938.k8IJcaQL000186%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000055.html">
+   <LINK REL="Next"  HREF="000057.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r589 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r589%20-%20trunk/src&In-Reply-To=%3C200609181938.k8IJcaQL000186%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r589 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep 18 21:38:36 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000055.html">[Sst-commit-watch] r588 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000057.html">[Sst-commit-watch] r590 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#56">[ date ]</a>
+              <a href="thread.html#56">[ thread ]</a>
+              <a href="subject.html#56">[ subject ]</a>
+              <a href="author.html#56">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-18 21:38:35 +0200 (Mon, 18 Sep 2006)
+New Revision: 589
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/finish.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+Checkpoint with several small changes, committed so Stas can play
+with the debug code:
+
+1. Change planet member of quadrant struct back to integer so it can be saved.
+2. Add code for torpedoing an inhabited world.  Score drops by 400 when you
+   do that, it's the only outcome worse than being killed.
+3. Events are now structures and can hold quadrant coordinates.
+4. EXPERIMENTAL tag is gone, code for BSD-Trek events is in good enough
+   shape to test now.
+5. User input is always logged.
+6. SEED command is implemented.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/ai.c	2006-09-18 19:38:35 UTC (rev 589)
+@@ -334,7 +334,7 @@
+ 	    game.state.plnets[i].crystals == 1) {
+ 	    /* destroy the planet */
+ 	    DESTROY(&amp;game.state.plnets[i]);
+-	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NULL;
++	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET;
+ 	    if (game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED) {
+ 		if (*ipage==0) pause_game(1);
+ 		*ipage = 1;
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/battle.c	2006-09-18 19:38:35 UTC (rev 589)
+@@ -318,7 +318,7 @@
+ 	    crmena(1, iquad, 2, w);
+ 	    prout(_(&quot; destroyed.&quot;));
+ 	    game.state.nplankl++;
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NULL;
++	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NOPLANET;
+ 	    DESTROY(&amp;game.state.plnets[game.iplnet]);
+ 	    game.iplnet = 0;
+ 	    game.plnet.x = game.plnet.y = 0;
+@@ -328,6 +328,22 @@
+ 		finish(FDPLANET);
+ 	    }
+ 	    return;
++	case IHW: /* Hit an inhabited world -- very bad! */
++	    crmena(1, iquad, 2, w);
++	    prout(_(&quot; destroyed.&quot;));
++	    game.state.nworldkl++;
++	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NOPLANET;
++	    DESTROY(&amp;game.state.plnets[game.iplnet]);
++	    game.iplnet = 0;
++	    game.plnet.x = game.plnet.y = 0;
++	    game.quad[w.x][w.y] = IHDOT;
++	    if (game.landed==1) {
++		/* captain perishes on planet */
++		finish(FDPLANET);
++	    }
++	    prout(&quot;You have just destroyed an inhabited planet.&quot;);
++	    prout(&quot;Celebratory rallies are being held on the Klingon homeworld.&quot;);
++	    return;
+ 	case IHSTAR: /* Hit a star */
+ 	    if (Rand() &gt; 0.10) {
+ 		nova(w.x, w.y);
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/events.c	2006-09-18 19:38:35 UTC (rev 589)
+@@ -1,42 +1,61 @@
+ #include &quot;sst.h&quot;
+ #include &lt;math.h&gt;
+ 
+-void unschedule(int evtype)
++event *unschedule(int evtype)
+ /* remove an event from the schedule */
+ {
+-    game.future[evtype] = FOREVER;
++    game.future[evtype].date = FOREVER;
++    return &amp;game.future[evtype];
+ }
+ 
+ int is_scheduled(int evtype)
+ /* is an event of specified type scheduled */
+ {
+-    return game.future[evtype] != FOREVER;
++    return game.future[evtype].date != FOREVER;
+ }
+ 
+ extern double scheduled(int evtype)
+ /* when will this event happen? */
+ {
+-    return game.future[evtype];
++    return game.future[evtype].date;
+ }
+ 
+-void schedule(int evtype, double offset)
++event *schedule(int evtype, double offset)
+ /* schedule an event of specified type */
+ {
+-    game.future[evtype] = game.state.date + offset;
++    game.future[evtype].date = game.state.date + offset;
++    return &amp;game.future[evtype];
+ }
+ 
+ void postpone(int evtype, double offset)
+ /* poistpone a scheduled event */
+ {
+-    game.future[evtype] += offset;
++    game.future[evtype].date += offset;
+ }
+ 
++static bool cancelrest(void)
++{
++    if (game.resting) {
++	skip(1);
++	proutn(_(&quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;));
++	if (ja()) {
++	    game.resting = 0;
++	    game.optime = 0.0;
++	    return true;
++	}
++    }
++
++    return false;
++}
++
+ void events(void) 
+ {
+     int ictbeam=0, ipage=0, istract=0, line, i=0, j, k, l, ixhold=0, iyhold=0;
+     double fintim = game.state.date + game.optime, datemin, xtime, repair, yank=0;
+     int radio_was_broken;
+-    struct quadrant *pdest;
++    struct quadrant *pdest, *q;
++    coord w, hold;
++    event *ev;
+ 
+     if (idebug) prout(&quot;=== EVENTS&quot;);
+ 
+@@ -48,9 +67,9 @@
+ 	if (game.alldone) return;
+ 	datemin = fintim;
+ 	for (l = 1; l &lt; NEVENTS; l++)
+-	    if (game.future[l] &lt; datemin) {
++	    if (game.future[l].date &lt; datemin) {
+ 		line = l;
+-		datemin = game.future[l];
++		datemin = game.future[l].date;
+ 	    }
+ 	xtime = datemin-game.state.date;
+ 	game.state.date = datemin;
+@@ -228,10 +247,10 @@
+ 	    schedule(FCDBAS, 1.0+3.0*Rand());
+ 	    if (game.isatb) /* extra time if SC already attacking */
+ 		postpone(FCDBAS, scheduled(FSCDBAS)-game.state.date);
+-	    game.future[FBATTAK] = game.future[FCDBAS] +expran(0.3*game.intime);
++	    game.future[FBATTAK].date = game.future[FCDBAS].date + expran(0.3*game.intime);
+ 	    game.iseenit = 0;
+-	    if (game.damage[DRADIO] != 0.0 &amp;&amp;
+-		game.condit != IHDOCKED) break; /* No warning :-( */
++	    if (game.damage[DRADIO] != 0.0 &amp;&amp; game.condit != IHDOCKED) 
++		break; /* No warning :-( */
+ 	    game.iseenit = 1;
+ 	    if (ipage==0) pause_game(1);
+ 	    ipage = 1;
+@@ -242,15 +261,8 @@
+ 	    proutn(_(&quot;   hold out only until stardate %d&quot;),
+ 		   (int)scheduled(FCDBAS));
+ 	    prout(&quot;.\&quot;&quot;);
+-	    if (game.resting) {
+-		skip(1);
+-		proutn(_(&quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;));
+-		if (ja()) {
+-		    game.resting = 0;
+-		    game.optime = 0.0;
+-		    return;
+-		}
+-	    }
++	    if (cancelrest())
++		return;
+ 	    break;
+ 	case FSCDBAS: /* Supercommander destroys base */
+ 	    unschedule(FSCDBAS);
+@@ -380,25 +392,18 @@
+ 		    return;
+ 	    }
+ 	    break;
+-#ifdef EXPERIMENTAL
+ 	case FDISTR: /* inhabited system issues distress call */
+-	    /* in BSD Trek this is a straight 1 stardate ahead */ 
+-	    schedule(FDISTR, 1.0 + Rand());
+-	    /* if we already have too many, throw this one away */
+-	    if (game.ndistr &gt;= MAXDISTR)
+-		break;
++	    schedule(FDISTR, expran(0.5*game.intime));
+ 	    /* try a whole bunch of times to find something suitable */
+ 	    for (i = 0; i &lt; 100; i++) {
+-		struct quadrant *q;
+-		iran(GALSIZE, &amp;ix, &amp;iy);
++		iran(GALSIZE, &amp;w.x, &amp;w.y);
+ 		q = &amp;game.state.galaxy[game.quadrant.x][game.quadrant.y];
+ 		/* need a quadrant which is not the current one,
+ 		   which has some stars which are inhabited and
+ 		   not already under attack, which is not
+ 		   supernova'ed, and which has some Klingons in it */
+-		if (!((ix == game.quadrant.x &amp;&amp; iy == game.quadrant.y) || q-&gt;stars&lt;=0 ||
+-		      (q-&gt;qsystemname &amp; Q_DISTRESSED) ||
+-		      (q-&gt;qsystemname &amp; Q_SYSTEM) == 0 || q-&gt;klings &lt;= 0))
++		if (!(same(game.quadrant, w) || q-&gt;stars&lt;=0 ||
++		      q-&gt;supernova || q-&gt;status != secure || q-&gt;klingons &lt;= 0))
+ 		    break;
+ 	    }
+ 	    if (i &gt;= 100)
+@@ -406,96 +411,78 @@
+ 		break;
+ 
+ 	    /* got one!!  Schedule its enslavement */
+-	    game.ndistr++;
+-	    e = xsched(E_ENSLV, 1, ix, iy, q-&gt;qsystemname);
+-	    q-&gt;qsystemname = (e - Event) | Q_DISTRESSED;
++	    ev = schedule(FENSLV, expran(game.intime));
++	    ev-&gt;quadrant = w;
++	    q-&gt;status = distressed;
+ 
+ 	    /* tell the captain about it if we can */
+-	    if (game.damage[DRADIO] == 0.0)
++	    if (game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED)
+ 	    {
+-		printf(&quot;\nUhura: Captain, starsystem %s in quadrant %d,%d is under attack\n&quot;,
+-		       Systemname[e-&gt;systemname], ix, iy);
+-		restcancel++;
++		prout(&quot;Uhura: Captain, starsystem %s in quadrant %d - %d is under attack.&quot;,
++		      systemname(q-&gt;planet), w.x, w.y);
++		if (cancelrest())
++		    return;
+ 	    }
+-	    else
+-		/* if we can't tell him, make it invisible */
+-		e-&gt;evcode |= E_HIDDEN;
+ 	    break;
+       case FENSLV:		/* starsystem is enslaved */
+-	    unschedule(e);
++	    ev = unschedule(FENSLV);
+ 	    /* see if current distress call still active */
+-	    q = &amp;Quad[e-&gt;x][e-&gt;y];
+-	    if (q-&gt;klings &lt;= 0)
+-	    {
+-		/* no Klingons, clean up */
+-		/* restore the system name */
+-		q-&gt;qsystemname = e-&gt;systemname;
++	    q = &amp;game.state.galaxy[ev-&gt;quadrant.x][ev-&gt;quadrant.y];
++	    if (q-&gt;klingons &lt;= 0) {
++		q-&gt;status = secure;
+ 		break;
+ 	    }
++	    q-&gt;status = enslaved;
+ 
+ 	    /* play stork and schedule the first baby */
+-	    e = schedule(E_REPRO, Param.eventdly[E_REPRO] * franf(), e-&gt;x, e-&gt;y, e-&gt;systemname);
++	    ev = schedule(FREPRO, expran(2.0 * game.intime));
+ 
+ 	    /* report the disaster if we can */
+-	    if (game.damage[DRADIO] == 0.0)
++	    if (game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED)
+ 	    {
+-		printf(&quot;\nUhura:  We've lost contact with starsystem %s\n&quot;,
+-		       Systemname[e-&gt;systemname]);
+-		printf(&quot;  in quadrant %d,%d.\n&quot;, e-&gt;x, e-&gt;y);
++		prout(&quot;\nUhura:  We've lost contact with starsystem %s\n&quot;,
++		      systemname(q-&gt;planet));
++		prout(&quot;  in quadrant %d,%d.\n&quot;, ev-&gt;quadrant.x,ev-&gt;quadrant.y);
+ 	    }
+-	    else
+-		e-&gt;evcode |= E_HIDDEN;
+-	    break;
+       case FREPRO:		/* Klingon reproduces */
+-	    /* see if distress call is still active */
+-	    q = &amp;Quad[e-&gt;x][e-&gt;y];
+-	    if (q-&gt;klings &lt;= 0)
+-	    {
+-		unschedule(e);
+-		q-&gt;qsystemname = e-&gt;systemname;
++	    ev = schedule(FREPRO, expran(1.0 * game.intime));
++	    /* see if current distress call still active */
++	    q = &amp;game.state.galaxy[ev-&gt;quadrant.x][ev-&gt;quadrant.y];
++	    if (q-&gt;klingons &lt;= 0) {
++		q-&gt;status = secure;
+ 		break;
+ 	    }
+-	    xresched(e, E_REPRO, 1);
+ 	    /* reproduce one Klingon */
+-	    ix = e-&gt;x;
+-	    iy = e-&gt;y;
+-	    if (Now.klings == 127)
++	    w = ev-&gt;quadrant;
++	    if (game.state.remkl &gt;=MAXKLGAME)
+ 		break;		/* full right now */
+-	    if (q-&gt;klings &gt;= MAXKLQUAD)
++	    /* this quadrant not ok, pick an adjacent one */
++	    for (i = w.x - 1; i &lt;= w.x + 1; i++)
+ 	    {
+-		/* this quadrant not ok, pick an adjacent one */
+-		for (i = ix - 1; i &lt;= ix + 1; i++)
++		for (j = w.y - 1; j &lt;= w.y + 1; j++)
+ 		{
+-		    if (!VALID_QUADRANT(i))
++		    if (!VALID_QUADRANT(i, j))
+ 			continue;
+-		    for (j = iy - 1; j &lt;= iy + 1; j++)
+-		    {
+-			if (!VALID_QUADRANT(j))
+-			    continue;
+-			q = &amp;Quad[i][j];
+-			/* check for this quad ok (not full &amp; no snova) */
+-			if (q-&gt;klings &gt;= MAXKLQUAD || q-&gt;stars &lt; 0)
+-			    continue;
+-			break;
+-		    }
+-		    if (j &lt;= iy + 1)
+-			break;
++		    q = &amp;game.state.galaxy[w.x][w.y];
++		    /* check for this quad ok (not full &amp; no snova) */
++		    if (q-&gt;klingons &gt;= MAXKLQUAD || q-&gt;stars &lt; 0)
++			continue;
++		    goto foundit;
+ 		}
+-		if (j &gt; iy + 1)
+-		    /* cannot create another yet */
+-		    break;
+-		ix = i;
+-		iy = j;
+ 	    }
++	    break;	/* search for eligible quadrant failed */
++	foundit:
++	    w.x = i;
++	    w.y = j;
++
+ 	    /* deliver the child */
+-	    game.remkl++;
+-	    if (ix == game.quadrant.x &amp;&amp; iy == game.quadrant.y)
+-		newkling(++game.klhere, &amp;ixhold, &amp;iyhold);
++	    game.state.remkl++;
++	    if (same(game.quadrant, w))
++		newkling(++game.klhere, &amp;hold);
+ 
+ 	    /* recompute time left */
+ 	    game.state.remtime = game.state.remres/(game.state.remkl+4*game.state.remcom);
+ 	    break;
+-#endif /* EXPERIMENTAL */
+ 	}
+     }
+ }
+@@ -618,7 +605,7 @@
+ 			game.quad[scratch.x][scratch.y] = IHDOT;
+ 			break;
+ 		    case IHP: /* Destroy planet */
+-			game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NULL;
++			game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NOPLANET;
+ 			game.state.nplankl++;
+ 			crmena(1, IHP, 2, scratch);
+ 			prout(_(&quot; destroyed.&quot;));
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/finish.c	2006-09-18 19:38:35 UTC (rev 589)
+@@ -326,7 +326,7 @@
+     if (game.gamewon == 0) game.state.nromrem = 0; // None captured if no win
+     iscore = 10*NKILLK + 50*NKILLC + ithperd + iwon
+ 	- 100*game.state.basekl - 100*klship - 45*game.nhelp -5*game.state.starkl - game.casual
+-	+ 20*NKILLROM + 200*NKILLSC - 10*game.state.nplankl + game.state.nromrem;
++	+ 20*NKILLROM + 200*NKILLSC - 10*game.state.nplankl - 300*game.state.nworldkl + game.state.nromrem;
+     if (game.alive == 0) iscore -= 200;
+     skip(2);
+     prout(_(&quot;Your score --&quot;));
+@@ -354,6 +354,9 @@
+     if (game.state.nplankl)
+ 	prout(_(&quot;%6d planets destroyed by your action   %5d&quot;),
+ 	      game.state.nplankl, -10*game.state.nplankl);
++    if ((game.options &amp; OPTION_WORLDS) &amp;&amp; game.state.nworldkl)
++	prout(_(&quot;%6d inhabited planets destroyed by your action   %5d&quot;),
++	      game.state.nplankl, -300*game.state.nworldkl);
+     if (game.state.basekl)
+ 	prout(_(&quot;%6d bases destroyed by your action     %5d&quot;),
+ 	      game.state.basekl, -100*game.state.basekl);
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/moving.c	2006-09-18 19:38:35 UTC (rev 589)
+@@ -489,12 +489,12 @@
+ }
+ 
+ 
+-void warp(int i) 
++void warp(bool timewarp) 
+ {
+     int blooey=0, twarp=0, iwarp;
+     double power;
+ 
+-    if (i!=2) { /* Not WARPX entry */
++    if (!timewarp) { /* Not WARPX entry */
+ 	game.ididit = 0;
+ 	if (game.damage[DWARPEN] &gt; 10.0) {
+ 	    chew();
+@@ -749,10 +749,10 @@
+ 	if (distreq &lt; game.dist) game.dist = distreq;
+ 	game.optime = 10.0*game.dist/game.wfacsq;
+ 	game.direc = 12.0*Rand();	/* How dumb! */
+-	game.justin = 0;
+-	game.inorbit = 0;
+-	warp(2);
+-	if (game.justin == 0) {
++	game.justin = false;
++	game.inorbit = false;
++	warp(true);
++	if (!game.justin) {
+ 	    /* This is bad news, we didn't leave quadrant. */
+ 	    if (game.alldone) return;
+ 	    skip(1);
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/planets.c	2006-09-18 19:38:35 UTC (rev 589)
+@@ -58,7 +58,7 @@
+ {
+     skip(1);
+     chew();
+-    if (game.inorbit!=0) {
++    if (game.inorbit) {
+ 	prout(&quot;Already in standard orbit.&quot;);
+ 	return;
+     }
+@@ -78,8 +78,8 @@
+     if (consumeTime()) return;
+     game.height = (1400.0+7200.0*Rand());
+     prout(&quot;Sulu-  \&quot;Entered orbit at altitude %.2f kilometers.\&quot;&quot;, game.height);
+-    game.inorbit = 1;
+-    game.ididit=1;
++    game.inorbit = true;
++    game.ididit = true;
+ }
+ 
+ void sensor(void) 
+@@ -122,7 +122,7 @@
+ 	}
+ 	return;
+     }
+-    if (game.inorbit==0) {
++    if (!game.inorbit) {
+ 	crmshp();
+ 	prout(&quot; not in standard orbit.&quot;);
+ 	return;
+@@ -299,7 +299,7 @@
+ 	else prout(&quot;Shuttle craft is now serving Big Macs.&quot;);
+ 	return;
+     }
+-    if (game.inorbit==0) {
++    if (!game.inorbit) {
+ 	crmshp();
+ 	prout(&quot; not in standard orbit.&quot;);
+ 	return;
+@@ -509,7 +509,7 @@
+     return;
+ }
+ 
+-char *systemname(planet *planet)
++char *systemname(int pindx)
+ {
+     static char	*names[NINHAB] =
+     {
+@@ -582,5 +582,5 @@
+ 	&quot;Exo III&quot;,		/* TOS: &quot;What Are Little Girls Made Of?&quot; (Class P) */
+     };
+ 
+-    return names[planet-&gt;inhabited];
++    return names[pindx];
+ }
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/reports.c	2006-09-18 19:38:35 UTC (rev 589)
+@@ -316,8 +316,8 @@
+ 	break;
+     case 10:
+ 	if (game.options &amp; OPTION_WORLDS) {
+-	    planet *here = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet;
+-	    if (here &amp;&amp; here-&gt;inhabited != UNINHABITED)
++	    int here = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet;
++	    if (here != NOPLANET &amp;&amp; game.state.plnets[here].inhabited != UNINHABITED)
+ 		proutn(&quot;Major system  %s&quot;, systemname(here));
+ 	    else
+ 		proutn(&quot;Sector is uninhabited&quot;);
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/setup.c	2006-09-18 19:38:35 UTC (rev 589)
+@@ -227,14 +227,12 @@
+ 	for_quadrants(j) {
+ 	struct quadrant *quad = &amp;game.state.galaxy[i][j];
+ 	    quad-&gt;charted = 0;
+-	    quad-&gt;planet = NULL;
++	    quad-&gt;planet = NOPLANET;
+ 	    quad-&gt;romulans = 0;
+ 	    quad-&gt;klingons = 0;
+ 	    quad-&gt;starbase = 0;
+ 	    quad-&gt;supernova = 0;
+-#ifdef EXPERIMENTAL
+ 	    quad-&gt;status = secure;
+-#endif /* EXPERIMENTAL */
+ 	}
+     // Initialize times for extraneous events
+     schedule(FSNOVA, expran(0.5 * game.intime));
+@@ -248,12 +246,10 @@
+ 	unschedule(FSCMOVE);
+     unschedule(FSCDBAS);
+     unschedule(FDSPROB);
+-#ifdef EXPERIMENTAL
+-    if (game.options &amp; OPTION_WORLDS)
++    if ((game.options &amp; OPTION_WORLDS) &amp;&amp; game.skill &gt;= SKILL_GOOD)
+ 	schedule(FDISTR, expran(1.0 + game.intime));
+     unschedule(FENSLV);
+     unschedule(FREPRO);
+-#endif /* EXPERIMENTAL */
+     // Starchart is functional but we've never seen it
+     game.lastchart = FOREVER;
+     // Put stars in the galaxy
+@@ -295,8 +291,8 @@
+     // Position ordinary Klingon Battle Cruisers
+     krem = game.inkling;
+     klumper = 0.25*game.skill*(9.0-game.length)+1.0;
+-    if (klumper &gt; 9) 
+-	klumper = 9; // Can't have more than 9 in quadrant
++    if (klumper &gt; MAXKLQUAD) 
++	klumper = MAXKLQUAD;
+     do {
+ 	double r = Rand();
+ 	int klump = (1.0 - r*r)*klumper;
+@@ -337,7 +333,7 @@
+     }
+     // Locate planets in galaxy
+     for (i = 0; i &lt; game.inplan; i++) {
+-	do iran(GALSIZE, &amp;ix, &amp;iy); while (game.state.galaxy[ix][iy].planet);
++	do iran(GALSIZE, &amp;ix, &amp;iy); while (game.state.galaxy[ix][iy].planet != NOPLANET);
+ 	game.state.plnets[i].w.x = ix;
+ 	game.state.plnets[i].w.y = iy;
+ 	if (i &lt; NINHAB) {
+@@ -352,7 +348,7 @@
+ 	    game.state.plnets[i].inhabited = UNINHABITED;
+ 	}
+ 	if ((game.options &amp; OPTION_WORLDS) || i &gt;= NINHAB)
+-	    game.state.galaxy[ix][iy].planet = game.state.plnets + i;
++	    game.state.galaxy[ix][iy].planet = i;
+     }
+     // Locate Romulans
+     for (i = 1; i &lt;= game.state.nromrem; i++) {
+@@ -506,7 +502,6 @@
+     setpassword();
+     if (strcmp(game.passwd, &quot;debug&quot;)==0) {
+ 	idebug = true;
+-	logfp = fopen(&quot;sst-input.log&quot;, &quot;w&quot;);
+ 	fputs(&quot;=== Debug mode enabled\n&quot;, stdout);
+     }
+ 
+@@ -564,7 +559,7 @@
+     struct quadrant *here;
+ 
+     game.iattak = 1;
+-    game.justin = 1;
++    game.justin = true;
+     game.base.x = game.base.y = 0;
+     game.klhere = 0;
+     game.comhere = 0;
+@@ -573,8 +568,8 @@
+     game.irhere = 0;
+     game.iplnet = 0;
+     game.nenhere = 0;
+-    game.neutz = 0;
+-    game.inorbit = 0;
++    game.neutz = false;
++    game.inorbit = false;
+     game.landed = -1;
+     game.ientesc = 0;
+     game.ithere = 0;
+@@ -635,9 +630,9 @@
+ 	dropin(IHB, &amp;game.base);
+ 	
+     // If quadrant needs a planet, put it in
+-    if (here-&gt;planet) {
+-	game.iplnet = here-&gt;planet - game.state.plnets;
+-	if (here-&gt;planet-&gt;inhabited == UNINHABITED)
++    if (here-&gt;planet != NOPLANET) {
++	game.iplnet = here-&gt;planet;
++	if (game.state.plnets[here-&gt;planet].inhabited == UNINHABITED)
+ 	    dropin(IHP, &amp;game.plnet);
+ 	else
+ 	    dropin(IHW, &amp;game.plnet);
+@@ -649,7 +644,7 @@
+ 	dropin(IHSTAR, &amp;w);
+ 
+     // Check for RNZ
+-    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (!here-&gt;planet || here-&gt;planet-&gt;inhabited == UNINHABITED)) {
++    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (here-&gt;planet == NOPLANET || game.state.plnets[here-&gt;planet].inhabited == UNINHABITED)) {
+ 	game.neutz = 1;
+ 	if (game.damage[DRADIO] &lt;= 0.0) {
+ 	    skip(1);
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/sst.c	2006-09-18 19:38:35 UTC (rev 589)
+@@ -155,9 +155,13 @@
+ 
+    5. Half the quadrants now have inhabited planets, from which one 
+       cannot mine dilithium (there will still be the same additional number
+-      of dilithium-bearing planets).  Right now this is just color, but
+-      eventually we'll fold in BSD-Trek-like logic for Klingons to attack
+-      and enslave inhabited worlds.
++      of dilithium-bearing planets).  Torpedoing an inhabited world is *bad*.
++      There is BSD-Trek-like logic for Klingons to attack and enslave 
++      inhabited worlds, producing more ships (only is skill is 'good' or 
++      better). (Controlled by OPTION_WORLDS and turned off if game 
++      type is &quot;plain&quot; or &quot;almy&quot;.)
++
++   6. User input is now logged so we can do regression testing.
+ */
+ 
+ /* the input queue */
+@@ -274,6 +278,8 @@
+ 	{&quot;QUIT&quot;,	QUIT,		0},
+ #define HELP	36
+ 	{&quot;HELP&quot;,	HELP,		0},
++#define SEED	37
++	{&quot;SEED&quot;,	SEED,		0},
+ };
+ 
+ #define NUMCOMMANDS	sizeof(commands)/sizeof(commands[0])
+@@ -379,7 +385,7 @@
+ 
+ static void makemoves(void) 
+ {
+-    int i, v = 0;
++    int key, i, v = 0;
+     bool hitme;
+     clrscr();
+     setwnd(message_window);
+@@ -441,7 +447,7 @@
+ 	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case MOVE:			// move
+-	    warp(1);
++	    warp(false);
+ 	    break;
+ 	case SHIELDS:			// shields
+ 	    doshield(1);
+@@ -543,8 +549,13 @@
+ 	    game.alldone = 1;		// quit the game
+ 	    break;
+ 	case HELP:
+-	    helpme();	// get help
++	    helpme();			// get help
+ 	    break;
++	case SEED:			// set random-number seed
++	    key = scan();
++	    if (key == IHREAL)
++		seed = (int)aaitem;
++	    break;
+ 	}
+ 	commandhook(commands[i].name, false);
+ 	for (;;) {
+@@ -598,6 +609,9 @@
+ 	    exit(0);
+ 	}
+     }
++    /* where to save the input in case of bugs */
++    logfp = fopen(&quot;sst-input.log&quot;, &quot;w&quot;);
++    setlinebuf(logfp);
+ 
+     randomize();
+     iostart();
+@@ -704,7 +718,7 @@
+     if (!randready) {
+ 	if (seed == 0)
+ 	    seed = (unsigned)time(NULL);
+-	if (idebug)
++	if (logfp)
+ 	    fprintf(logfp, &quot;seed %d\n&quot;, seed);
+ 	srand(seed);
+ 	randready = true;
+@@ -830,7 +844,7 @@
+ 	    if (game.damage[i] &gt; 0.0) 
+ 		game.damage[i] = 0.0;
+     }
+-    proutn(&quot;Toggle game.idebug? &quot;);
++    proutn(&quot;Toggle debug flag? &quot;);
+     if (ja() != 0) {
+ 	idebug = !idebug;
+ 	if (idebug) prout(&quot;Debug output ON&quot;);
+@@ -852,6 +866,8 @@
+     }
+     proutn(&quot;Examine/change events? &quot;);
+     if (ja() != 0) {
++	event *ev;
++	coord w;
+ 	int i;
+ 	for (i = 1; i &lt; NEVENTS; i++) {
+ 	    int key;
+@@ -864,13 +880,36 @@
+ 	    case FCDBAS:  proutn(&quot;Base Destroy    &quot;); break;
+ 	    case FSCMOVE: proutn(&quot;SC Move         &quot;); break;
+ 	    case FSCDBAS: proutn(&quot;SC Base Destroy &quot;); break;
++	    //case FDSPROB:proutn(&quot;Probe Move      &quot;); break;
++	    case FDISTR:  proutn(&quot;Distress Call   &quot;); break;
++	    case FENSLV:  proutn(&quot;Enlavement      &quot;); break;
++	    case FREPRO:  proutn(&quot;Klingon Build   &quot;); break;
+ 	    }
+ 	    proutn(&quot;%.2f&quot;, scheduled(i)-game.state.date);
+ 	    chew();
+ 	    proutn(&quot;  ?&quot;);
+ 	    key = scan();
+ 	    if (key == IHREAL) {
+-		schedule(i, aaitem);
++		ev = schedule(i, aaitem);
++		if (i == FENSLV || i == FREPRO) {
++		    chew();
++		    proutn(&quot;In quadrant- &quot;);
++		    key = scan();
++		    if (key != IHREAL) {
++			prout(&quot;Event %d canceled, no y coordinate.&quot;, i);
++			unschedule(i);
++			continue;
++		    }
++		    w.y = (int)aaitem;
++		    key = scan();
++		    if (key != IHREAL) {
++			prout(&quot;Event %d canceled, no x coordinate.&quot;, i);
++			unschedule(i);
++			continue;
++		    }
++		    w.x = (int)aaitem;
++		    ev-&gt;quadrant = w;
++		}
+ 	    }
+ 	}
+ 	chew();
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-18 08:34:16 UTC (rev 588)
++++ trunk/src/sst.h	2006-09-18 19:38:35 UTC (rev 589)
+@@ -65,25 +65,25 @@
+ 	starkl,			// destroyed stars
+ 	basekl,			// destroyed bases
+ 	nromrem,		// Romulans remaining
+-	nplankl;		// destroyed planets
+-	planet plnets[PLNETMAX];  // Planet information
+-	double date,		// stardate
+-	    remres,		// remaining resources
+-	    remtime;		// remaining time
++	nplankl,		// destroyed uninhabited planets
++	nworldkl;		// destroyed inhabited planets
++    planet plnets[PLNETMAX];  // Planet information
++    double date,		// stardate
++	remres,		// remaining resources
++	remtime;		// remaining time
+     coord baseq[BASEMAX+1];	// Base quadrant coordinates
+     coord kcmdr[QUADSIZE+1];	// Commander quadrant coordinates
+     coord kscmdr;		// Supercommander quadrant coordinates
+     struct quadrant {
+ 	int stars;
+-	planet *planet;
++	int planet;
++#define NOPLANET	-1
+ 	bool starbase;
+ 	int klingons;
+ 	int romulans;
+ 	bool supernova;
+ 	bool charted;
+-#ifdef EXPERIMENTAL
+ 	enum {secure, distressed, enslaved} status;
+-#endif /* EXPERIMENTAL */
+     } galaxy[GALSIZE+1][GALSIZE+1]; 	// The Galaxy (subscript 0 not used)
+     struct page {
+ 	int stars;
+@@ -92,6 +92,9 @@
+     } chart[GALSIZE+1][GALSIZE+1]; 	// the starchart (subscript 0 not used)
+ } snapshot;				// Data that is snapshot
+ 
++#define MAXKLGAME	127
++#define MAXKLQUAD	9
++
+ #define NKILLK (game.inkling - game.state.remkl)
+ #define NKILLC (game.incom - game.state.remcom)
+ #define NKILLSC (game.inscom - game.state.nscrem)
+@@ -156,29 +159,26 @@
+ #define FSCMOVE 6   // Supercommander moves (might attack base)
+ #define FSCDBAS 7   // Supercommander destroys base
+ #define FDSPROB 8   // Move deep space probe
+-#ifndef EXPERIMENTAL
+-#define NEVENTS (9)
+-#else /* EXPERIMENTAL */
+ #define FDISTR	9   // Emit distress call from an inhabited world 
+ #define FENSLV	10  // Inhabited word is enslaved */
+ #define FREPRO	11  // Klingons build a ship in an enslaved system
+ #define NEVENTS (12)
+-#endif /* EXPERIMENTAL */
+ 
++typedef struct {
++    double date;
++    coord quadrant;
++} event;
++
+ /*
+  * abstract out the event handling -- underlying data structures will change
+  * when we implement stateful events
+  */
+-extern void unschedule(int);
++extern event *unschedule(int);
+ extern int is_scheduled(int);
+-extern void schedule(int, double);
++extern event *schedule(int, double);
+ extern void postpone(int, double);
+ extern double scheduled(int);
+ 
+-#ifdef EXPERIMENTAL
+-#define	MAXDISTR	5	/* maximum concurrent distress calls */
+-#endif /* EXPERIMENTAL */
+-
+ #define SSTMAGIC	&quot;SST2.0\n&quot;
+ 
+ struct game {
+@@ -191,7 +191,7 @@
+     double kdist[(QUADSIZE+1)*(QUADSIZE+1)];		// enemy distances
+     double kavgd[(QUADSIZE+1)*(QUADSIZE+1)];		// average distances
+     double damage[NDEVICES];	// damage encountered
+-    double future[NEVENTS];	// future events
++    event future[NEVENTS];	// future events
+     char passwd[10];		// Self Destruct password
+     coord ks[(QUADSIZE+1)*(QUADSIZE+1)];	// enemy sector locations
+     coord quadrant, sector;	// where we are
+@@ -201,23 +201,24 @@
+     coord plnet;		// location of planet in quadrant
+     coord probec;	// current probe quadrant
+     bool gamewon,	// Finished!
+-	ididit,		// Action taken -- allows enemy to attack
+-	alive,		// We are alive (not killed)
++	ididit,		// action taken -- allows enemy to attack
++	alive,		// we are alive (not killed)
+ 	justin,		// just entered quadrant
+ 	alldone,	// game is now finished
+ 	neutz,		// Romulan Neutral Zone
+ 	isarmed,	// probe is armed
++	inorbit,	// orbiting a planet
+ 	thawed;		// thawed game
+-    int inkling,	// Initial number of klingons
+-	inbase,		// Initial number of bases
+-	incom,		// Initial number of commanders
+-	inscom,		// Initial number of commanders
+-	inrom,		// Initial number of commanders
+-	instar,		// Initial stars
+-	intorps,	// Initial/Max torpedoes
+-	condit,		// Condition (red/yellow/green/docked)
++    int inkling,	// initial number of klingons
++	inbase,		// initial number of bases
++	incom,		// initial number of commanders
++	inscom,		// initial number of commanders
++	inrom,		// initial number of commanders
++	instar,		// initial stars
++	intorps,	// initial/Max torpedoes
++	condit,		// condition (red/yellow/green/docked)
+ 	torps,		// number of torpedoes
+-	ship,		// Ship type -- 'E' is Enterprise
++	ship,		// ship type -- 'E' is Enterprise
+ 	length,		// length of game
+ 	skill,		// skill level
+ 	klhere,		// klingons here
+@@ -226,7 +227,6 @@
+ 	nhelp,		// calls for help
+ 	nkinks,		// count of energy-barrier crossings
+ 	shldchg,	// shield is changing (affects efficiency)
+-	inorbit,	// orbiting
+ 	landed,		// party on planet (1), on ship (-1)
+ 	iplnet,		// planet # in quadrant
+ 	imine,		// mining
+@@ -244,9 +244,6 @@
+ 	tourn,		// tournament number
+ 	ithere,		// Tholian is here 
+ 	iseenit,	// seen base attack report
+-#ifdef EXPERIMENTAL
+-	ndistr,		//* count of distress calls */ 
+-#endif /* EXPERIMENTAL */
+ 	proben,		// number of moves for probe
+ 	nprobes;	// number of probes available
+     double inresor,	// initial resources
+@@ -335,7 +332,7 @@
+ void lrscan(void);
+ void phasers(void);
+ void photon(void);
+-void warp(int);
++void warp(bool);
+ void doshield(int);
+ void dock(int);
+ void dreprt(void);
+@@ -416,7 +413,7 @@
+ void commandhook(char *, bool);
+ void makechart(void);
+ void enqueue(char *);
+-char *systemname(planet *);
++char *systemname(int);
+ void newkling(int, coord *);
+ 
+ /* mode arguments for srscan() */
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000055.html">[Sst-commit-watch] r588 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000057.html">[Sst-commit-watch] r590 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#56">[ date ]</a>
+              <a href="thread.html#56">[ thread ]</a>
+              <a href="subject.html#56">[ subject ]</a>
+              <a href="author.html#56">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

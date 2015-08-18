@@ -1,0 +1,243 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r616 - in trunk: . doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r616%20-%20in%20trunk%3A%20.%20doc%20src&In-Reply-To=%3C200609201629.k8KGTnE9013903%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000082.html">
+   <LINK REL="Next"  HREF="000084.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r616 - in trunk: . doc src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r616%20-%20in%20trunk%3A%20.%20doc%20src&In-Reply-To=%3C200609201629.k8KGTnE9013903%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r616 - in trunk: . doc src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 18:29:49 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000082.html">[Sst-commit-watch] r615 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000084.html">[Sst-commit-watch] r617 - in trunk: . po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#83">[ date ]</a>
+              <a href="thread.html#83">[ thread ]</a>
+              <a href="subject.html#83">[ subject ]</a>
+              <a href="author.html#83">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 18:29:48 +0200 (Wed, 20 Sep 2006)
+New Revision: 616
+
+Modified:
+   trunk/TODO
+   trunk/doc/sst-doc.xml
+   trunk/src/reports.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+Incorporate BSD-Trek visual-scan code, just in case.
+
+
+Modified: trunk/TODO
+===================================================================
+--- trunk/TODO	2006-09-20 15:47:19 UTC (rev 615)
++++ trunk/TODO	2006-09-20 16:29:48 UTC (rev 616)
+@@ -24,12 +24,9 @@
+ 
+ * Summoning Klingons to surrender and taking captives.
+ 
+-* Automatic bugout sets your warp factor to &gt; 6.
+-
+ * Smarter computer, with multiple requests.
+ 
+ * There is a small probility that a nova event will leave a black hole.
+ 
+ * Multiple laser banks and beam spreading.
+ 
+-* Visual scans for when sensors are out.
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2006-09-20 15:47:19 UTC (rev 615)
++++ trunk/doc/sst-doc.xml	2006-09-20 16:29:48 UTC (rev 616)
+@@ -411,6 +411,21 @@
+ the contents of adjacent sectors.&lt;/para&gt;
+ 
+ &lt;/sect1&gt;
++&lt;!--
++&lt;sect1&gt;&lt;title&gt;Visual Scan&lt;/title&gt;
++
++&lt;literallayout&gt;
++Mnemonic:  VISUAL
++Shortest abbreviation: V
++&lt;/literallayout&gt;
++
++&lt;para&gt;A visual scan is made in a particular direction of three sectors
++in the general direction specified.  This takes time, and Klingons can
++attack you, so it should be done only when short-range sensors are
++out.&lt;/para&gt;
++
++&lt;/sect1&gt;
++--&gt;
+ &lt;sect1&gt;&lt;title&gt;Status Report&lt;/title&gt;
+ 
+ &lt;literallayout&gt;
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-20 15:47:19 UTC (rev 615)
++++ trunk/src/reports.c	2006-09-20 16:29:48 UTC (rev 616)
+@@ -557,3 +557,74 @@
+     }
+ 			
+ }
++
++#if BSD_BUG_FOR_BUG
++/*
++ *	A visual scan is made in a particular direction of three sectors
++ *	in the general direction specified.  This takes time, and
++ *	Klingons can attack you, so it should be done only when sensors
++ * 	are out.  Code swiped from BSD-Trek.  Not presently used, as we
++ *	automatically display all adjacent sectors on the short-range
++ *	scan even when short-range sensors are out.
++ */
++
++/* This struct[] has the delta x, delta y for particular directions */
++coord visdelta[] =
++{
++    {-1,-1},
++    {-1, 0},
++    {-1, 1},
++    {0,	 1},
++    {1,	 1},
++    {1,	 0},
++    {1,	-1},
++    {0,	-1},
++    {-1,-1},
++    {-1, 0},
++    {-1, 1},
++};
++
++void visual(void)
++{
++    int		co, ix, iy;
++    coord	*v;
++
++    if (scan() != IHREAL) {
++	chew();
++	proutn(_(&quot;Direction? &quot;));
++	if (scan()!=IHREAL) {
++	    huh();
++	    return;
++	}
++    }
++    if (aaitem &lt; 0.0 || aaitem &gt; 360.0)
++	return;
++    co = (aaitem + 22) / 45;
++    v = &amp;visdelta[co];
++    ix = game.sector.x + v-&gt;x;
++    iy = game.sector.y + v-&gt;y;
++    if (ix &lt; 0 || ix &gt;= QUADSIZE || iy &lt; 0 || iy &gt;= QUADSIZE)
++	co = '?';
++    else
++	co = game.quad[ix][iy];
++    printf(&quot;%d,%d %c &quot;, ix, iy, co);
++    v++;
++    ix = game.sector.x + v-&gt;x;
++    iy = game.sector.y + v-&gt;y;
++    if (ix &lt; 0 || ix &gt;= QUADSIZE || iy &lt; 0 || iy &gt;= QUADSIZE)
++	co = '?';
++    else
++	co = game.quad[ix][iy];
++    printf(&quot;%c &quot;, co);
++    v++;
++    ix = game.sector.x + v-&gt;x;
++    iy = game.sector.y + v-&gt;y;
++    if (ix &lt; 0 || ix &gt;= QUADSIZE || iy &lt; 0 || iy &gt;= QUADSIZE)
++	co = '?';
++    else
++	co = game.quad[ix][iy];
++    printf(&quot;%c %d,%d\n&quot;, co, ix, iy);
++    game.optime = 0.5;
++    game.ididit = true;
++}
++#endif
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-20 15:47:19 UTC (rev 615)
++++ trunk/src/sst.c	2006-09-20 16:29:48 UTC (rev 616)
+@@ -291,6 +291,10 @@
+ 	{&quot;HELP&quot;,	HELP,		0},
+ #define SEED	37
+ 	{&quot;SEED&quot;,	SEED,		0},
++#if BSD_BUG_FOR_BUG
++#define VISUAL	38
++	{&quot;VISUAL&quot;,	VISUAL,		0},
++#endif
+ };
+ 
+ #define NUMCOMMANDS	sizeof(commands)/sizeof(commands[0])
+@@ -572,6 +576,11 @@
+ 	    if (key == IHREAL)
+ 		seed = (int)aaitem;
+ 	    break;
++#if BSD_BUG_FOR_BUG
++	case VISUAL:
++	    visual();			// perform visual scan
++	    break;
++#endif
+ 	}
+ 	commandhook(commands[i].name, false);
+ 	for (;;) {
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-20 15:47:19 UTC (rev 615)
++++ trunk/src/sst.h	2006-09-20 16:29:48 UTC (rev 616)
+@@ -438,6 +438,9 @@
+ void enqueue(char *);
+ char *systemname(int);
+ coord newkling(int);
++#if BSD_BUG_FOR_BUG
++void visual(void);
++#endif
+ 
+ extern WINDOW *curwnd;
+ extern WINDOW *fullscreen_window;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000082.html">[Sst-commit-watch] r615 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000084.html">[Sst-commit-watch] r617 - in trunk: . po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#83">[ date ]</a>
+              <a href="thread.html#83">[ thread ]</a>
+              <a href="subject.html#83">[ subject ]</a>
+              <a href="author.html#83">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

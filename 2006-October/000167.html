@@ -1,0 +1,338 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r700 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r700%20-%20trunk/src&In-Reply-To=%3C200610070640.k976e1Mp029587%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000166.html">
+   <LINK REL="Next"  HREF="000168.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r700 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r700%20-%20trunk/src&In-Reply-To=%3C200610070640.k976e1Mp029587%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r700 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Sat Oct  7 08:40:01 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000166.html">[Sst-commit-watch] r699 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000168.html">[Sst-commit-watch] r701 - branches
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#167">[ date ]</a>
+              <a href="thread.html#167">[ thread ]</a>
+              <a href="subject.html#167">[ subject ]</a>
+              <a href="author.html#167">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-07 08:40:00 +0200 (Sat, 07 Oct 2006)
+New Revision: 700
+
+Modified:
+   trunk/src/sst.py
+Log:
+Clear the new quadeant properly, otherwise we end up with ghost features.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-07 04:47:29 UTC (rev 699)
++++ trunk/src/sst.py	2006-10-07 06:40:00 UTC (rev 700)
+@@ -445,7 +445,7 @@
+         self.options = None	# Game options
+         self.state = snapshot()	# A snapshot structure
+         self.snapsht = snapshot()	# Last snapshot taken for time-travel purposes
+-        self.quad = fill2d(QUADSIZE, lambda i, j: IHDOT)	# contents of our quadrant
++        self.quad = None	# contents of our quadrant
+         self.damage = [0.0] * NDEVICES	# damage encountered
+         self.future = []		# future events
+         for i in range(NEVENTS):
+@@ -1788,7 +1788,8 @@
+     return 1.90985932*math.atan2(deltx, delty)
+ 
+ def photon():
+-    # launch photon torpedo 
++    # launch photon torpedo
++    course = [0.0] * MAXBURST
+     game.ididit = False
+     if damaged(DPHOTON):
+ 	prout(_(&quot;Photon tubes damaged.&quot;))
+@@ -1809,7 +1810,7 @@
+ 	    proutn(_(&quot;Number of torpedoes to fire- &quot;))
+ 	    key = scan()
+ 	else: # key == IHREAL  {
+-	    n = aaitem + 0.5
++	    n = int(round(aaitem + 0.5))
+ 	    if n &lt;= 0: # abort command 
+ 		chew()
+ 		return
+@@ -1941,7 +1942,7 @@
+ 
+ def hittem(hits):
+     # register a phaser hit on Klingons and Romulans
+-    nenhr2 = game.nenhere; kk=0
++    nenhr2 = len(game.enemies); kk=0
+     w = coord()
+     skip(1)
+     for (k, wham) in enumerate(hits):
+@@ -2022,7 +2023,7 @@
+ 	key=scan()
+ 	if key == IHALPHA:
+ 	    if isit(&quot;manual&quot;):
+-		if game.nenhere==0:
++		if len(game.enemies)==0:
+ 		    prout(_(&quot;There is no enemy present to select.&quot;))
+ 		    chew()
+ 		    key = IHEOL
+@@ -2031,10 +2032,10 @@
+ 		    automode = &quot;MANUAL&quot;
+ 		    key = scan()
+ 	    elif isit(&quot;automatic&quot;):
+-		if (not itarg) and game.nenhere != 0:
++		if (not itarg) and len(game.enemies) != 0:
+ 		    automode = &quot;FORCEMAN&quot;
+ 		else:
+-		    if game.nenhere==0:
++		    if len(game.enemies)==0:
+ 			prout(_(&quot;Energy will be expended into space.&quot;))
+ 		    automode = &quot;AUTOMATIC&quot;
+ 		    key = scan()
+@@ -2044,7 +2045,7 @@
+ 		huh()
+ 		return
+ 	elif key == IHREAL:
+-	    if game.nenhere==0:
++	    if len(game.enemies)==0:
+ 		prout(_(&quot;Energy will be expended into space.&quot;))
+ 		automode = &quot;AUTOMATIC&quot;
+ 	    elif not itarg:
+@@ -2053,7 +2054,7 @@
+ 		automode = &quot;AUTOMATIC&quot;
+ 	else:
+ 	    # IHEOL 
+-	    if game.nenhere==0:
++	    if len(game.enemies)==0:
+ 		prout(_(&quot;Energy will be expended into space.&quot;))
+ 		automode = &quot;AUTOMATIC&quot;
+ 	    elif not itarg:
+@@ -2068,13 +2069,13 @@
+ 	if key == IHALPHA and isit(&quot;no&quot;):
+ 	    no = True
+ 	    key = scan()
+-	if key != IHREAL and game.nenhere != 0:
++	if key != IHREAL and len(game.enemies) != 0:
+ 	    prout(_(&quot;Phasers locked on target. Energy available: %.2f&quot;)%avail)
+ 	irec=0
+         while True:
+ 	    chew()
+ 	    if not kz:
+-		for i in range(game.nenhere):
++		for i in range(len(game.enemies)):
+ 		    irec += math.fabs(game.enemies[i].kpower)/(PHASEFAC*math.pow(0.90,game.enemies[i].kdist))*randreal(1.01, 1.06) + 1.0
+ 	    kz=1
+ 	    proutn(_(&quot;%d units required. &quot;) % irec)
+@@ -2104,10 +2105,10 @@
+ 	chew()
+ 	game.energy -= rpow
+ 	extra = rpow
+-	if game.nenhere:
++	if len(game.enemies):
+ 	    extra = 0.0
+ 	    powrem = rpow
+-	    for i in range(game.nenhere):
++	    for i in range(len(game.enemies)):
+ 		hits.append(0.0)
+ 		if powrem &lt;= 0:
+ 		    continue
+@@ -2127,7 +2128,7 @@
+ 	if extra &gt; 0 and not game.alldone:
+ 	    if game.tholian:
+ 		proutn(_(&quot;*** Tholian web absorbs &quot;))
+-		if game.nenhere&gt;0:
++		if len(game.enemies)&gt;0:
+ 		    proutn(_(&quot;excess &quot;))
+ 		prout(_(&quot;phaser energy.&quot;))
+ 	    else:
+@@ -2147,7 +2148,7 @@
+ 	    skip(1)
+     elif automode == &quot;MANUAL&quot;:
+ 	rpow = 0.0
+-        for k in range(game.nenhere):
++        for k in range(len(game.enemies)):
+ 	    aim = game.enemies[k].kloc
+ 	    ienm = game.quad[aim.x][aim.y]
+ 	    if msgflag:
+@@ -2701,7 +2702,7 @@
+     origTime = delay = aaitem
+     if delay &lt;= 0.0:
+ 	return
+-    if delay &gt;= game.state.remtime or game.nenhere != 0:
++    if delay &gt;= game.state.remtime or len(game.enemies) != 0:
+ 	proutn(_(&quot;Are you sure? &quot;))
+ 	if ja() == False:
+ 	    return
+@@ -2714,7 +2715,7 @@
+ 	    prout(_(&quot;%d stardates left.&quot;) % int(game.state.remtime))
+ 	    return
+ 	temp = game.optime = delay
+-	if game.nenhere:
++	if len(game.enemies):
+ 	    rtime = randreal(1.0, 2.0)
+ 	    if rtime &lt; temp:
+ 		temp = rtime
+@@ -2838,7 +2839,7 @@
+                 elif iquad == IHK: # kill klingon 
+                     deadkl(neighbor, iquad, neighbor)
+                 elif iquad in (IHC,IHS,IHR): # Damage/destroy big enemies 
+-                    for ll in range(game.nenhere):
++                    for ll in range(len(game.enemies)):
+                         if game.enemies[ll].kloc == neighbor:
+                             break
+                     game.enemies[ll].kpower -= 800.0 # If firepower is lost, die 
+@@ -3050,10 +3051,10 @@
+     skip(1)
+     stars()
+     skip(1)
+-    if game.nenhere != 0:
++    if len(game.enemies) != 0:
+ 	whammo = 25.0 * game.energy
+ 	l=1
+-	while l &lt;= game.nenhere:
++	while l &lt;= len(game.enemies):
+ 	    if game.enemies[l].kpower*game.enemies[l].kdist &lt;= whammo: 
+ 		deadkl(game.enemies[l].kloc, game.quad[game.enemies[l].kloc.x][game.enemies[l].kloc.y], game.enemies[l].kloc)
+ 	    l += 1
+@@ -3770,15 +3771,15 @@
+     def no_quad_change():
+         # No quadrant change -- compute new average enemy distances 
+         game.quad[game.sector.x][game.sector.y] = game.ship
+-        if game.nenhere:
+-            for m in range(game.nenhere):
++        if len(game.enemies):
++            for m in range(len(game.enemies)):
+                 finald = distance(w, game.enemies[m].kloc)
+                 game.enemies[m].kavgd = 0.5 * (finald+game.enemies[m].kdist)
+                 game.enemies[m].kdist = finald
+             game.enemies.sort(lambda x, y: cmp(x.kdist, y.kdist))
+             if not game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova:
+                 attack(torps_ok=False)
+-            for m in range(game.nenhere):
++            for m in range(len(game.enemies)):
+                 game.enemies[m].kavgd = game.enemies[m].kdist
+         newcnd()
+         drawmaps(0)
+@@ -3816,9 +3817,9 @@
+ 	    if not VALID_SECTOR(w.x, w.y):
+ 		# Leaving quadrant -- allow final enemy attack 
+ 		# Don't do it if being pushed by Nova 
+-		if game.nenhere != 0 and not novapush:
++		if len(game.enemies) != 0 and not novapush:
+ 		    newcnd()
+-		    for m in range(game.nenhere):
++		    for m in range(len(game.enemies)):
+ 			finald = distance(w, game.enemies[m].kloc)
+ 			game.enemies[m].kavgd = 0.5 * (finald + game.enemies[m].kdist)
+ 		    #
+@@ -5100,7 +5101,7 @@
+     if game.ship != IHE:
+ 	prout(_(&quot;Ye Faerie Queene has no death ray.&quot;))
+ 	return
+-    if game.nenhere==0:
++    if len(game.enemies)==0:
+ 	prout(_(&quot;Sulu-  \&quot;But Sir, there are no enemies in this quadrant.\&quot;&quot;))
+ 	return
+     if damaged(DDRAY):
+@@ -5132,7 +5133,7 @@
+     if r &gt; dprob:
+ 	prouts(_(&quot;Sulu- \&quot;Captain!  It's working!\&quot;&quot;))
+ 	skip(2)
+-	while game.nenhere &gt; 0:
++	while len(game.enemies) &gt; 0:
+ 	    deadkl(game.enemies[1].kloc, game.quad[game.enemies[1].kloc.x][game.enemies[1].kloc.y],game.enemies[1].kloc)
+ 	prout(_(&quot;Ensign Chekov-  \&quot;Congratulations, Captain!\&quot;&quot;))
+ 	if (game.state.remkl + game.state.remcom + game.state.nscrem) == 0:
+@@ -5493,7 +5494,6 @@
+ 	    sectscan(goodScan, i, j)
+ 	skip(1)
+ 			
+-			
+ def eta():
+     # use computer to get estimated time of arrival for a warp jump 
+     w1 = coord(); w2 = coord()
+@@ -5944,7 +5944,7 @@
+ 	prout(_(&quot;  YOU'LL NEED IT.&quot;))
+     waitfor()
+     newqad(False)
+-    if game.nenhere - (thing == game.quadrant) - (game.tholian != None):
++    if len(game.enemies) - (thing == game.quadrant) - (game.tholian != None):
+ 	game.shldup = True
+     if game.neutz:	# bad luck to start in a Romulan Neutral Zone
+ 	attack(torps_ok=False)
+@@ -6096,12 +6096,13 @@
+     game.ishere = False
+     game.irhere = 0
+     game.iplnet = 0
+-    game.nenhere = 0
+     game.neutz = False
+     game.inorbit = False
+     game.landed = False
+     game.ientesc = False
+     game.iseenit = False
++    # Create a blank quadrant
++    game.quad = fill2d(QUADSIZE, lambda i, j: IHDOT)
+     if game.iscate:
+ 	# Attempt to escape Super-commander, so tbeam back!
+ 	game.iscate = False
+@@ -6112,7 +6113,6 @@
+ 	return
+     game.klhere = q.klingons
+     game.irhere = q.romulans
+-    game.nenhere = game.klhere + game.irhere
+     # Position Starship
+     game.quad[game.sector.x][game.sector.y] = game.ship
+     game.enemies = []
+@@ -6136,7 +6136,7 @@
+ 	    game.iscate = (game.state.remkl &gt; 1)
+ 	    game.ishere = True
+     # Put in Romulans if needed
+-    for i in range(game.klhere, game.nenhere):
++    for i in range(game.klhere, len(game.enemies)):
+         enemy(IHR, loc=dropin(), power=randreal(400.0,850.0)+50.0*game.skill)
+     # If quadrant needs a starbase, put it in
+     if q.starbase:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000166.html">[Sst-commit-watch] r699 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000168.html">[Sst-commit-watch] r701 - branches
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#167">[ date ]</a>
+              <a href="thread.html#167">[ thread ]</a>
+              <a href="subject.html#167">[ subject ]</a>
+              <a href="author.html#167">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

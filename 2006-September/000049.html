@@ -1,0 +1,646 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r583 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r583%20-%20trunk/src&In-Reply-To=%3C200609172355.k8HNtlmV000852%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000048.html">
+   <LINK REL="Next"  HREF="000051.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r583 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r583%20-%20trunk/src&In-Reply-To=%3C200609172355.k8HNtlmV000852%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r583 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep 18 01:55:47 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000048.html">[Sst-commit-watch] r582 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000051.html">[Sst-commit-watch] r584 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#49">[ date ]</a>
+              <a href="thread.html#49">[ thread ]</a>
+              <a href="subject.html#49">[ subject ]</a>
+              <a href="author.html#49">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-18 01:55:46 +0200 (Mon, 18 Sep 2006)
+New Revision: 583
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+Abstract all references to the future array (outside of events.c) away.
+This has two benefits:
+
+1. New code is easier to read.
+2. It prepares us for implementing stateful events with a different 
+underlying data structure.  We'll need this for some BSD-Trek features.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-17 22:43:51 UTC (rev 582)
++++ trunk/src/ai.c	2006-09-17 23:55:46 UTC (rev 583)
+@@ -48,8 +48,8 @@
+ 	game.iscate=0;
+ 	game.ientesc=0;
+ 	game.isatb=0;
+-	game.future[FSCMOVE]=0.2777+game.state.date;
+-	game.future[FSCDBAS]=FOREVER;
++	schedule(FSCMOVE, 0.2777);
++	unschedule(FSCDBAS);
+ 	game.state.isx=iqx;
+ 	game.state.isy=iqy;
+     }
+@@ -331,7 +331,7 @@
+ 	game.isatb=0;
+ 	game.ishere=0;
+ 	game.ientesc=0;
+-	game.future[FSCDBAS]=FOREVER;
++	unschedule(FSCDBAS);
+ 	for_local_enemies(i) 
+ 	    if (game.quad[game.kx[i]][game.ky[i]] == IHS) break;
+ 	game.quad[game.kx[i]][game.ky[i]] = IHDOT;
+@@ -395,7 +395,7 @@
+ 	/* compute distances to starbases */
+ 	if (game.state.rembase &lt;= 0) {
+ 	    /* nothing left to do */
+-	    game.future[FSCMOVE] = FOREVER;
++	    unschedule(FSCMOVE);
+ 	    return;
+ 	}
+ 	sx = game.state.isx;
+@@ -499,7 +499,7 @@
+     }
+     /* check for a base */
+     if (game.state.rembase == 0) {
+-	game.future[FSCMOVE] = FOREVER;
++	unschedule(FSCMOVE);
+     }
+     else for_starbases(i) {
+ 	ibqx = game.state.baseqx[i];
+@@ -509,9 +509,9 @@
+ 	    if (flag) return; /* no, don't attack base! */
+ 	    game.iseenit = 0;
+ 	    game.isatb=1;
+-	    game.future[FSCDBAS] = game.state.date + 1.0 +2.0*Rand();
+-	    if (game.future[FCDBAS] &lt; FOREVER) game.future[FSCDBAS] +=
+-		game.future[FCDBAS]-game.state.date;
++	    schedule(FSCDBAS, 1.0 +2.0*Rand());
++	    if (is_scheduled(FCDBAS)) 
++		postpone(FSCDBAS, scheduled(FCDBAS)-game.state.date);
+ 	    if (game.damage[DRADIO] &gt; 0 &amp;&amp; game.condit != IHDOCKED)
+ 		return; /* no warning */
+ 	    game.iseenit = 1;
+@@ -522,7 +522,7 @@
+ 	    skip(1);
+ 	    prout(_(&quot;   reports that it is under attack from the Klingon Super-commander.&quot;));
+ 	    proutn(_(&quot;   It can survive until stardate %d.\&quot;&quot;),
+-		   (int)game.future[FSCDBAS]);
++		   (int)scheduled(FSCDBAS));
+ 	    if (game.resting==0) return;
+ 	    prout(_(&quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;));
+ 	    if (ja()==0) return;
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-17 22:43:51 UTC (rev 582)
++++ trunk/src/battle.c	2006-09-17 23:55:46 UTC (rev 583)
+@@ -635,9 +635,9 @@
+ 	    game.state.cx[game.state.remcom] = 0;
+ 	    game.state.cy[game.state.remcom] = 0;
+ 	    game.state.remcom--;
+-	    game.future[FTBEAM] = FOREVER;
++	    unschedule(FTBEAM);
+ 	    if (game.state.remcom != 0)
+-		game.future[FTBEAM] = game.state.date + expran(1.0*game.incom/game.state.remcom);
++		schedule(FTBEAM, expran(1.0*game.incom/game.state.remcom));
+ 	    break;
+ 	case IHK:
+ 	    game.state.remkl--;
+@@ -645,7 +645,8 @@
+ 	case IHS:
+ 	    game.state.nscrem--;
+ 	    game.ishere = game.state.isx = game.state.isy = game.isatb = game.iscate = 0;
+-	    game.future[FSCMOVE] = game.future[FSCDBAS] = FOREVER;
++	    unschedule(FSCMOVE);
++	    unschedule(FSCDBAS);
+ 	    break;
+ 	}
+     }
+@@ -658,8 +659,8 @@
+     game.state.remtime = game.state.remres/(game.state.remkl + 4*game.state.remcom);
+ 
+     /* Remove enemy ship from arrays describing local game.conditions */
+-    if (game.future[FCDBAS] &lt; FOREVER &amp;&amp; game.batx==game.quadx &amp;&amp; game.baty==game.quady &amp;&amp; type==IHC)
+-	game.future[FCDBAS] = FOREVER;
++    if (is_scheduled(FCDBAS) &amp;&amp; game.batx==game.quadx &amp;&amp; game.baty==game.quady &amp;&amp; type==IHC)
++	unschedule(FCDBAS);
+     for_local_enemies(i)
+ 	if (game.kx[i]==ix &amp;&amp; game.ky[i]==iy) break;
+     game.nenhere--;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-17 22:43:51 UTC (rev 582)
++++ trunk/src/events.c	2006-09-17 23:55:46 UTC (rev 583)
+@@ -1,6 +1,36 @@
+ #include &quot;sst.h&quot;
+ #include &lt;math.h&gt;
+ 
++void unschedule(int evtype)
++/* remove an event from the schedule */
++{
++    game.future[evtype] = FOREVER;
++}
++
++int is_scheduled(int evtype)
++/* is an event of specified type scheduled */
++{
++    return game.future[evtype] != FOREVER;
++}
++
++extern double scheduled(int evtype)
++/* when will this event happen? */
++{
++    return game.future[evtype];
++}
++
++void schedule(int evtype, double offset)
++/* schedule an event of specified type */
++{
++    game.future[evtype] = game.state.date + offset;
++}
++
++void postpone(int evtype, double offset)
++/* poistpone a scheduled event */
++{
++    game.future[evtype] += offset;
++}
++
+ void events(void) 
+ {
+     int ictbeam=0, ipage=0, istract=0, line, i=0, j, k, l, ixhold=0, iyhold=0;
+@@ -68,7 +98,7 @@
+ 	    if (ipage==0) pause_game(1);
+ 	    ipage=1;
+ 	    snova(0,0);
+-	    game.future[FSNOVA] = game.state.date + expran(0.5*game.intime);
++	    schedule(FSNOVA, expran(0.5*game.intime));
+ 	    if (game.state.galaxy[game.quadx][game.quady].supernova) return;
+ 	    break;
+ 	case FSPY: /* Check with spy to see if S.C. should tractor beam */
+@@ -90,15 +120,15 @@
+ 	case FTBEAM: /* Tractor beam */
+ 	    if (line==FTBEAM) {
+ 		if (game.state.remcom == 0) {
+-		    game.future[FTBEAM] = FOREVER;
++		    unschedule(FTBEAM);
+ 		    break;
+ 		}
+ 		i = Rand()*game.state.remcom+1.0;
+ 		yank = square(game.state.cx[i]-game.quadx) + square(game.state.cy[i]-game.quady);
+ 		if (istract || game.condit == IHDOCKED || yank == 0) {
+ 		    /* Drats! Have to reschedule */
+-		    game.future[FTBEAM] = game.state.date + game.optime +
+-			expran(1.5*game.intime/game.state.remcom);
++		    schedule(FTBEAM, 
++			     game.optime + expran(1.5*game.intime/game.state.remcom));
+ 		    break;
+ 		}
+ 	    }
+@@ -161,18 +191,19 @@
+ 	    /* Adjust finish time to time of tractor beaming */
+ 	    fintim = game.state.date+game.optime;
+ 	    attack(0);
+-	    if (game.state.remcom &lt;= 0) game.future[FTBEAM] = FOREVER;
+-	    else game.future[FTBEAM] = game.state.date+game.optime+expran(1.5*game.intime/game.state.remcom);
++	    if (game.state.remcom &lt;= 0) unschedule(FTBEAM);
++	    else schedule(FTBEAM, game.optime+expran(1.5*game.intime/game.state.remcom));
+ 	    break;
+ 	case FSNAP: /* Snapshot of the universe (for time warp) */
+ 	    game.snapsht = game.state;
+ 	    game.state.snap = 1;
+-	    game.future[FSNAP] = game.state.date + expran(0.5 * game.intime);
++	    schedule(FSNAP, expran(0.5 * game.intime));
+ 	    break;
+ 	case FBATTAK: /* Commander attacks starbase */
+ 	    if (game.state.remcom==0 || game.state.rembase==0) {
+ 		/* no can do */
+-		game.future[FBATTAK] = game.future[FCDBAS] = FOREVER;
++		unschedule(FBATTAK);
++		unschedule(FCDBAS);
+ 		break;
+ 	    }
+ 	    i = 0;
+@@ -188,16 +219,16 @@
+ 	    }
+ 	    if (j&gt;game.state.rembase) {
+ 		/* no match found -- try later */
+-		game.future[FBATTAK] = game.state.date + expran(0.3*game.intime);
+-		game.future[FCDBAS] = FOREVER;
++		schedule(FBATTAK, expran(0.3*game.intime));
++		unschedule(FCDBAS);
+ 		break;
+ 	    }
+ 	    /* commander + starbase combination found -- launch attack */
+ 	    game.batx = game.state.baseqx[j];
+ 	    game.baty = game.state.baseqy[j];
+-	    game.future[FCDBAS] = game.state.date+1.0+3.0*Rand();
++	    schedule(FCDBAS, 1.0+3.0*Rand());
+ 	    if (game.isatb) /* extra time if SC already attacking */
+-		game.future[FCDBAS] += game.future[FSCDBAS]-game.state.date;
++		postpone(FCDBAS, scheduled(FSCDBAS)-game.state.date);
+ 	    game.future[FBATTAK] = game.future[FCDBAS] +expran(0.3*game.intime);
+ 	    game.iseenit = 0;
+ 	    if (game.damage[DRADIO] != 0.0 &amp;&amp;
+@@ -210,7 +241,7 @@
+ 	    prout(cramlc(quadrant, game.batx, game.baty));
+ 	    prout(_(&quot;   reports that it is under attack and that it can&quot;));
+ 	    proutn(_(&quot;   hold out only until stardate %d&quot;),
+-		   (int)game.future[FCDBAS]);
++		   (int)scheduled(FCDBAS));
+ 	    prout(&quot;.\&quot;&quot;);
+ 	    if (game.resting) {
+ 		skip(1);
+@@ -223,7 +254,7 @@
+ 	    }
+ 	    break;
+ 	case FSCDBAS: /* Supercommander destroys base */
+-	    game.future[FSCDBAS] = FOREVER;
++	    unschedule(FSCDBAS);
+ 	    game.isatb = 2;
+ 	    if (!game.state.galaxy[game.state.isx][game.state.isy].starbase) 
+ 		break; /* WAS RETURN! */
+@@ -233,7 +264,7 @@
+ 	    game.baty = game.state.isy;
+ 	case FCDBAS: /* Commander succeeds in destroying base */
+ 	    if (line==FCDBAS) {
+-		game.future[FCDBAS] = FOREVER;
++		unschedule(FCDBAS);
+ 		/* find the lucky pair */
+ 		for_commanders(i)
+ 		    if (game.state.cx[i]==game.batx &amp;&amp; game.state.cy[i]==game.baty) 
+@@ -289,13 +320,13 @@
+ 	    }
+ 	    break;
+ 	case FSCMOVE: /* Supercommander moves */
+-	    game.future[FSCMOVE] = game.state.date+0.2777;
++	    schedule(FSCMOVE, 0.2777);
+ 	    if (game.ientesc+istract==0 &amp;&amp;
+ 		game.isatb!=1 &amp;&amp;
+ 		(game.iscate!=1 || game.justin==1)) scom(&amp;ipage);
+ 	    break;
+ 	case FDSPROB: /* Move deep space probe */
+-	    game.future[FDSPROB] = game.state.date + 0.01;
++	    schedule(FDSPROB, 0.01);
+ 	    game.probex += game.probeinx;
+ 	    game.probey += game.probeiny;
+ 	    i = (int)(game.probex/QUADSIZE +0.05);
+@@ -317,7 +348,7 @@
+ 			    proutn(_(&quot;is no longer transmitting&quot;));
+ 			prout(&quot;.\&quot;&quot;);
+ 		    }
+-		    game.future[FDSPROB] = FOREVER;
++		    unschedule(FDSPROB);
+ 		    break;
+ 		}
+ 		if (game.damage[DRADIO]==0.0   || game.condit == IHDOCKED) {
+@@ -342,7 +373,7 @@
+ 		game.state.galaxy[game.probecx][game.probecy].stars) {
+ 		/* lets blow the sucker! */
+ 		snova(1,0);
+-		game.future[FDSPROB] = FOREVER;
++		unschedule(FDSPROB);
+ 		if (game.state.galaxy[game.quadx][game.quady].supernova) 
+ 		    return;
+ 	    }
+@@ -350,7 +381,7 @@
+ #ifdef EXPERIMENTAL
+ 	case FDISTR: /* inhabited system issues distress call */
+ 	    /* in BSD Trek this is a straight 1 stardate ahead */ 
+-	    game.future[FDISTR] =  game.state.date + 1.0 + Rand();
++	    schedule(FDISTR, 1.0 + Rand());
+ 	    /* if we already have too many, throw this one away */
+ 	    if (game.ndistr &gt;= MAXDISTR)
+ 		break;
+@@ -801,7 +832,8 @@
+ 	/* did in the Supercommander! */
+ 	game.state.nscrem = game.state.isx = game.state.isy = game.isatb = game.iscate = 0;
+ 	iscdead = 1;
+-	game.future[FSCMOVE] = game.future[FSCDBAS] = FOREVER;
++	unschedule(FSCMOVE);
++	unschedule(FSCDBAS);
+     }
+     if (game.state.remcom) {
+ 	int maxloop = game.state.remcom, l;
+@@ -813,7 +845,7 @@
+ 		game.state.remcom--;
+ 		kldead--;
+ 		comdead++;
+-		if (game.state.remcom==0) game.future[FTBEAM] = FOREVER;
++		if (game.state.remcom==0) unschedule(FTBEAM);
+ 		break;
+ 	    }
+ 	}
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-17 22:43:51 UTC (rev 582)
++++ trunk/src/moving.c	2006-09-17 23:55:46 UTC (rev 583)
+@@ -27,11 +27,11 @@
+     deltax /= bigger;
+ 
+     /* If tractor beam is to occur, don't move full distance */
+-    if (game.state.date+game.optime &gt;= game.future[FTBEAM]) {
++    if (game.state.date+game.optime &gt;= scheduled(FTBEAM)) {
+ 	trbeam = 1;
+ 	game.condit = IHRED;
+-	game.dist = game.dist*(game.future[FTBEAM]-game.state.date)/game.optime + 0.1;
+-	game.optime = game.future[FTBEAM] - game.state.date + 1e-5;
++	game.dist = game.dist*(scheduled(FTBEAM)-game.state.date)/game.optime + 0.1;
++	game.optime = scheduled(FTBEAM) - game.state.date + 1e-5;
+     }
+     /* Move within the quadrant */
+     game.quad[game.sectx][game.secty] = IHDOT;
+@@ -237,7 +237,7 @@
+     game.torps = game.intorps;
+     game.lsupres = game.inlsr;
+     if (game.damage[DRADIO] == 0.0 &amp;&amp;
+-	(game.future[FCDBAS] &lt; FOREVER || game.isatb == 1) &amp;&amp; game.iseenit == 0) {
++	(is_scheduled(FCDBAS) || game.isatb == 1) &amp;&amp; game.iseenit == 0) {
+ 	/* get attack report from base */
+ 	prout(&quot;Lt. Uhura- \&quot;Captain, an important message from the starbase:\&quot;&quot;);
+ 	attakreport(0);
+@@ -778,15 +778,17 @@
+ 	game.state = game.snapsht;
+ 	game.state.snap = 0;
+ 	if (game.state.remcom) {
+-	    game.future[FTBEAM] = game.state.date + expran(game.intime/game.state.remcom);
+-	    game.future[FBATTAK] = game.state.date + expran(0.3*game.intime);
++	    schedule(FTBEAM, expran(game.intime/game.state.remcom));
++	    schedule(FBATTAK, expran(0.3*game.intime));
+ 	}
+-	game.future[FSNOVA] = game.state.date + expran(0.5*game.intime);
+-	game.future[FSNAP] = game.state.date +expran(0.25*game.state.remtime); /* next snapshot will
+-										  be sooner */
+-	if (game.state.nscrem) game.future[FSCMOVE] = 0.2777;
++	schedule(FSNOVA, expran(0.5*game.intime));
++	/* next snapshot will be sooner */
++	schedule(FSNAP, expran(0.25*game.state.remtime));
++				
++	if (game.state.nscrem) schedule(FSCMOVE, 0.2777);
+ 	game.isatb = 0;
+-	game.future[FCDBAS] = game.future[FSCDBAS] = FOREVER;
++	unschedule(FCDBAS);
++	unschedule(FSCDBAS);
+ 	game.batx = game.baty = 0;
+ 
+ 	/* Make sure Galileo is consistant -- Snapshot may have been taken
+@@ -818,7 +820,7 @@
+ 	game.optime = -0.5*game.intime*log(Rand());
+ 	prout(&quot;You are traveling forward in time %d stardates.&quot;, (int)game.optime);
+ 	/* cheat to make sure no tractor beams occur during time warp */
+-	game.future[FTBEAM] += game.optime;
++	postpone(FTBEAM, game.optime);
+ 	game.damage[DRADIO] += game.optime;
+     }
+     newqad(0);
+@@ -845,7 +847,7 @@
+ 	prout(&quot;Engineer Scott- \&quot;The probe launcher is damaged, Sir.\&quot;&quot;);
+ 	return;
+     }
+-    if (game.future[FDSPROB] != FOREVER) {
++    if (is_scheduled(FDSPROB)) {
+ 	chew();
+ 	skip(1);
+ 	if (game.damage[DRADIO] != 0 &amp;&amp; game.condit != IHDOCKED) {
+@@ -892,7 +894,7 @@
+     game.probey = game.quady*QUADSIZE + game.secty - 1;
+     game.probecx = game.quadx;
+     game.probecy = game.quady;
+-    game.future[FDSPROB] = game.state.date + 0.01; // Time to move one sector
++    schedule(FDSPROB, 0.01); // Time to move one sector
+     prout(&quot;Ensign Chekov-  \&quot;The deep space probe is launched, Captain.\&quot;&quot;);
+     game.ididit = 1;
+     return;
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-17 22:43:51 UTC (rev 582)
++++ trunk/src/planets.c	2006-09-17 23:55:46 UTC (rev 583)
+@@ -11,15 +11,15 @@
+     game.ididit = 1;
+ #if 0
+     /* Don't worry about this */
+-    if (future[FTBEAM] &lt;= game.state.date+game.optime &amp;&amp; game.state.remcom != 0 &amp;&amp; game.condit != IHDOCKED) {
++    if (scheduled(FTBEAM) &lt;= game.state.date+game.optime &amp;&amp; game.state.remcom != 0 &amp;&amp; game.condit != IHDOCKED) {
+ 	/* We are about to be tractor beamed -- operation fails */
+ 	return 1;
+     }
+ #endif
+-//	asave = future[FSNOVA];
+-//	future[FSNOVA] = FOREVER; /* defer supernovas */
+-    events();	/* Used to avoid if future[FSCMOVE] within time */
+-//	future[FSNOVA] = asave;
++//	asave = scheduled(FSNOVA);
++//	unschedule(FSNOVA); /* defer supernovas */
++    events();	/* Used to avoid if FSCMOVE is scheduled within time */
++//	schedule(FSNOVA, asave-game.state.time);
+     /*fails if game over, quadrant super-novas or we've moved to new quadrant*/
+     if (game.alldone || game.state.galaxy[game.quadx][game.quady].supernova || game.justin != 0) return 1;
+     return 0;
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-17 22:43:51 UTC (rev 582)
++++ trunk/src/reports.c	2006-09-17 23:55:46 UTC (rev 583)
+@@ -6,23 +6,23 @@
+ void attakreport(int curt) 
+ {
+     if (!curt) {
+-	if (game.future[FCDBAS] &lt; FOREVER) {
++	if (is_scheduled(FCDBAS)) {
+ 	    prout(&quot;Starbase in %s is currently under Commander attack.&quot;,
+ 		  cramlc(quadrant, game.batx, game.baty));
+ 	    prout(&quot;It can hold out until Stardate %d.&quot;, 
+-		  (int)game.future[FCDBAS]);
++		  (int)scheduled(FCDBAS));
+ 	}
+ 	if (game.isatb == 1) {
+ 	    prout(&quot;Starbase in %s is under Super-commander attack.&quot;,
+ 		  cramlc(quadrant, game.state.isx, game.state.isy));
+ 	    prout(&quot;It can hold out until Stardate %d.&quot;, 
+-		  (int)game.future[FSCDBAS]);
++		  (int)scheduled(FSCDBAS));
+ 	}
+     } else {
+-        if (game.future[FCDBAS] &lt; FOREVER)
+-	    proutn(&quot;Base in %i - %i attacked by C. Alive until %.1f&quot;, game.batx, game.baty, game.future[FCDBAS]);
++        if (is_scheduled(FCDBAS))
++	    proutn(&quot;Base in %i - %i attacked by C. Alive until %.1f&quot;, game.batx, game.baty, scheduled(FCDBAS));
+         if (game.isatb == 1)
+-	    proutn(&quot;Base in %i - %i attacked by S. Alive until %.1f&quot;, game.state.isx, game.state.isy, game.future[FSCDBAS]);
++	    proutn(&quot;Base in %i - %i attacked by S. Alive until %.1f&quot;, game.state.isx, game.state.isy, scheduled(FSCDBAS));
+     }
+     clreol();
+ }
+@@ -87,8 +87,8 @@
+ 	if (game.nprobes!=1) proutn(&quot;s&quot;);
+ 	prout(&quot;.&quot;);
+     }
+-    if ((game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED)&amp;&amp;
+-	game.future[FDSPROB] != FOREVER) {
++    if ((game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED)
++		&amp;&amp; is_scheduled(FDSPROB)) {
+ 	if (game.isarmed) 
+ 	    proutn(&quot;An armed deep space probe is in&quot;);
+ 	else
+@@ -527,8 +527,8 @@
+ 	if (twarp &gt; 6.0)
+ 	    prout(&quot;You'll be taking risks at that speed, Captain&quot;);
+ 	if ((game.isatb==1 &amp;&amp; game.state.isy == iy1 &amp;&amp; game.state.isx == ix1 &amp;&amp;
+-	     game.future[FSCDBAS]&lt; ttime+game.state.date)||
+-	    (game.future[FCDBAS]&lt;ttime+game.state.date &amp;&amp; game.baty==iy1 &amp;&amp; game.baty == iy1))
++	     scheduled(FSCDBAS)&lt; ttime+game.state.date)||
++	    (scheduled(FCDBAS)&lt;ttime+game.state.date &amp;&amp; game.baty==iy1 &amp;&amp; game.batx == ix1))
+ 	    prout(&quot;The starbase there will be destroyed by then.&quot;);
+ 	proutn(&quot;New warp factor to try? &quot;);
+ 	if (scan() == IHREAL) {
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-17 22:43:51 UTC (rev 582)
++++ trunk/src/setup.c	2006-09-17 23:55:46 UTC (rev 583)
+@@ -240,20 +240,22 @@
+ #endif /* EXPERIMENTAL */
+ 	}
+     // Initialize times for extraneous events
+-    game.future[FSNOVA] = game.state.date + expran(0.5 * game.intime);
+-    game.future[FTBEAM] = game.state.date + expran(1.5 * (game.intime / game.state.remcom));
+-    game.future[FSNAP] = game.state.date + 1.0 + Rand(); // Force an early snapshot
+-    game.future[FBATTAK] = game.state.date + expran(0.3*game.intime);
+-    game.future[FCDBAS] = FOREVER;
+-    game.future[FSCMOVE] = game.state.nscrem ? game.state.date+0.2777 : FOREVER;
+-    game.future[FSCDBAS] = FOREVER;
+-    game.future[FDSPROB] = FOREVER;
++    schedule(FSNOVA, expran(0.5 * game.intime));
++    schedule(FTBEAM, expran(1.5 * (game.intime / game.state.remcom)));
++    schedule(FSNAP, 1.0 + Rand()); // Force an early snapshot
++    schedule(FBATTAK, expran(0.3*game.intime));
++    unschedule(FCDBAS);
++    if (game.state.nscrem)
++	schedule(FSCMOVE, 0.2777);
++    else
++	unschedule(FSCMOVE);
++    unschedule(FSCDBAS);
++    unschedule(FDSPROB);
+ #ifdef EXPERIMENTAL
+     if (game.options &amp; OPTION_WORLDS)
+-	/* in BSD-Trek, this is a fixed one stardate in the future */
+-	game.future[FDISTR] = game.state.date + 1.0 + Rand();
+-    game.future[FENSLV] = FOREVER;
+-    game.future[FREPRO] = FOREVER;
++	schedule(FDISTR, expran(1.0 + game.intime));
++    unschedule(FENSLV);
++    unschedule(FREPRO);
+ #endif /* EXPERIMENTAL */
+     // Starchart is functional but we've never seen it
+     game.lastchart = FOREVER;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-17 22:43:51 UTC (rev 582)
++++ trunk/src/sst.c	2006-09-17 23:55:46 UTC (rev 583)
+@@ -848,7 +848,7 @@
+ 	int i;
+ 	for (i = 1; i &lt; NEVENTS; i++) {
+ 	    int key;
+-	    if (game.future[i] == FOREVER) continue;
++	    if (!is_scheduled(i)) continue;
+ 	    switch (i) {
+ 	    case FSNOVA:  proutn(&quot;Supernova       &quot;); break;
+ 	    case FTBEAM:  proutn(&quot;T Beam          &quot;); break;
+@@ -858,12 +858,12 @@
+ 	    case FSCMOVE: proutn(&quot;SC Move         &quot;); break;
+ 	    case FSCDBAS: proutn(&quot;SC Base Destroy &quot;); break;
+ 	    }
+-	    proutn(&quot;%.2f&quot;, game.future[i]-game.state.date);
++	    proutn(&quot;%.2f&quot;, scheduled(i)-game.state.date);
+ 	    chew();
+ 	    proutn(&quot;  ?&quot;);
+ 	    key = scan();
+ 	    if (key == IHREAL) {
+-		game.future[i] = game.state.date + aaitem;
++		schedule(i, aaitem);
+ 	    }
+ 	}
+ 	chew();
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-17 22:43:51 UTC (rev 582)
++++ trunk/src/sst.h	2006-09-17 23:55:46 UTC (rev 583)
+@@ -164,6 +164,16 @@
+ #define NEVENTS (12)
+ #endif /* EXPERIMENTAL */
+ 
++/*
++ * abstract out the event handling -- underlying data structures will change
++ * when we implement stateful events
++ */
++extern void unschedule(int);
++extern int is_scheduled(int);
++extern void schedule(int, double);
++extern void postpone(int, double);
++extern double scheduled(int);
++
+ #ifdef EXPERIMENTAL
+ #define	MAXDISTR	5	/* maximum concurrent distress calls */
+ #endif /* EXPERIMENTAL */
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000048.html">[Sst-commit-watch] r582 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000051.html">[Sst-commit-watch] r584 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#49">[ date ]</a>
+              <a href="thread.html#49">[ thread ]</a>
+              <a href="subject.html#49">[ subject ]</a>
+              <a href="author.html#49">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

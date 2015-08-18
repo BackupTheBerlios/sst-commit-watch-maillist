@@ -1,0 +1,3125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r629 - in trunk: . po src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r629%20-%20in%20trunk%3A%20.%20po%20src&In-Reply-To=%3C200609221709.k8MH9PRe019662%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000095.html">
+   <LINK REL="Next"  HREF="000097.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r629 - in trunk: . po src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r629%20-%20in%20trunk%3A%20.%20po%20src&In-Reply-To=%3C200609221709.k8MH9PRe019662%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r629 - in trunk: . po src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 22 19:09:25 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000095.html">[Sst-commit-watch] r628 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000097.html">[Sst-commit-watch] r630 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#96">[ date ]</a>
+              <a href="thread.html#96">[ thread ]</a>
+              <a href="subject.html#96">[ subject ]</a>
+              <a href="author.html#96">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2006-09-22 19:09:23 +0200 (Fri, 22 Sep 2006)
+New Revision: 629
+
+Modified:
+   trunk/TODO
+   trunk/po/ru.po
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/io.c
+   trunk/src/moving.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+   trunk/src/xio.c
+Log:
+- use ARRAY_SIZE
+- cleaned up srscan()
+- introduced a separate ncurses window for status
+- removed completed TODO entries
+- fixed SIGSEGV in tty mode when env LINES is undefined (always!)
+- made &quot;Please enter password&quot; message visible
+- made the above message to appear for OPTION_PLAIN instead of !OPTION_CURSES
+- killed enqueue()
+- localized status() (added helper prstat() )
+- enabled gcc to check the format arguments, which uncovered a lot of
+  the real bugs!
+- fixed the bugs uncovered by the gcc format checking (the last one in
+  ai.c is left for Eric :)
+- fixed problem with skip(): it relied on &quot;linecount&quot;, but &quot;linecount&quot;
+  doesn't increment when you enter the multiline answers, like, for example,
+  the torpedo courses. The fix works only in curses mode though - no idea
+  how to fix this for tty.
+- localized prouts(), however, not very cleanly. Any help is appreciated,
+  see the added comments.
+
+Modified: trunk/TODO
+===================================================================
+--- trunk/TODO	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/TODO	2006-09-22 17:09:23 UTC (rev 629)
+@@ -7,12 +7,7 @@
+ * Complete, polish, improve, complete, polish, improve the
+   gettextization and the translation! Right now it just sucks.
+ 
+-* Probably a separate window for status in ncurses mode
+-  (right now status uses srscan window)
+ 
+-* srscan() really needs to be restructured and cleaned up.
+-
+-
+ Long-term items:
+ 
+ * Wrap a GUI around it.
+
+Modified: trunk/po/ru.po
+===================================================================
+--- trunk/po/ru.po	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/po/ru.po	2006-09-22 17:09:23 UTC (rev 629)
+@@ -11,7 +11,7 @@
+ msgstr &quot;&quot;
+ &quot;Project-Id-Version: sst 2.0\n&quot;
+ &quot;Report-Msgid-Bugs-To: stsp\n&quot;
+-&quot;POT-Creation-Date: 2006-09-20 20:51+0400\n&quot;
++&quot;POT-Creation-Date: 2006-09-22 20:54+0400\n&quot;
+ &quot;PO-Revision-Date: 2006-09-15 11:01+0400\n&quot;
+ &quot;Last-Translator: Stas Sergeev &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">stsp at aknet.ru</A>&gt;\n&quot;
+ &quot;Language-Team: Russian &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">ru at li.org</A>&gt;\n&quot;
+@@ -39,44 +39,44 @@
+ msgid &quot; retreats to &quot;
+ msgstr &quot; &#1086;&#1090;&#1089;&#1090;&#1091;&#1087;&#1072;&#1077;&#1090; &#1082; &quot;
+ 
+-#: src/ai.c:340 src/ai.c:518
++#: src/ai.c:341 src/ai.c:519
+ msgid &quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1088;&#1072;&#1079;&#1074;&#1077;&#1076;&#1082;&#1072; &#1079;&#1074;&#1105;&#1079;&#1076;&#1085;&#1086;&#1075;&#1086; &#1092;&#1083;&#1086;&#1090;&#1072; &#1076;&#1086;&#1082;&#1083;&#1072;&#1076;&#1099;&#1074;&#1072;&#1077;&#1090;&quot;
+ 
+-#: src/ai.c:341
++#: src/ai.c:342
+ msgid &quot;   a planet in &quot;
+ msgstr &quot;   &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1072; &#1074; &quot;
+ 
+-#: src/ai.c:343
++#: src/ai.c:344
+ msgid &quot; has been destroyed&quot;
+ msgstr &quot; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1077;&#1085;&#1072;&quot;
+ 
+-#: src/ai.c:344
++#: src/ai.c:345
+ msgid &quot;   by the Super-commander.\&quot;&quot;
+ msgstr &quot;   &#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084;&#1086;&#1084;.&quot;
+ 
+-#: src/ai.c:495 src/events.c:293
++#: src/ai.c:496 src/events.c:293
+ msgid &quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1073;&#1072;&#1079;&#1072; &#1074; &quot;
+ 
+-#: src/ai.c:498
++#: src/ai.c:499
+ msgid &quot;   reports that it is under attack from the Klingon Super-commander.&quot;
+ msgstr &quot;   &#1089;&#1086;&#1086;&#1073;&#1097;&#1072;&#1077;&#1090;, &#1095;&#1090;&#1086; &#1086;&#1085;&#1072; &#1072;&#1090;&#1072;&#1082;&#1086;&#1074;&#1072;&#1085;&#1072; &#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084;&#1086;&#1084; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;.&quot;
+ 
+-#: src/ai.c:499
++#: src/ai.c:500
+ #, c-format
+ msgid &quot;   It can survive until stardate %d.\&quot;&quot;
+ msgstr &quot;   &#1054;&#1085;&#1072; &#1089;&#1084;&#1086;&#1078;&#1077;&#1090; &#1087;&#1088;&#1086;&#1076;&#1077;&#1088;&#1078;&#1072;&#1090;&#1100;&#1089;&#1103; &#1076;&#1086; &#1076;&#1072;&#1090;&#1099; %d.\&quot;&quot;
+ 
+-#: src/ai.c:502 src/events.c:49
++#: src/ai.c:503 src/events.c:49
+ msgid &quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;
+ msgstr &quot;&#1052;&#1080;&#1089;&#1090;&#1077;&#1088; &#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1085;&#1072;&#1084; &#1087;&#1088;&#1077;&#1088;&#1074;&#1072;&#1090;&#1100; &#1086;&#1090;&#1076;&#1099;&#1093;?\&quot;&quot;
+ 
+-#: src/ai.c:519
++#: src/ai.c:520
+ msgid &quot;   the Super-commander is in &quot;
+ msgstr &quot;   &#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084; &#1085;&#1072;&#1093;&#1086;&#1076;&#1080;&#1090;&#1089;&#1103; &#1074; &quot;
+ 
+-#: src/ai.c:584
++#: src/ai.c:585
+ msgid &quot; completes web.&quot;
+ msgstr &quot; &#1076;&#1086;&#1076;&#1077;&#1083;&#1072;&#1083; &#1089;&#1077;&#1090;&#1100;.&quot;
+ 
+@@ -104,7 +104,7 @@
+ msgid &quot;Shields already up.&quot;
+ msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1080; &#1090;&#1072;&#1082; &#1091;&#1078;&#1077; &#1087;&#1086;&#1076;&#1085;&#1103;&#1090;&#1072;.&quot;
+ 
+-#: src/battle.c:67 src/battle.c:1262
++#: src/battle.c:67 src/battle.c:1282
+ msgid &quot;Shields raised.&quot;
+ msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1087;&#1086;&#1076;&#1085;&#1103;&#1090;&#1072;.&quot;
+ 
+@@ -116,9 +116,9 @@
+ msgid &quot;Shields already down.&quot;
+ msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1080; &#1090;&#1072;&#1082; &#1091;&#1078;&#1077; &#1089;&#1085;&#1103;&#1090;&#1072;.&quot;
+ 
+-#: src/battle.c:83 src/battle.c:940
++#: src/battle.c:83 src/battle.c:960
+ msgid &quot;Shields lowered.&quot;
+-msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1086;&#1087;&#1091;&#1097;&#1077;&#1085;&#1072;.&quot;
++msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1089;&#1085;&#1103;&#1090;&#1072;.&quot;
+ 
+ #: src/battle.c:94
+ msgid &quot;Insufficient ship energy.&quot;
+@@ -132,7 +132,7 @@
+ msgid &quot;Excess energy requested returned to ship energy&quot;
+ msgstr &quot;&#1051;&#1080;&#1096;&#1085;&#1103;&#1103; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1103; &#1074;&#1077;&#1088;&#1085;&#1091;&#1083;&#1072;&#1089;&#1100; &#1082;&#1086;&#1088;&#1072;&#1073;&#1083;&#1102;&quot;
+ 
+-#: src/battle.c:110 src/moving.c:526 src/moving.c:617
++#: src/battle.c:110 src/moving.c:525 src/moving.c:616
+ msgid &quot;Engineering to bridge--&quot;
+ msgstr &quot;&#1048;&#1085;&#1078;&#1077;&#1085;&#1077;&#1088;&#1085;&#1099;&#1081; &#1086;&#1090;&#1089;&#1077;&#1082; &#1084;&#1086;&#1089;&#1090;&#1080;&#1082;&#1091;--&quot;
+ 
+@@ -160,8 +160,8 @@
+ msgid &quot;Draining energy from shields.\&quot;&quot;
+ msgstr &quot;&#1055;&#1077;&#1088;&#1077;&#1074;&#1086;&#1078;&#1091; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1102; &#1080;&#1079; &#1079;&#1072;&#1097;&#1080;&#1090;&#1099;.\&quot;&quot;
+ 
+-#: src/battle.c:195 src/battle.c:944 src/events.c:852 src/moving.c:140
+-#: src/moving.c:725 src/planets.c:458
++#: src/battle.c:195 src/battle.c:964 src/events.c:851 src/moving.c:140
++#: src/moving.c:724 src/planets.c:458
+ msgid &quot;***RED ALERT!  RED ALERT!&quot;
+ msgstr &quot;***&#1058;&#1056;&#1045;&#1042;&#1054;&#1043;&#1040;!  &#1058;&#1056;&#1045;&#1042;&#1054;&#1043;&#1040;!&quot;
+ 
+@@ -191,388 +191,387 @@
+ msgstr &quot;***&#1048;&#1079; &#1083;&#1072;&#1079;&#1072;&#1088;&#1077;&#1090;&#1072; &#1076;&#1086;&#1082;&#1083;&#1072;&#1076;&#1099;&#1074;&#1072;&#1102;&#1090; &#1086; %d &#1087;&#1086;&#1089;&#1090;&#1088;&#1072;&#1076;&#1072;&#1074;&#1096;&#1080;&#1093;&quot;
+ 
+ #: src/battle.c:236
+-#, fuzzy
+ msgid &quot;***Shields are down.&quot;
+-msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1080; &#1090;&#1072;&#1082; &#1091;&#1078;&#1077; &#1089;&#1085;&#1103;&#1090;&#1072;.&quot;
++msgstr &quot;***&#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1089;&#1085;&#1103;&#1090;&#1072;.&quot;
+ 
+-#: src/battle.c:284
++#: src/battle.c:285
+ msgid &quot;Torpedo hits &quot;
+ msgstr &quot;&#1058;&#1086;&#1088;&#1087;&#1077;&#1076;&#1072; &#1087;&#1086;&#1087;&#1072;&#1083;&#1072; &#1074; &#1094;&#1077;&#1083;&#1100;: &quot;
+ 
+-#: src/battle.c:319
++#: src/battle.c:320
+ msgid &quot; uses anti-photon device;&quot;
+ msgstr &quot; &#1080;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1091;&#1077;&#1090; &#1087;&#1088;&#1086;&#1090;&#1080;&#1074;&#1086;&#1092;&#1086;&#1090;&#1086;&#1085;&#1085;&#1091;&#1102; &#1091;&#1089;&#1090;&#1072;&#1085;&#1086;&#1074;&#1082;&#1091;;&quot;
+ 
+-#: src/battle.c:320
++#: src/battle.c:321
+ msgid &quot;   torpedo neutralized.&quot;
+ msgstr &quot;   &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;&#1072; &#1085;&#1077;&#1081;&#1090;&#1088;&#1072;&#1083;&#1080;&#1079;&#1086;&#1074;&#1072;&#1085;&#1072;.&quot;
+ 
+-#: src/battle.c:349 src/battle.c:359
++#: src/battle.c:350 src/battle.c:360
+ msgid &quot; damaged but not destroyed.&quot;
+ msgstr &quot; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1105;&#1085;, &#1085;&#1086; &#1085;&#1077; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1077;&#1085;.&quot;
+ 
+-#: src/battle.c:353
++#: src/battle.c:354
+ msgid &quot; buffeted into black hole.&quot;
+ msgstr &quot; &#1086;&#1090;&#1083;&#1077;&#1090;&#1077;&#1083; &#1074; &#1095;&#1105;&#1088;&#1085;&#1091;&#1102; &#1076;&#1099;&#1088;&#1091;.&quot;
+ 
+-#: src/battle.c:362
++#: src/battle.c:363
+ msgid &quot; damaged--&quot;
+ msgstr &quot; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1105;&#1085;--&quot;
+ 
+-#: src/battle.c:368
++#: src/battle.c:369
+ msgid &quot;***STARBASE DESTROYED..&quot;
+ msgstr &quot;***&#1041;&#1040;&#1047;&#1040; &#1059;&#1053;&#1048;&#1063;&#1058;&#1054;&#1046;&#1045;&#1053;&#1040;..&quot;
+ 
+-#: src/battle.c:385 src/battle.c:399 src/battle.c:740 src/events.c:677
++#: src/battle.c:386 src/battle.c:400 src/battle.c:760 src/events.c:676
+ #: src/events.c:697
+ msgid &quot; destroyed.&quot;
+ msgstr &quot; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1077;&#1085;.&quot;
+ 
+-#: src/battle.c:410
++#: src/battle.c:411
+ msgid &quot;You have just destroyed an inhabited planet.&quot;
+ msgstr &quot;&#1042;&#1099; &#1090;&#1086;&#1083;&#1100;&#1082;&#1086; &#1095;&#1090;&#1086; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1080;&#1083;&#1080; &#1086;&#1073;&#1080;&#1090;&#1072;&#1077;&#1084;&#1091;&#1102; &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1091;.&quot;
+ 
+-#: src/battle.c:411
++#: src/battle.c:412
+ msgid &quot;Celebratory rallies are being held on the Klingon homeworld.&quot;
+-msgstr &quot;&#1053;&#1072; &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1077; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074; &#1087;&#1088;&#1086;&#1096;&#1083;&#1080; &#1087;&#1088;&#1072;&#1079;&#1076;&#1085;&#1080;&#1095;&#1085;&#1099;&#1077; &#1076;&#1077;&#1084;&#1086;&#1085;&#1089;&#1090;&#1088;&#1072;&#1094;&#1080;&#1080;.&quot;
++msgstr &quot;&#1053;&#1072; &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1077; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074; &#1087;&#1088;&#1086;&#1096;&#1083;&#1080; &#1087;&#1088;&#1072;&#1079;&#1076;&#1085;&#1080;&#1095;&#1085;&#1099;&#1077; &#1084;&#1080;&#1090;&#1080;&#1085;&#1075;&#1080;.&quot;
+ 
+-#: src/battle.c:419
++#: src/battle.c:420
+ msgid &quot; unaffected by photon blast.&quot;
+ msgstr &quot; &#1085;&#1077; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1105;&#1085; &#1092;&#1086;&#1090;&#1086;&#1085;&#1085;&#1099;&#1084; &#1079;&#1072;&#1088;&#1103;&#1076;&#1086;&#1084;.&quot;
+ 
+-#: src/battle.c:424
++#: src/battle.c:425
+ msgid &quot;AAAAIIIIEEEEEEEEAAAAAAAAUUUUUGGGGGHHHHHHHHHHHH!!!&quot;
+ msgstr &quot;&#1042;&#1042;&#1042;&#1042;&#1055;&#1055;&#1055;&#1055;&#1045;&#1045;&#1045;&#1045;&#1056;&#1056;&#1056;&#1025;&#1025;&#1025;&#1025;&#1044;&#1044;&#1044;&#1047;&#1047;&#1047;&#1047;&#1040;&#1040;&#1040;&#1040;&#1056;&#1056;&#1056;&#1056;&#1054;&#1054;&#1054;&#1054;&#1044;&#1044;&#1044;&#1044;&#1048;&#1048;&#1048;&#1053;&#1053;&#1053;&#1053;&#1059;&#1059;&#1059;&#1059;!!!&quot;
+ 
+-#: src/battle.c:426
++#: src/battle.c:427
+ msgid &quot;    HACK!     HACK!    HACK!        *CHOKE!*  &quot;
+ msgstr &quot;&quot;
+ 
+-#: src/battle.c:428
++#: src/battle.c:429
+ msgid &quot;Mr. Spock-&quot;
+ msgstr &quot;&#1052;&#1080;&#1089;&#1090;&#1077;&#1088; &#1057;&#1087;&#1086;&#1082;-&quot;
+ 
+-#: src/battle.c:429
++#: src/battle.c:430
+ msgid &quot;  \&quot;Fascinating!\&quot;&quot;
+ msgstr &quot;  \&quot;&#1043;&#1088;&#1072;&#1085;&#1076;&#1080;&#1086;&#1079;&#1085;&#1086;!\&quot;&quot;
+ 
+-#: src/battle.c:445
++#: src/battle.c:446
+ msgid &quot; swallows torpedo.&quot;
+ msgstr &quot; &#1087;&#1086;&#1075;&#1083;&#1086;&#1090;&#1080;&#1083;&#1072; &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;&#1091;.&quot;
+ 
+-#: src/battle.c:449
++#: src/battle.c:450
+ msgid &quot;***Torpedo absorbed by Tholian web.&quot;
+ msgstr &quot;***&#1058;&#1086;&#1083;&#1080;&#1072;&#1085;&#1089;&#1082;&#1072;&#1103; &#1089;&#1077;&#1090;&#1100; &#1087;&#1086;&#1075;&#1083;&#1086;&#1090;&#1080;&#1083;&#1072; &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;&#1091;.&quot;
+ 
+-#: src/battle.c:464
++#: src/battle.c:465
+ msgid &quot; survives photon blast.&quot;
+ msgstr &quot; &#1074;&#1099;&#1076;&#1077;&#1088;&#1078;&#1072;&#1083; &#1092;&#1086;&#1090;&#1086;&#1085;&#1085;&#1099;&#1081; &#1074;&#1079;&#1088;&#1099;&#1074;.&quot;
+ 
+-#: src/battle.c:467
++#: src/battle.c:468
+ msgid &quot; disappears.&quot;
+ msgstr &quot; &#1080;&#1089;&#1095;&#1077;&#1079;.&quot;
+ 
+-#: src/battle.c:489
++#: src/battle.c:490
+ #, c-format
+ msgid &quot; displaced by blast to %s &quot;
+ msgstr &quot; &#1087;&#1077;&#1088;&#1077;&#1084;&#1077;&#1097;&#1105;&#1085; &#1074;&#1079;&#1088;&#1099;&#1074;&#1086;&#1084; &#1074; %s &quot;
+ 
+-#: src/battle.c:496
++#: src/battle.c:497
+ msgid &quot;Torpedo missed.&quot;
+ msgstr &quot;&#1058;&#1086;&#1088;&#1087;&#1077;&#1076;&#1072; &#1087;&#1088;&#1086;&#1084;&#1072;&#1079;&#1072;&#1083;&#1072;.&quot;
+ 
+-#: src/battle.c:510
++#: src/battle.c:511
+ msgid &quot;***CRITICAL HIT--&quot;
+ msgstr &quot;***&#1050;&#1056;&#1048;&#1058;&#1048;&#1063;&#1045;&#1057;&#1050;&#1048;&#1049; &#1059;&#1044;&#1040;&#1056;--&quot;
+ 
+-#: src/battle.c:526
++#: src/battle.c:527
+ msgid &quot; and &quot;
+ msgstr &quot; &#1080; &quot;
+ 
+-#: src/battle.c:530
++#: src/battle.c:531
+ msgid &quot; damaged.&quot;
+ msgstr &quot; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1077;&#1085;.&quot;
+ 
+-#: src/battle.c:532
++#: src/battle.c:533
+ msgid &quot;***Shields knocked down.&quot;
+ msgstr &quot;***&#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1089;&#1073;&#1080;&#1090;&#1072;.&quot;
+ 
+-#: src/battle.c:589
++#: src/battle.c:610
+ msgid &quot;***TORPEDO INCOMING&quot;
+ msgstr &quot;***&#1058;&#1054;&#1056;&#1055;&#1045;&#1044;&#1040; &#1055;&#1056;&#1048;&#1041;&#1051;&#1048;&#1046;&#1040;&#1045;&#1058;&#1057;&#1071;&quot;
+ 
+-#: src/battle.c:591
++#: src/battle.c:612
+ msgid &quot; From &quot;
+ msgstr &quot; &#1054;&#1090; &quot;
+ 
+-#: src/battle.c:623
++#: src/battle.c:645
+ #, c-format
+ msgid &quot;%d unit hit&quot;
+ msgstr &quot;&#1091;&#1076;&#1072;&#1088; &#1085;&#1072; %d &#1077;&#1076;&#1080;&#1085;&#1080;&#1094;&quot;
+ 
+-#: src/battle.c:625
++#: src/battle.c:647
+ msgid &quot; on the &quot;
+ msgstr &quot; &#1087;&#1086; &quot;
+ 
+-#: src/battle.c:629
++#: src/battle.c:651
+ msgid &quot; from &quot;
+ msgstr &quot; &#1086;&#1090; &quot;
+ 
+-#: src/battle.c:647
++#: src/battle.c:667
+ msgid &quot;***Enemies decide against attacking your ship.&quot;
+ msgstr &quot;***&#1042;&#1088;&#1072;&#1075;&#1080; &#1088;&#1077;&#1096;&#1080;&#1083;&#1080; &#1085;&#1077; &#1072;&#1090;&#1072;&#1082;&#1086;&#1074;&#1072;&#1090;&#1100; &#1074;&#1072;&#1096; &#1082;&#1086;&#1088;&#1072;&#1073;&#1083;&#1100;.&quot;
+ 
+-#: src/battle.c:652
++#: src/battle.c:672
+ msgid &quot;Enemy attack reduces shield strength to &quot;
+ msgstr &quot;&#1042;&#1088;&#1072;&#1078;&#1077;&#1089;&#1082;&#1072;&#1103; &#1072;&#1090;&#1072;&#1082;&#1072; &#1091;&#1084;&#1077;&#1085;&#1100;&#1096;&#1072;&#1077;&#1090; &#1089;&#1080;&#1083;&#1091; &#1079;&#1072;&#1097;&#1080;&#1090;&#1099; &#1076;&#1086; &quot;
+ 
+-#: src/battle.c:657
++#: src/battle.c:677
+ #, c-format
+ msgid &quot;Energy left %2d    shields &quot;
+ msgstr &quot;&#1054;&#1089;&#1090;&#1072;&#1090;&#1086;&#1082; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080;: %2d    &#1079;&#1072;&#1097;&#1080;&#1090;&#1072; &quot;
+ 
+-#: src/battle.c:658
++#: src/battle.c:678
+ msgid &quot;up &quot;
+ msgstr &quot;&#1087;&#1086;&#1076;&#1085;&#1103;&#1090;&#1072; &quot;
+ 
+-#: src/battle.c:659
++#: src/battle.c:679
+ msgid &quot;down &quot;
+ msgstr &quot;&#1089;&#1085;&#1103;&#1090;&#1072; &quot;
+ 
+-#: src/battle.c:660
++#: src/battle.c:680
+ msgid &quot;damaged, &quot;
+ msgstr &quot;&#1089;&#1083;&#1086;&#1084;&#1072;&#1085;&#1072;, &quot;
+ 
+-#: src/battle.c:662
++#: src/battle.c:682
+ #, c-format
+ msgid &quot;%d%%,   torpedoes left %d&quot;
+ msgstr &quot;%d%%,   &#1086;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100; %d &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;&quot;
+ 
+-#: src/battle.c:668
++#: src/battle.c:688
+ #, c-format
+ msgid &quot;Mc Coy-  \&quot;Sickbay to bridge.  We suffered %d casualties&quot;
+ msgstr &quot;&#1052;&#1072;&#1082;&#1050;&#1086;&#1081;- \&quot;&#1051;&#1072;&#1079;&#1072;&#1088;&#1077;&#1090; &#1084;&#1086;&#1089;&#1090;&#1080;&#1082;&#1091;.  &#1050; &#1085;&#1072;&#1084; &#1087;&#1086;&#1089;&#1090;&#1091;&#1087;&#1080;&#1083;&#1080; %d &#1087;&#1086;&#1089;&#1090;&#1088;&#1072;&#1076;&#1072;&#1074;&#1096;&#1080;&#1093;&quot;
+ 
+-#: src/battle.c:669
++#: src/battle.c:689
+ msgid &quot;   in that last attack.\&quot;&quot;
+ msgstr &quot;   &#1086;&#1090; &#1087;&#1086;&#1089;&#1083;&#1077;&#1076;&#1085;&#1077;&#1081; &#1072;&#1090;&#1072;&#1082;&#1080;.\&quot;&quot;
+ 
+-#: src/battle.c:779
++#: src/battle.c:799
+ msgid &quot;Spock-  \&quot;Bridge to sickbay.  Dr. McCoy,&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1052;&#1086;&#1089;&#1090;&#1080;&#1082; &#1083;&#1072;&#1079;&#1072;&#1088;&#1077;&#1090;&#1091;.  &#1044;&#1086;&#1082;&#1090;&#1086;&#1088; &#1052;&#1072;&#1082;&#1050;&#1086;&#1081;,&quot;
+ 
+-#: src/battle.c:780
++#: src/battle.c:800
+ msgid &quot;  I recommend an immediate review of&quot;
+ msgstr &quot;  &#1088;&#1077;&#1082;&#1086;&#1084;&#1077;&#1085;&#1076;&#1091;&#1102; &#1085;&#1077;&#1084;&#1077;&#1076;&#1083;&#1077;&#1085;&#1085;&#1086; &#1087;&#1088;&#1086;&#1074;&#1077;&#1088;&#1080;&#1090;&#1100;&quot;
+ 
+-#: src/battle.c:781
++#: src/battle.c:801
+ msgid &quot;  the Captain's psychological profile.\&quot;&quot;
+ msgstr &quot;  &#1087;&#1089;&#1080;&#1093;&#1086;&#1083;&#1086;&#1075;&#1080;&#1095;&#1077;&#1089;&#1082;&#1086;&#1077; &#1089;&#1086;&#1089;&#1090;&#1086;&#1103;&#1085;&#1080;&#1077; &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;&#1072;.\&quot;&quot;
+ 
+-#: src/battle.c:800
++#: src/battle.c:820
+ msgid &quot;Photon tubes damaged.&quot;
+ msgstr &quot;&#1060;&#1086;&#1090;&#1086;&#1085;&#1085;&#1099;&#1077; &#1090;&#1088;&#1091;&#1073;&#1099; &#1089;&#1083;&#1086;&#1084;&#1072;&#1085;&#1099;.&quot;
+ 
+-#: src/battle.c:805
++#: src/battle.c:825
+ msgid &quot;No torpedoes left.&quot;
+ msgstr &quot;&#1058;&#1086;&#1088;&#1087;&#1077;&#1076; &#1089;&#1086;&#1074;&#1089;&#1077;&#1084; &#1085;&#1077; &#1086;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100;.&quot;
+ 
+-#: src/battle.c:816
++#: src/battle.c:836
+ #, c-format
+ msgid &quot;%d torpedoes left.&quot;
+ msgstr &quot;&#1054;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100; %d &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;.&quot;
+ 
+-#: src/battle.c:817
++#: src/battle.c:837
+ msgid &quot;Number of torpedoes to fire- &quot;
+ msgstr &quot;&#1063;&#1080;&#1089;&#1083;&#1086; &#1090;&#1086;&#1088;&#1087;&#1077;&#1076; &#1085;&#1072; &#1086;&#1090;&#1089;&#1090;&#1088;&#1077;&#1083;- &quot;
+ 
+-#: src/battle.c:828
++#: src/battle.c:848
+ msgid &quot;Maximum of 3 torpedoes per burst.&quot;
+ msgstr &quot;&#1052;&#1072;&#1082;&#1089;&#1080;&#1084;&#1091;&#1084; 3 &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;&#1099; &#1079;&#1072; &#1079;&#1072;&#1083;&#1087;.&quot;
+ 
+-#: src/battle.c:869
++#: src/battle.c:889
+ #, c-format
+ msgid &quot;Target sector for torpedo number %d- &quot;
+ msgstr &quot;&#1057;&#1077;&#1082;&#1090;&#1086;&#1088; &#1085;&#1072;&#1079;&#1085;&#1072;&#1095;&#1077;&#1085;&#1080;&#1103; &#1076;&#1083;&#1103; &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;&#1099; &#1085;&#1086;&#1084;&#1077;&#1088; %d- &quot;
+ 
+-#: src/battle.c:896
++#: src/battle.c:916
+ #, c-format
+ msgid &quot;***TORPEDO NUMBER %d MISFIRES&quot;
+ msgstr &quot;***&#1058;&#1054;&#1056;&#1055;&#1045;&#1044;&#1040; &#1053;&#1054;&#1052;&#1045;&#1056; %d &#1053;&#1045; &#1057;&#1054;&#1064;&#1051;&#1040;&quot;
+ 
+-#: src/battle.c:898
++#: src/battle.c:918
+ msgid &quot;***TORPEDO MISFIRES.&quot;
+ msgstr &quot;***&#1058;&#1054;&#1056;&#1055;&#1045;&#1044;&#1040; &#1053;&#1045; &#1057;&#1054;&#1064;&#1051;&#1040;.&quot;
+ 
+-#: src/battle.c:901
++#: src/battle.c:921
+ msgid &quot;  Remainder of burst aborted.&quot;
+ msgstr &quot;  &#1054;&#1089;&#1090;&#1072;&#1090;&#1086;&#1082; &#1079;&#1072;&#1083;&#1087;&#1072; &#1086;&#1090;&#1084;&#1077;&#1085;&#1105;&#1085;.&quot;
+ 
+-#: src/battle.c:904
++#: src/battle.c:924
+ msgid &quot;***Photon tubes damaged by misfire.&quot;
+ msgstr &quot;***&#1060;&#1086;&#1090;&#1086;&#1085;&#1085;&#1099;&#1077; &#1090;&#1088;&#1091;&#1073;&#1099; &#1089;&#1083;&#1086;&#1084;&#1072;&#1083;&#1080;&#1089;&#1100; &#1087;&#1088;&#1080; &#1086;&#1089;&#1077;&#1095;&#1082;&#1077;.&quot;
+ 
+-#: src/battle.c:926
++#: src/battle.c:946
+ msgid &quot;Weapons officer Sulu-  \&quot;Phasers overheated, sir.\&quot;&quot;
+ msgstr &quot;&#1053;&#1072;&#1074;&#1086;&#1076;&#1095;&#1080;&#1082; &#1057;&#1091;&#1083;&#1091;- \&quot;&#1060;&#1072;&#1079;&#1077;&#1088;&#1099; &#1087;&#1077;&#1088;&#1077;&#1075;&#1086;&#1088;&#1077;&#1083;&#1080;, &#1089;&#1101;&#1088;.\&quot;&quot;
+ 
+-#: src/battle.c:950
++#: src/battle.c:970
+ msgid &quot;Sulu-  \&quot;Captain! Shield malf***********************\&quot;&quot;
+ msgstr &quot;&#1057;&#1091;&#1083;&#1091;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;! &#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1085;&#1077; &#1089;&#1088;&#1072;&#1073;*********************\&quot;&quot;
+ 
+-#: src/battle.c:956
++#: src/battle.c:976
+ msgid &quot;Sulu-  \&quot;Captain! Shield malfunction! Phaser fire contained!\&quot;&quot;
+ msgstr &quot;&quot;
+ &quot;&#1057;&#1091;&#1083;&#1091;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;! &#1047;&#1072;&#1097;&#1080;&#1090;&#1072; &#1085;&#1077; &#1089;&#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1083;&#1072;! &#1069;&#1085;&#1077;&#1088;&#1075;&#1080;&#1103; &#1092;&#1072;&#1079;&#1077;&#1088;&#1086;&#1074; &#1089;&#1082;&#1086;&#1087;&#1080;&#1083;&#1072;&#1089;&#1100; &#1074;&#1085;&#1091;&#1090;&#1088;&#1080;!\&quot;&quot;
+ 
+-#: src/battle.c:958
++#: src/battle.c:978
+ msgid &quot;Lt. Uhura-  \&quot;Sir, all decks reporting damage.\&quot;&quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1057;&#1101;&#1088;, &#1074;&#1089;&#1077; &#1087;&#1072;&#1083;&#1091;&#1073;&#1099; &#1089;&#1086;&#1086;&#1073;&#1097;&#1072;&#1102;&#1090; &#1086; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1077;&#1085;&#1080;&#1080;.\&quot;&quot;
+ 
+-#: src/battle.c:964
++#: src/battle.c:984
+ msgid &quot;McCoy to bridge- \&quot;Severe radiation burns, Jim.&quot;
+ msgstr &quot;&#1052;&#1072;&#1082;&#1050;&#1086;&#1081; &#1084;&#1086;&#1089;&#1090;&#1080;&#1082;&#1091;- \&quot;&#1057;&#1080;&#1083;&#1100;&#1085;&#1077;&#1081;&#1096;&#1080;&#1077; &#1088;&#1072;&#1076;&#1080;&#1072;&#1094;&#1080;&#1086;&#1085;&#1085;&#1099;&#1077; &#1086;&#1078;&#1086;&#1075;&#1080;, &#1044;&#1078;&#1080;&#1084;.&quot;
+ 
+-#: src/battle.c:965
++#: src/battle.c:985
+ #, c-format
+ msgid &quot;  %d casualties so far.\&quot;&quot;
+ msgstr &quot;  &#1087;&#1086;&#1082;&#1072;-&#1095;&#1090;&#1086; %d &#1087;&#1086;&#1089;&#1090;&#1088;&#1072;&#1076;&#1072;&#1074;&#1096;&#1080;&#1093;.\&quot;&quot;
+ 
+-#: src/battle.c:970
++#: src/battle.c:990
+ msgid &quot;Phaser energy dispersed by shields.&quot;
+ msgstr &quot;&#1069;&#1085;&#1077;&#1088;&#1075;&#1080;&#1103; &#1092;&#1072;&#1079;&#1077;&#1088;&#1086;&#1074; &#1088;&#1072;&#1089;&#1089;&#1077;&#1103;&#1085;&#1072; &#1079;&#1072;&#1097;&#1080;&#1090;&#1085;&#1099;&#1084; &#1087;&#1086;&#1083;&#1077;&#1084;.&quot;
+ 
+-#: src/battle.c:971
++#: src/battle.c:991
+ msgid &quot;Enemy unaffected.&quot;
+ msgstr &quot;&#1042;&#1088;&#1072;&#1075; &#1085;&#1077; &#1087;&#1086;&#1089;&#1090;&#1088;&#1072;&#1076;&#1072;&#1083;.&quot;
+ 
+-#: src/battle.c:991
++#: src/battle.c:1011
+ msgid &quot;Phasers can't be fired through base shields.&quot;
+ msgstr &quot;&#1060;&#1072;&#1079;&#1077;&#1088;&#1099; &#1085;&#1077; &#1084;&#1086;&#1075;&#1091;&#1090; &#1089;&#1090;&#1088;&#1077;&#1083;&#1103;&#1090;&#1100; &#1095;&#1077;&#1088;&#1077;&#1079; &#1079;&#1072;&#1097;&#1080;&#1090;&#1091; &#1073;&#1072;&#1079;&#1099;.&quot;
+ 
+-#: src/battle.c:996
++#: src/battle.c:1016
+ msgid &quot;Phaser control damaged.&quot;
+ msgstr &quot;&#1059;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1092;&#1072;&#1079;&#1077;&#1088;&#1072;&#1084;&#1080; &#1085;&#1077; &#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1077;&#1090;.&quot;
+ 
+-#: src/battle.c:1002
++#: src/battle.c:1022
+ msgid &quot;High speed shield control damaged.&quot;
+ msgstr &quot;&#1042;&#1099;&#1089;&#1086;&#1082;&#1086;&#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1085;&#1086;&#1077; &#1091;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1079;&#1072;&#1097;&#1080;&#1090;&#1086;&#1081; &#1085;&#1077; &#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1077;&#1090;.&quot;
+ 
+-#: src/battle.c:1007
++#: src/battle.c:1027
+ msgid &quot;Insufficient energy to activate high-speed shield control.&quot;
+ msgstr &quot;&#1053;&#1077;&#1076;&#1086;&#1089;&#1090;&#1072;&#1090;&#1086;&#1095;&#1085;&#1086; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1076;&#1083;&#1103; &#1074;&#1099;&#1089;&#1086;&#1082;&#1086;&#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1085;&#1086;&#1075;&#1086; &#1091;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1103; &#1079;&#1072;&#1097;&#1080;&#1090;&#1086;&#1081;.&quot;
+ 
+-#: src/battle.c:1011
++#: src/battle.c:1031
+ msgid &quot;Weapons Officer Sulu-  \&quot;High-speed shield control enabled, sir.\&quot;&quot;
+ msgstr &quot;&#1053;&#1072;&#1074;&#1086;&#1076;&#1095;&#1080;&#1082; &#1057;&#1091;&#1083;&#1091;- \&quot;&#1042;&#1099;&#1089;&#1086;&#1082;&#1086;&#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1085;&#1086;&#1077; &#1091;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1079;&#1072;&#1097;&#1080;&#1090;&#1086;&#1081; &#1074;&#1082;&#1083;&#1102;&#1095;&#1077;&#1085;&#1086;, &#1089;&#1101;&#1088;.\&quot;&quot;
+ 
+-#: src/battle.c:1021
++#: src/battle.c:1041
+ msgid &quot;There is no enemy present to select.&quot;
+ msgstr &quot;&#1047;&#1076;&#1077;&#1089;&#1100; &#1085;&#1077;&#1090; &#1074;&#1088;&#1072;&#1075;&#1086;&#1074;.&quot;
+ 
+-#: src/battle.c:1037 src/battle.c:1052 src/battle.c:1063
++#: src/battle.c:1057 src/battle.c:1072 src/battle.c:1083
+ msgid &quot;Energy will be expended into space.&quot;
+ msgstr &quot;&#1069;&#1085;&#1077;&#1088;&#1075;&#1080;&#1103; &#1091;&#1081;&#1076;&#1105;&#1090; &#1074; &#1087;&#1091;&#1089;&#1090;&#1086;&#1090;&#1091;.&quot;
+ 
+-#: src/battle.c:1069
++#: src/battle.c:1089
+ msgid &quot;Manual or automatic? &quot;
+ msgstr &quot;&#1056;&#1091;&#1095;&#1085;&#1086;&#1081; &#1080;&#1083;&#1080; &#1072;&#1074;&#1090;&#1086;&#1084;&#1072;&#1090;&#1080;&#1095;&#1077;&#1089;&#1082;&#1080;&#1081;? &quot;
+ 
+-#: src/battle.c:1080
++#: src/battle.c:1100
+ #, c-format
+ msgid &quot;Phasers locked on target. Energy available: %.2f&quot;
+ msgstr &quot;&#1060;&#1072;&#1079;&#1077;&#1088;&#1099; &#1085;&#1072;&#1074;&#1077;&#1076;&#1077;&#1085;&#1099; &#1085;&#1072; &#1094;&#1077;&#1083;&#1100;. &#1044;&#1086;&#1089;&#1090;&#1091;&#1087;&#1085;&#1072;&#1103; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1103;: %.2f&quot;
+ 
+-#: src/battle.c:1090
++#: src/battle.c:1110
+ #, c-format
+ msgid &quot;%d units required. &quot;
+ msgstr &quot;&#1053;&#1077;&#1086;&#1073;&#1093;&#1086;&#1076;&#1080;&#1084;&#1086; %d &#1077;&#1076;&#1080;&#1085;&#1080;&#1094;. &quot;
+ 
+-#: src/battle.c:1092
++#: src/battle.c:1112
+ msgid &quot;Units to fire= &quot;
+ msgstr &quot;&#1069;&#1085;&#1077;&#1088;&#1075;&#1080;&#1103; &#1085;&#1072; &#1074;&#1099;&#1089;&#1090;&#1088;&#1077;&#1083;= &quot;
+ 
+-#: src/battle.c:1097 src/battle.c:1168
++#: src/battle.c:1117 src/battle.c:1188
+ #, c-format
+ msgid &quot;Energy available= %.2f&quot;
+ msgstr &quot;&#1044;&#1086;&#1089;&#1090;&#1091;&#1087;&#1085;&#1072;&#1103; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1103;= %.2f&quot;
+ 
+-#: src/battle.c:1138
++#: src/battle.c:1158
+ msgid &quot;*** Tholian web absorbs &quot;
+ msgstr &quot;*** &#1058;&#1086;&#1083;&#1080;&#1072;&#1085;&#1089;&#1082;&#1072;&#1103; &#1089;&#1077;&#1090;&#1100; &#1087;&#1086;&#1075;&#1083;&#1086;&#1097;&#1072;&#1077;&#1090; &quot;
+ 
+-#: src/battle.c:1139
++#: src/battle.c:1159
+ msgid &quot;excess &quot;
+ msgstr &quot;&#1080;&#1079;&#1073;&#1099;&#1090;&#1086;&#1095;&#1085;&#1091;&#1102; &quot;
+ 
+-#: src/battle.c:1140
++#: src/battle.c:1160
+ msgid &quot;phaser energy.&quot;
+ msgstr &quot;&#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1102; &#1092;&#1072;&#1079;&#1077;&#1088;&#1086;&#1074;.&quot;
+ 
+-#: src/battle.c:1143
++#: src/battle.c:1163
+ #, c-format
+ msgid &quot;%d expended on empty space.&quot;
+ msgstr &quot;%d &#1091;&#1096;&#1083;&#1086; &#1074; &#1087;&#1091;&#1089;&#1090;&#1086;&#1090;&#1091;.&quot;
+ 
+-#: src/battle.c:1152
+-#, fuzzy
+-msgid &quot;Battle computer damaged, manual file only.&quot;
+-msgstr &quot;&#1041;&#1086;&#1088;&#1090;&#1086;&#1074;&#1086;&#1081; &#1082;&#1086;&#1084;&#1087;&#1100;&#1102;&#1090;&#1077;&#1088; &#1089;&#1083;&#1086;&#1084;&#1072;&#1085;, &#1080;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1091;&#1081;&#1090;&#1077; &#1088;&#1091;&#1095;&#1085;&#1086;&#1077; &#1091;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077;.&quot;
++#: src/battle.c:1172
++msgid &quot;Battle computer damaged, manual fire only.&quot;
++msgstr &quot;&#1041;&#1086;&#1088;&#1090;&#1086;&#1074;&#1086;&#1081; &#1082;&#1086;&#1084;&#1087;&#1100;&#1102;&#1090;&#1077;&#1088; &#1089;&#1083;&#1086;&#1084;&#1072;&#1085;, &#1080;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1091;&#1081;&#1090;&#1077; &#1088;&#1091;&#1095;&#1085;&#1086;&#1077; &#1085;&#1072;&#1074;&#1077;&#1076;&#1077;&#1085;&#1080;&#1077;.&quot;
+ 
+-#: src/battle.c:1155 src/finish.c:14
++#: src/battle.c:1175 src/finish.c:14
+ msgid &quot;---WORKING---&quot;
+ msgstr &quot;---&#1056;&#1040;&#1041;&#1054;&#1058;&#1040;---&quot;
+ 
+-#: src/battle.c:1157
++#: src/battle.c:1177
+ msgid &quot;Short-range-sensors-damaged&quot;
+ msgstr &quot;&#1057;&#1077;&#1085;&#1089;&#1086;&#1088;&#1099;-&#1073;&#1083;&#1080;&#1078;&#1085;&#1077;&#1075;&#1086;-&#1086;&#1073;&#1079;&#1086;&#1088;&#1072;-&#1089;&#1083;&#1086;&#1084;&#1072;&#1085;&#1099;&quot;
+ 
+-#: src/battle.c:1158
++#: src/battle.c:1178
+ msgid &quot;Insufficient-data-for-automatic-phaser-fire&quot;
+ msgstr &quot;&#1053;&#1077;&#1076;&#1086;&#1089;&#1090;&#1072;&#1090;&#1086;&#1095;&#1085;&#1086;-&#1076;&#1072;&#1085;&#1085;&#1099;&#1093;-&#1076;&#1083;&#1103;-&#1072;&#1074;&#1090;&#1086;&#1084;&#1072;&#1090;&#1080;&#1095;&#1077;&#1089;&#1082;&#1086;&#1075;&#1086;-&#1085;&#1072;&#1074;&#1077;&#1076;&#1077;&#1085;&#1080;&#1103;-&#1092;&#1072;&#1079;&#1077;&#1088;&#1086;&#1074;&quot;
+ 
+-#: src/battle.c:1159
++#: src/battle.c:1179
+ msgid &quot;Manual-fire-must-be-used&quot;
+ msgstr &quot;&#1048;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1091;&#1081;&#1090;&#1077;-&#1088;&#1091;&#1095;&#1085;&#1086;&#1077;-&#1085;&#1072;&#1074;&#1077;&#1076;&#1077;&#1085;&#1080;&#1077;&quot;
+ 
+-#: src/battle.c:1177
++#: src/battle.c:1197
+ msgid &quot; can't be located without short range scan.&quot;
+ msgstr &quot; &#1085;&#1077; &#1084;&#1086;&#1078;&#1077;&#1090; &#1073;&#1099;&#1090;&#1100; &#1086;&#1073;&#1085;&#1072;&#1088;&#1091;&#1078;&#1077;&#1085; &#1073;&#1077;&#1079; &#1073;&#1083;&#1080;&#1078;&#1085;&#1077;&#1075;&#1086; &#1089;&#1082;&#1072;&#1085;&#1080;&#1088;&#1086;&#1074;&#1072;&#1085;&#1080;&#1103;.&quot;
+ 
+-#: src/battle.c:1194
++#: src/battle.c:1214
+ msgid &quot;units to fire at &quot;
+ msgstr &quot;&#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1085;&#1072; &#1074;&#1099;&#1089;&#1090;&#1088;&#1077;&#1083; &#1087;&#1086; &quot;
+ 
+-#: src/battle.c:1224
++#: src/battle.c:1244
+ msgid &quot;Available energy exceeded -- try again.&quot;
+ msgstr &quot;&#1048;&#1084;&#1077;&#1102;&#1097;&#1077;&#1081;&#1089;&#1103; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1085;&#1077; &#1093;&#1074;&#1072;&#1090;&#1072;&#1077;&#1090; -- &#1087;&#1086;&#1087;&#1088;&#1086;&#1073;&#1091;&#1081;&#1090;&#1077; &#1089;&#1085;&#1086;&#1074;&#1072;.&quot;
+ 
+-#: src/battle.c:1256
++#: src/battle.c:1276
+ msgid &quot;Sulu-  \&quot;Sir, the high-speed shield control has malfunctioned . . .&quot;
+ msgstr &quot;&#1057;&#1091;&#1083;&#1091;- \&quot;&#1057;&#1101;&#1088;, &#1074;&#1099;&#1089;&#1086;&#1082;&#1086;&#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1085;&#1086;&#1077; &#1091;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1079;&#1072;&#1097;&#1080;&#1090;&#1086;&#1081; &#1085;&#1077; &#1089;&#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1083;&#1086; . . .&quot;
+ 
+-#: src/battle.c:1257
++#: src/battle.c:1277
+ msgid &quot;         CLICK   CLICK   POP  . . .&quot;
+ msgstr &quot;         &#1065;&#1025;&#1051;&#1050;   &#1065;&#1025;&#1051;&#1050;   &#1063;&#1025;&#1056;&#1058;  . . .&quot;
+ 
+-#: src/battle.c:1258
++#: src/battle.c:1278
+ msgid &quot; No response, sir!&quot;
+ msgstr &quot; &#1041;&#1077;&#1079; &#1088;&#1077;&#1072;&#1082;&#1094;&#1080;&#1080;, &#1089;&#1101;&#1088;!&quot;
+ 
+-#: src/battle.c:1292
++#: src/battle.c:1312
+ #, c-format
+ msgid &quot;%d unit hit on &quot;
+ msgstr &quot;%d &#1077;&#1076;&#1080;&#1085;&#1080;&#1094; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1091;&#1076;&#1072;&#1088;&#1080;&#1083;&#1080; &#1087;&#1086; &quot;
+ 
+-#: src/battle.c:1295
++#: src/battle.c:1315
+ msgid &quot;Very small hit on &quot;
+ msgstr &quot;&#1054;&#1095;&#1077;&#1085;&#1100; &#1089;&#1083;&#1072;&#1073;&#1099;&#1081; &#1091;&#1076;&#1072;&#1088; &#1087;&#1086; &quot;
+ 
+-#: src/battle.c:1309
+-msgid &quot;***Mr. Spock-  \&quot;Captain, the vessel at &quot;
++#: src/battle.c:1329
++#, fuzzy, c-format
++msgid &quot;***Mr. Spock-  \&quot;Captain, the vessel at %s&quot;
+ msgstr &quot;***&#1052;&#1080;&#1089;&#1090;&#1077;&#1088; &#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1082;&#1086;&#1088;&#1072;&#1073;&#1083;&#1100; &#1085;&#1072; &quot;
+ 
+-#: src/battle.c:1311
++#: src/battle.c:1331
+ msgid &quot;   has just lost its firepower.\&quot;&quot;
+ msgstr &quot;   &#1087;&#1086;&#1090;&#1077;&#1088;&#1103;&#1083; &#1073;&#1086;&#1077;&#1089;&#1087;&#1086;&#1089;&#1086;&#1073;&#1085;&#1086;&#1089;&#1090;&#1100;.\&quot;&quot;
+ 
+@@ -649,36 +648,36 @@
+ msgid &quot;a Klingon Commander&quot;
+ msgstr &quot;&#1050;&#1086;&#1084;&#1072;&#1085;&#1076;&#1080;&#1088;&#1086;&#1084; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;&quot;
+ 
+-#: src/events.c:387
++#: src/events.c:386
+ msgid &quot;Lt. Uhura-  \&quot;The deep space probe &quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1044;&#1072;&#1083;&#1100;&#1085;&#1086;&#1073;&#1086;&#1081;&#1085;&#1072;&#1103; &#1082;&#1086;&#1089;&#1084;&#1080;&#1095;&#1077;&#1089;&#1082;&#1072;&#1103; &#1088;&#1072;&#1082;&#1077;&#1090;&#1072; &quot;
+ 
+-#: src/events.c:389
++#: src/events.c:388
+ msgid &quot;has left the galaxy&quot;
+ msgstr &quot;&#1087;&#1086;&#1082;&#1080;&#1085;&#1091;&#1083;&#1072; &#1075;&#1072;&#1083;&#1072;&#1082;&#1090;&#1080;&#1082;&#1091;&quot;
+ 
+-#: src/events.c:391
++#: src/events.c:390
+ msgid &quot;is no longer transmitting&quot;
+ msgstr &quot;&#1073;&#1086;&#1083;&#1100;&#1096;&#1077; &#1085;&#1077; &#1087;&#1077;&#1088;&#1077;&#1076;&#1072;&#1105;&#1090;&quot;
+ 
+-#: src/events.c:401
++#: src/events.c:400
+ msgid &quot;Lt. Uhura-  \&quot;The deep space probe is now in &quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1044;&#1072;&#1083;&#1100;&#1085;&#1086;&#1073;&#1086;&#1081;&#1085;&#1072;&#1103; &#1082;&#1086;&#1089;&#1084;&#1080;&#1095;&#1077;&#1089;&#1082;&#1072;&#1103; &#1088;&#1072;&#1082;&#1077;&#1090;&#1072; &#1089;&#1077;&#1081;&#1095;&#1072;&#1089; &#1074; &quot;
+ 
+-#: src/events.c:558
++#: src/events.c:557
+ msgid &quot;How long? &quot;
+ msgstr &quot;&#1050;&#1072;&#1082;&#1086;&#1081; &#1089;&#1088;&#1086;&#1082;? &quot;
+ 
+-#: src/events.c:568
++#: src/events.c:567
+ msgid &quot;Are you sure? &quot;
+ msgstr &quot;&#1042;&#1099; &#1091;&#1074;&#1077;&#1088;&#1077;&#1085;&#1099;? &quot;
+ 
+-#: src/events.c:578
++#: src/events.c:577
+ #, c-format
+ msgid &quot;%d stardates left.&quot;
+ msgstr &quot;&#1054;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100; %d &#1076;&#1085;&#1077;&#1081;.&quot;
+ 
+-#: src/events.c:631 src/events.c:670
++#: src/events.c:630 src/events.c:669
+ msgid &quot; novas.&quot;
+ msgstr &quot; &#1074;&#1079;&#1086;&#1088;&#1074;&#1072;&#1083;&#1072;&#1089;&#1100;.&quot;
+ 
+@@ -706,29 +705,30 @@
+ msgid &quot;Force of nova displaces starship.&quot;
+ msgstr &quot;&#1042;&#1079;&#1088;&#1099;&#1074; &#1079;&#1074;&#1077;&#1079;&#1076;&#1099; &#1089;&#1084;&#1077;&#1097;&#1072;&#1077;&#1090; &#1079;&#1074;&#1077;&#1079;&#1076;&#1086;&#1083;&#1105;&#1090;.&quot;
+ 
+-#: src/events.c:832
++#: src/events.c:831
+ #, c-format
+ msgid &quot;Message from Starfleet Command       Stardate %.2f&quot;
+ msgstr &quot;&#1057;&#1086;&#1086;&#1073;&#1097;&#1077;&#1085;&#1080;&#1077; &#1086;&#1090; &#1096;&#1090;&#1072;&#1073;&#1072; &#1047;&#1074;&#1105;&#1079;&#1076;&#1085;&#1086;&#1075;&#1086; &#1060;&#1083;&#1086;&#1090;&#1072;       &#1044;&#1072;&#1090;&#1072; %.2f&quot;
+ 
+-#: src/events.c:833
++#: src/events.c:832
+ #, c-format
+ msgid &quot;     Supernova in %s; caution advised.&quot;
+ msgstr &quot;     &#1042;&#1079;&#1088;&#1099;&#1074; &#1089;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1074;&#1086;&#1081; &#1074; %s; &#1089;&#1086;&#1073;&#1083;&#1102;&#1076;&#1072;&#1081;&#1090;&#1077; &#1086;&#1089;&#1090;&#1086;&#1088;&#1086;&#1078;&#1085;&#1086;&#1089;&#1090;&#1100;.&quot;
+ 
+-#: src/events.c:854
+-msgid &quot;***Incipient supernova detected at &quot;
++#: src/events.c:853
++#, fuzzy, c-format
++msgid &quot;***Incipient supernova detected at %s&quot;
+ msgstr &quot;***&#1047;&#1072;&#1088;&#1077;&#1075;&#1080;&#1089;&#1090;&#1088;&#1080;&#1088;&#1086;&#1074;&#1072;&#1085;&#1086; &#1087;&#1086;&#1103;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1089;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1074;&#1086;&#1081; &#1074; &quot;
+ 
+-#: src/events.c:856
++#: src/events.c:855
+ msgid &quot;Emergency override attempts t&quot;
+ msgstr &quot;&#1040;&#1074;&#1090;&#1086;&#1087;&#1080;&#1083;&#1086;&#1090; &#1087;&#1099;&#1090;&#1072;&#1077;&#1090;&#1089;&#1103; &#1074;&quot;
+ 
+-#: src/events.c:923
++#: src/events.c:922
+ msgid &quot;Lucky you!&quot;
+ msgstr &quot;&#1055;&#1086;&#1074;&#1077;&#1079;&#1083;&#1086;!&quot;
+ 
+-#: src/events.c:924
++#: src/events.c:923
+ #, c-format
+ msgid &quot;A supernova in %s has just destroyed the last Klingons.&quot;
+ msgstr &quot;&#1057;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1074;&#1072;&#1103; &#1074; %s &#1082;&#1072;&#1082; &#1088;&#1072;&#1079; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1080;&#1083;&#1072; &#1087;&#1086;&#1089;&#1083;&#1077;&#1076;&#1085;&#1080;&#1093; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;.&quot;
+@@ -903,7 +903,7 @@
+ msgid &quot;Your energy supply is exhausted.&quot;
+ msgstr &quot;&#1048;&#1089;&#1090;&#1086;&#1095;&#1085;&#1080;&#1082;&#1080; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1080;&#1089;&#1089;&#1103;&#1082;&#1083;&#1080;.&quot;
+ 
+-#: src/finish.c:187 src/finish.c:206 src/finish.c:225 src/moving.c:727
++#: src/finish.c:187 src/finish.c:206 src/finish.c:225 src/moving.c:726
+ msgid &quot;The &quot;
+ msgstr &quot; &quot;
+ 
+@@ -1331,28 +1331,28 @@
+ msgstr &quot;&quot;
+ &quot;                                                    &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074; &#1074; &#1076;&#1077;&#1085;&#1100;:  %.2f\n&quot;
+ 
+-#: src/io.c:94
++#: src/io.c:98
+ msgid &quot;[ANOUNCEMENT ARRIVING...]&quot;
+ msgstr &quot;[&#1055;&#1054;&#1057;&#1058;&#1059;&#1055;&#1048;&#1051;&#1054; &#1057;&#1054;&#1054;&#1041;&#1065;&#1045;&#1053;&#1048;&#1045;...]&quot;
+ 
+-#: src/io.c:96
++#: src/io.c:100
+ msgid &quot;[IMPORTANT ANNOUNCEMENT ARRIVING -- PRESS ENTER TO CONTINUE]&quot;
+ msgstr &quot;[&#1055;&#1054;&#1057;&#1058;&#1059;&#1055;&#1048;&#1051;&#1054; &#1042;&#1040;&#1046;&#1053;&#1054;&#1045; &#1057;&#1054;&#1054;&#1041;&#1065;&#1045;&#1053;&#1048;&#1045; -- &#1053;&#1040;&#1046;&#1052;&#1048;&#1058;&#1045; &#1042;&#1042;&#1054;&#1044; &#1044;&#1051;&#1071; &#1055;&#1056;&#1054;&#1044;&#1054;&#1051;&#1046;&#1045;&#1053;&#1048;&#1071;]&quot;
+ 
+-#: src/io.c:100
++#: src/io.c:104
+ msgid &quot;[CONTINUE?]&quot;
+ msgstr &quot;[&#1055;&#1056;&#1054;&#1044;&#1054;&#1051;&#1046;&#1048;&#1058;&#1068;?]&quot;
+ 
+-#: src/io.c:102
++#: src/io.c:106
+ msgid &quot;[PRESS ENTER TO CONTINUE]&quot;
+ msgstr &quot;[&#1053;&#1040;&#1046;&#1052;&#1048;&#1058;&#1045; &#1042;&#1042;&#1054;&#1044; &#1044;&#1051;&#1071; &#1055;&#1056;&#1054;&#1044;&#1054;&#1051;&#1046;&#1045;&#1053;&#1048;&#1071;]&quot;
+ 
+-#: src/io.c:390
++#: src/io.c:400
+ #, c-format
+ msgid &quot;Track for torpedo number %d-  &quot;
+ msgstr &quot;&#1058;&#1088;&#1072;&#1089;&#1089;&#1072; &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;&#1099; &#1085;&#1086;&#1084;&#1077;&#1088; %d- &quot;
+ 
+-#: src/io.c:394
++#: src/io.c:404
+ msgid &quot;Torpedo track- &quot;
+ msgstr &quot;&#1058;&#1088;&#1072;&#1089;&#1089;&#1072; &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;&#1099;- &quot;
+ 
+@@ -1398,471 +1398,470 @@
+ msgid &quot;%2d units of energy.&quot;
+ msgstr &quot;%2d &#1077;&#1076;&#1080;&#1085;&#1080;&#1094; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080;.&quot;
+ 
+-#: src/moving.c:216
++#: src/moving.c:215
+ msgid &quot;Already docked.&quot;
+ msgstr &quot;&#1048; &#1090;&#1072;&#1082; &#1091;&#1078;&#1077; &#1087;&#1088;&#1080;&#1096;&#1074;&#1072;&#1088;&#1090;&#1086;&#1074;&#1072;&#1085;.&quot;
+ 
+-#: src/moving.c:220
++#: src/moving.c:219
+ msgid &quot;You must first leave standard orbit.&quot;
+ msgstr &quot;&#1057;&#1085;&#1072;&#1095;&#1072;&#1083;&#1072; &#1074;&#1099; &#1076;&#1086;&#1083;&#1078;&#1085;&#1099; &#1091;&#1081;&#1090;&#1080; &#1089; &#1086;&#1088;&#1073;&#1080;&#1090;&#1099;.&quot;
+ 
+-#: src/moving.c:225
++#: src/moving.c:224
+ msgid &quot; not adjacent to base.&quot;
+ msgstr &quot; &#1074;&#1085;&#1077; &#1076;&#1086;&#1089;&#1103;&#1075;&#1072;&#1077;&#1084;&#1086;&#1089;&#1090;&#1080; &#1073;&#1072;&#1079;&#1099;.&quot;
+ 
+-#: src/moving.c:229
++#: src/moving.c:228
+ msgid &quot;Docked.&quot;
+ msgstr &quot;&#1055;&#1088;&#1080;&#1096;&#1074;&#1072;&#1088;&#1090;&#1086;&#1074;&#1072;&#1085;.&quot;
+ 
+-#: src/moving.c:239
++#: src/moving.c:238
+ msgid &quot;Lt. Uhura- \&quot;Captain, an important message from the starbase:\&quot;&quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1090;&#1091;&#1090; &#1074;&#1072;&#1078;&#1085;&#1086;&#1077; &#1089;&#1086;&#1086;&#1073;&#1097;&#1077;&#1085;&#1080;&#1077; &#1089; &#1073;&#1072;&#1079;&#1099;:\&quot;&quot;
+ 
+-#: src/moving.c:272
++#: src/moving.c:271
+ msgid &quot;Dummy! You can't leave standard orbit until you&quot;
+ msgstr &quot;&#1044;&#1103;&#1090;&#1077;&#1083;! &#1058;&#1099; &#1085;&#1077; &#1084;&#1086;&#1078;&#1077;&#1096;&#1100; &#1091;&#1081;&#1090;&#1080; &#1089; &#1086;&#1088;&#1073;&#1080;&#1090;&#1099; &#1087;&#1086;&#1082;&#1072; &#1090;&#1099; &#1085;&#1077;&quot;
+ 
+-#: src/moving.c:273
++#: src/moving.c:272
+ msgid &quot;are back aboard the ship.&quot;
+ msgstr &quot;&#1074;&#1077;&#1088;&#1085;&#1105;&#1096;&#1100;&#1089;&#1103; &#1085;&#1072; &#1073;&#1086;&#1088;&#1090; &#1082;&#1086;&#1088;&#1072;&#1073;&#1083;&#1103;.&quot;
+ 
+-#: src/moving.c:280
++#: src/moving.c:279
+ msgid &quot;Computer damaged; manual navigation only&quot;
+ msgstr &quot;&#1050;&#1086;&#1084;&#1087;&#1100;&#1102;&#1090;&#1077;&#1088; &#1089;&#1083;&#1086;&#1084;&#1072;&#1085;; &#1090;&#1086;&#1083;&#1100;&#1082;&#1086; &#1088;&#1091;&#1095;&#1085;&#1086;&#1077; &#1091;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1077;&#1090;&quot;
+ 
+-#: src/moving.c:282
++#: src/moving.c:281
+ msgid &quot;Computer damaged; manual movement only&quot;
+ msgstr &quot;&#1050;&#1086;&#1084;&#1087;&#1100;&#1102;&#1090;&#1077;&#1088; &#1089;&#1083;&#1086;&#1084;&#1072;&#1085;; &#1079;&#1072;&#1076;&#1072;&#1074;&#1072;&#1081;&#1090;&#1077; &#1087;&#1077;&#1088;&#1077;&#1084;&#1077;&#1097;&#1077;&#1085;&#1080;&#1077; &#1074;&#1088;&#1091;&#1095;&#1085;&#1091;&#1102;&quot;
+ 
+-#: src/moving.c:297
++#: src/moving.c:296
+ msgid &quot;Manual or automatic- &quot;
+ msgstr &quot;&#1056;&#1091;&#1095;&#1085;&#1086;&#1081; &#1080;&#1083;&#1080; &#1072;&#1074;&#1090;&#1086;&#1084;&#1072;&#1090;&#1080;&#1095;&#1077;&#1089;&#1082;&#1080;&#1081;- &quot;
+ 
+-#: src/moving.c:320
++#: src/moving.c:319
+ msgid &quot;(Manual navigation assumed.)&quot;
+ msgstr &quot;(&#1048;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1091;&#1077;&#1090;&#1089;&#1103; &#1088;&#1091;&#1095;&#1085;&#1086;&#1077; &#1091;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077;.)&quot;
+ 
+-#: src/moving.c:322
++#: src/moving.c:321
+ msgid &quot;(Manual movement assumed.)&quot;
+ msgstr &quot;(&#1048;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1091;&#1077;&#1090;&#1089;&#1103; &#1088;&#1091;&#1095;&#1085;&#1072;&#1103; &#1085;&#1072;&#1074;&#1080;&#1075;&#1072;&#1094;&#1080;&#1103;.)&quot;
+ 
+-#: src/moving.c:331
++#: src/moving.c:330
+ msgid &quot;Target quadrant or quadrant&amp;sector- &quot;
+ msgstr &quot;&#1050;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090; &#1085;&#1072;&#1079;&#1085;&#1072;&#1095;&#1077;&#1085;&#1080;&#1103; &#1080;&#1083;&#1080; &#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090;&amp;&#1089;&#1077;&#1082;&#1090;&#1086;&#1088;- &quot;
+ 
+-#: src/moving.c:333
++#: src/moving.c:332
+ msgid &quot;Destination sector or quadrant&amp;sector- &quot;
+ msgstr &quot;&#1057;&#1077;&#1082;&#1090;&#1086;&#1088; &#1085;&#1072;&#1079;&#1085;&#1072;&#1095;&#1077;&#1085;&#1080;&#1103; &#1080;&#1083;&#1080; &#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090;&amp;&#1089;&#1077;&#1082;&#1090;&#1086;&#1088;- &quot;
+ 
+-#: src/moving.c:387
++#: src/moving.c:386
+ #, c-format
+ msgid &quot;Helmsman Sulu- \&quot;Course locked in for %s.\&quot;&quot;
+ msgstr &quot;&#1050;&#1086;&#1088;&#1084;&#1095;&#1080;&#1081; &#1057;&#1091;&#1083;&#1091;- \&quot;&#1050;&#1091;&#1088;&#1089; &#1074;&#1079;&#1103;&#1090; &#1085;&#1072; %s.\&quot;&quot;
+ 
+-#: src/moving.c:391
++#: src/moving.c:390
+ msgid &quot;Ensign Chekov- \&quot;Course laid in, Captain.\&quot;&quot;
+ msgstr &quot;&#1055;&#1088;&#1072;&#1087;&#1086;&#1088;&#1097;&#1080;&#1082; &#1063;&#1077;&#1093;&#1086;&#1074;- \&quot;&#1050;&#1091;&#1088;&#1089; &#1074;&#1079;&#1103;&#1090;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;.\&quot;&quot;
+ 
+-#: src/moving.c:398
++#: src/moving.c:397
+ msgid &quot;X and Y displacements- &quot;
+ msgstr &quot;&#1056;&#1072;&#1089;&#1089;&#1090;&#1086;&#1103;&#1085;&#1080;&#1103; &#1087;&#1086; X &#1080; Y- &quot;
+ 
+-#: src/moving.c:423
++#: src/moving.c:422
+ msgid &quot;Helmsman Sulu- \&quot;Aye, Sir.\&quot;&quot;
+ msgstr &quot;&#1050;&#1086;&#1088;&#1084;&#1095;&#1080;&#1081; &#1057;&#1091;&#1083;&#1091;- \&quot;&#1040;&#1075;&#1072;, &#1057;&#1101;&#1088;.\&quot;&quot;
+ 
+-#: src/moving.c:443 src/moving.c:503
++#: src/moving.c:442 src/moving.c:502
+ msgid &quot;Engineer Scott- \&quot;The impulse engines are damaged, Sir.\&quot;&quot;
+ msgstr &quot;&#1048;&#1085;&#1078;&#1077;&#1085;&#1077;&#1088; &#1057;&#1082;&#1086;&#1090;- \&quot;&#1048;&#1084;&#1087;&#1091;&#1083;&#1100;&#1089;&#1085;&#1099;&#1077; &#1076;&#1074;&#1080;&#1075;&#1072;&#1090;&#1077;&#1083;&#1080; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1077;&#1085;&#1099;, &#1057;&#1101;&#1088;.\&quot;&quot;
+ 
+-#: src/moving.c:458
++#: src/moving.c:457
+ msgid &quot;First Officer Spock- \&quot;Captain, the impulse engines&quot;
+ msgstr &quot;&#1055;&#1077;&#1088;&#1074;&#1099;&#1081; &#1054;&#1092;&#1080;&#1094;&#1077;&#1088; &#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1080;&#1084;&#1087;&#1091;&#1083;&#1100;&#1089;&#1085;&#1099;&#1077; &#1076;&#1074;&#1080;&#1075;&#1072;&#1090;&#1077;&#1083;&#1080;&quot;
+ 
+-#: src/moving.c:459
++#: src/moving.c:458
+ msgid &quot;require 20.0 units to engage, plus 100.0 units per&quot;
+ msgstr &quot;&#1090;&#1088;&#1077;&#1073;&#1091;&#1102;&#1090; 20.0 &#1077;&#1076;&#1080;&#1085;&#1080;&#1094; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1076;&#1083;&#1103; &#1079;&#1072;&#1087;&#1091;&#1089;&#1082;&#1072;, &#1087;&#1083;&#1102;&#1089; 100.0 &#1077;&#1076;&#1080;&#1085;&#1080;&#1094; &#1085;&#1072;&quot;
+ 
+-#: src/moving.c:461
++#: src/moving.c:460
+ #, c-format
+ msgid &quot;quadrant.  We can go, therefore, a maximum of %d&quot;
+ msgstr &quot;&#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090;.  &#1057;&#1083;&#1077;&#1076;&#1086;&#1074;&#1072;&#1090;&#1077;&#1083;&#1100;&#1085;&#1086;, &#1084;&#1099; &#1087;&#1088;&#1086;&#1083;&#1077;&#1090;&#1080;&#1084; &#1084;&#1072;&#1082;&#1089;&#1080;&#1084;&#1091;&#1084; %d&quot;
+ 
+-#: src/moving.c:463
++#: src/moving.c:462
+ msgid &quot; quadrants.\&quot;&quot;
+ msgstr &quot; &#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090;&#1086;&#1074;.\&quot;&quot;
+ 
+-#: src/moving.c:466
++#: src/moving.c:465
+ msgid &quot;quadrant.  They are, therefore, useless.\&quot;&quot;
+ msgstr &quot;&#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090;.  &#1058;&#1072;&#1082;&#1080;&#1084; &#1086;&#1073;&#1088;&#1072;&#1079;&#1086;&#1084; &#1086;&#1085;&#1080; &#1073;&#1077;&#1089;&#1087;&#1086;&#1083;&#1077;&#1079;&#1085;&#1099;.\&quot;&quot;
+ 
+-#: src/moving.c:474
++#: src/moving.c:473
+ msgid &quot;First Officer Spock- \&quot;Captain, our speed under impulse&quot;
+ msgstr &quot;&#1055;&#1077;&#1088;&#1074;&#1099;&#1081; &#1054;&#1092;&#1080;&#1094;&#1077;&#1088; &#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1085;&#1072;&#1096;&#1072; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; &#1085;&#1072; &#1080;&#1084;&#1087;&#1091;&#1083;&#1100;&#1089;&#1085;&#1086;&#1081;&quot;
+ 
+-#: src/moving.c:475
++#: src/moving.c:474
+ msgid &quot;power is only 0.95 sectors per stardate. Are you sure&quot;
+ msgstr &quot;&#1090;&#1103;&#1075;&#1077; &#1074;&#1089;&#1077;&#1075;&#1086; 0.95 &#1089;&#1077;&#1082;&#1090;&#1086;&#1088;&#1086;&#1074; &#1074; &#1076;&#1077;&#1085;&#1100;. &#1042;&#1099; &#1091;&#1074;&#1077;&#1088;&#1077;&#1085;&#1099;,&quot;
+ 
+-#: src/moving.c:476
++#: src/moving.c:475
+ msgid &quot;we dare spend the time?\&quot; &quot;
+ msgstr &quot;&#1095;&#1090;&#1086; &#1084;&#1099; &#1084;&#1086;&#1078;&#1077;&#1084; &#1090;&#1088;&#1072;&#1090;&#1080;&#1090;&#1100; &#1089;&#1090;&#1086;&#1083;&#1100;&#1082;&#1086; &#1074;&#1088;&#1077;&#1084;&#1077;&#1085;&#1080;?\&quot; &quot;
+ 
+-#: src/moving.c:509
++#: src/moving.c:508
+ msgid &quot;Engineer Scott- \&quot;Sorry, Captain. Until this damage&quot;
+ msgstr &quot;&#1048;&#1085;&#1078;&#1077;&#1085;&#1077;&#1088; &#1057;&#1082;&#1086;&#1090;- \&quot;&#1048;&#1079;&#1074;&#1080;&#1085;&#1080;&#1090;&#1077;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;. &#1055;&#1086;&#1082;&#1072; &#1101;&#1090;&#1072; &#1085;&#1077;&#1080;&#1089;&#1087;&#1088;&#1072;&#1074;&#1085;&#1086;&#1089;&#1090;&#1100; &#1085;&#1077;&quot;
+ 
+-#: src/moving.c:510
++#: src/moving.c:509
+ msgid &quot;  is repaired, I can only give you warp 4.\&quot;&quot;
+ msgstr &quot;  &#1091;&#1089;&#1090;&#1088;&#1072;&#1085;&#1077;&#1085;&#1072;, &#1103; &#1084;&#1086;&#1075;&#1091; &#1090;&#1086;&#1083;&#1100;&#1082;&#1086; &#1087;&#1088;&#1077;&#1076;&#1083;&#1086;&#1078;&#1080;&#1090;&#1100; &#1074;&#1072;&#1084; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; 4.\&quot;&quot;
+ 
+-#: src/moving.c:530
++#: src/moving.c:529
+ msgid &quot;We can't do it, Captain. We don't have enough energy.&quot;
+ msgstr &quot;&#1053;&#1077; &#1074;&#1099;&#1081;&#1076;&#1077;&#1090;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;. &#1059; &#1085;&#1072;&#1089; &#1085;&#1077; &#1093;&#1074;&#1072;&#1090;&#1080;&#1090; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080;.&quot;
+ 
+-#: src/moving.c:533
++#: src/moving.c:532
+ #, c-format
+ msgid &quot;We don't have enough energy, but we could do it at warp %d&quot;
+ msgstr &quot;&#1059; &#1085;&#1072;&#1089; &#1085;&#1077; &#1076;&#1086;&#1089;&#1090;&#1072;&#1090;&#1086;&#1095;&#1085;&#1086; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080;, &#1085;&#1086; &#1077;&#1105; &#1084;&#1086;&#1075;&#1083;&#1086; &#1073;&#1099; &#1093;&#1074;&#1072;&#1090;&#1080;&#1090;&#1100; &#1073;&#1099; &#1087;&#1088;&#1080; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1080; %d&quot;
+ 
+-#: src/moving.c:536
++#: src/moving.c:535
+ msgid &quot;if you'll lower the shields.&quot;
+ msgstr &quot;, &#1077;&#1089;&#1083;&#1080; &#1090;&#1086;&#1083;&#1100;&#1082;&#1086; &#1074;&#1099; &#1086;&#1087;&#1091;&#1089;&#1090;&#1080;&#1090;&#1077; &#1079;&#1072;&#1097;&#1080;&#1090;&#1091;.&quot;
+ 
+-#: src/moving.c:543
++#: src/moving.c:542
+ msgid &quot;We haven't the energy to go that far with the shields up.&quot;
+ msgstr &quot;&#1059; &#1085;&#1072;&#1089; &#1085;&#1077;&#1090; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1095;&#1090;&#1086;&#1073;&#1099; &#1083;&#1077;&#1090;&#1077;&#1090;&#1100; &#1090;&#1072;&#1082; &#1076;&#1072;&#1083;&#1077;&#1082;&#1086; &#1089; &#1087;&#1086;&#1076;&#1085;&#1103;&#1090;&#1086;&#1081; &#1079;&#1072;&#1097;&#1080;&#1090;&#1086;&#1081;.&quot;
+ 
+-#: src/moving.c:551
++#: src/moving.c:550
+ msgid &quot;First Officer Spock- \&quot;Captain, I compute that such&quot;
+ msgstr &quot;&#1055;&#1077;&#1088;&#1074;&#1099;&#1081; &#1054;&#1092;&#1080;&#1094;&#1077;&#1088; &#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1103; &#1089;&#1095;&#1080;&#1090;&#1072;&#1102; &#1095;&#1090;&#1086; &#1090;&#1072;&#1082;&#1086;&#1081;&quot;
+ 
+-#: src/moving.c:552
++#: src/moving.c:551
+ #, c-format
+ msgid &quot;  a trip would require approximately %2.0f&quot;
+ msgstr &quot;  &#1087;&#1086;&#1083;&#1105;&#1090; &#1087;&#1086;&#1090;&#1088;&#1077;&#1073;&#1091;&#1077;&#1090; &#1087;&#1088;&#1080;&#1084;&#1077;&#1088;&#1085;&#1086; %2.0f&quot;
+ 
+-#: src/moving.c:554
++#: src/moving.c:553
+ msgid &quot; percent of our&quot;
+ msgstr &quot; &#1087;&#1088;&#1086;&#1094;&#1077;&#1085;&#1090;&#1086;&#1074;&quot;
+ 
+-#: src/moving.c:555
++#: src/moving.c:554
+ msgid &quot;  remaining time.  Are you sure this is wise?\&quot; &quot;
+ msgstr &quot; &#1086;&#1089;&#1090;&#1072;&#1074;&#1096;&#1077;&#1075;&#1086;&#1089;&#1103; &#1074;&#1088;&#1077;&#1084;&#1077;&#1085;&#1080;.  &#1042;&#1099; &#1091;&#1074;&#1077;&#1088;&#1077;&#1085;&#1099; &#1095;&#1090;&#1086; &#1101;&#1090;&#1086; &#1088;&#1072;&#1079;&#1091;&#1084;&#1085;&#1086;?\&quot; &quot;
+ 
+-#: src/moving.c:618
++#: src/moving.c:617
+ msgid &quot;  Scott here.  The warp engines are damaged.&quot;
+ msgstr &quot;  &#1057;&#1082;&#1086;&#1090; &#1085;&#1072; &#1089;&#1074;&#1103;&#1079;&#1080;.  &#1052;&#1077;&#1078;&#1087;&#1088;&#1086;&#1089;&#1090;&#1088;&#1072;&#1085;&#1089;&#1090;&#1074;&#1077;&#1085;&#1085;&#1099;&#1077; &#1076;&#1074;&#1080;&#1075;&#1072;&#1090;&#1077;&#1083;&#1080; &#1089;&#1083;&#1086;&#1084;&#1072;&#1085;&#1099;.&quot;
+ 
+-#: src/moving.c:619
++#: src/moving.c:618
+ msgid &quot;  We'll have to reduce speed to warp 4.&quot;
+ msgstr &quot;  &#1055;&#1088;&#1080;&#1076;&#1105;&#1090;&#1089;&#1103; &#1089;&#1073;&#1072;&#1074;&#1080;&#1090;&#1100; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; &#1076;&#1086; 4.&quot;
+ 
+-#: src/moving.c:635
++#: src/moving.c:634
+ msgid &quot;Warp factor- &quot;
+ msgstr &quot;&#1057;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100;- &quot;
+ 
+-#: src/moving.c:643
++#: src/moving.c:642
+ msgid &quot;Warp engines inoperative.&quot;
+ msgstr &quot;&#1052;&#1077;&#1078;&#1087;&#1088;&#1086;&#1089;&#1090;&#1088;&#1072;&#1085;&#1089;&#1090;&#1074;&#1077;&#1085;&#1085;&#1099;&#1077; &#1076;&#1074;&#1080;&#1075;&#1072;&#1090;&#1077;&#1083;&#1080; &#1085;&#1077; &#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1102;&#1090;.&quot;
+ 
+-#: src/moving.c:647
++#: src/moving.c:646
+ msgid &quot;Engineer Scott- \&quot;I'm doing my best, Captain,&quot;
+ msgstr &quot;&#1048;&#1085;&#1078;&#1077;&#1085;&#1077;&#1088; &#1057;&#1082;&#1086;&#1090;- \&quot;&#1071; &#1076;&#1077;&#1083;&#1072;&#1102; &#1074;&#1089;&#1105; &#1095;&#1090;&#1086; &#1084;&#1086;&#1075;&#1091;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;,&quot;
+ 
+-#: src/moving.c:648
++#: src/moving.c:647
+ msgid &quot;  but right now we can only go warp 4.\&quot;&quot;
+ msgstr &quot;  &#1085;&#1086; &#1089;&#1077;&#1081;&#1095;&#1072;&#1089; &#1084;&#1099; &#1084;&#1086;&#1078;&#1077;&#1084; &#1076;&#1072;&#1090;&#1100; &#1090;&#1086;&#1083;&#1100;&#1082;&#1086; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; 4.&quot;
+ 
+-#: src/moving.c:652
++#: src/moving.c:651
+ msgid &quot;Helmsman Sulu- \&quot;Our top speed is warp 10, Captain.\&quot;&quot;
+ msgstr &quot;&#1055;&#1088;&#1072;&#1087;&#1086;&#1088;&#1097;&#1080;&#1082; &#1057;&#1091;&#1083;&#1091;- \&quot;&#1053;&#1072;&#1096;&#1072; &#1084;&#1072;&#1082;&#1089;&#1080;&#1084;&#1072;&#1083;&#1100;&#1085;&#1072;&#1103; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; - 10, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;.\&quot;&quot;
+ 
+-#: src/moving.c:656
++#: src/moving.c:655
+ msgid &quot;Helmsman Sulu- \&quot;We can't go below warp 1, Captain.\&quot;&quot;
+ msgstr &quot;&#1055;&#1088;&#1072;&#1087;&#1086;&#1088;&#1097;&#1080;&#1082; &#1057;&#1091;&#1083;&#1091;- \&quot;&#1052;&#1099; &#1085;&#1077; &#1084;&#1086;&#1078;&#1077;&#1084; &#1091;&#1089;&#1090;&#1072;&#1085;&#1086;&#1074;&#1080;&#1090;&#1100; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; &#1085;&#1080;&#1078;&#1077; 1, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;.\&quot;&quot;
+ 
+-#: src/moving.c:663
++#: src/moving.c:662
+ #, c-format
+ msgid &quot;Helmsman Sulu- \&quot;Warp factor %d, Captain.\&quot;&quot;
+ msgstr &quot;&#1055;&#1088;&#1072;&#1087;&#1086;&#1088;&#1097;&#1080;&#1082; &#1057;&#1091;&#1083;&#1091;- \&quot;&#1057;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; %d, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;.\&quot;&quot;
+ 
+-#: src/moving.c:668
++#: src/moving.c:667
+ msgid &quot;Engineer Scott- \&quot;Aye, but our maximum safe speed is warp 6.\&quot;&quot;
+ msgstr &quot;&#1048;&#1085;&#1078;&#1077;&#1085;&#1077;&#1088; &#1057;&#1082;&#1086;&#1090;- \&quot;&#1040;&#1075;&#1072;, &#1093;&#1086;&#1090;&#1103; &#1085;&#1072;&#1080;&#1073;&#1086;&#1083;&#1100;&#1096;&#1072;&#1103; &#1073;&#1077;&#1079;&#1086;&#1087;&#1072;&#1089;&#1085;&#1072;&#1103; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; - 6.\&quot;&quot;
+ 
+-#: src/moving.c:672
++#: src/moving.c:671
+ msgid &quot;Engineer Scott- \&quot;Aye, Captain, we'll try it.\&quot;&quot;
+ msgstr &quot;&#1048;&#1085;&#1078;&#1077;&#1085;&#1077;&#1088; &#1057;&#1082;&#1086;&#1090;- \&quot;&#1040;&#1075;&#1072; &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1087;&#1086;&#1087;&#1088;&#1086;&#1073;&#1091;&#1077;&#1084;.\&quot;&quot;
+ 
+-#: src/moving.c:675
++#: src/moving.c:674
+ msgid &quot;Engineer Scott- \&quot;Aye, Captain, but our engines may not take it.\&quot;&quot;
+ msgstr &quot;&#1048;&#1085;&#1078;&#1077;&#1085;&#1077;&#1088; &#1057;&#1082;&#1086;&#1090;- \&quot;&#1040;&#1075;&#1072; &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1085;&#1086; &#1085;&#1072;&#1096;&#1080; &#1076;&#1074;&#1080;&#1078;&#1082;&#1080; &#1084;&#1086;&#1075;&#1091;&#1090; &#1085;&#1077; &#1089;&#1087;&#1088;&#1072;&#1074;&#1080;&#1090;&#1100;&#1089;&#1103;.\&quot;&quot;
+ 
+-#: src/moving.c:691
++#: src/moving.c:690
+ msgid &quot;Scotty rushes to the transporter controls.&quot;
+ msgstr &quot;&#1057;&#1082;&#1086;&#1090;&#1080; &#1073;&#1088;&#1086;&#1089;&#1072;&#1077;&#1090;&#1089;&#1103; &#1082; &#1091;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1102; &#1090;&#1088;&#1072;&#1085;&#1089;&#1087;&#1086;&#1088;&#1090;&#1105;&#1088;&#1086;&#1084;.&quot;
+ 
+-#: src/moving.c:693
++#: src/moving.c:692
+ msgid &quot;But with the shields up it's hopeless.&quot;
+ msgstr &quot;&#1053;&#1086; &#1089; &#1087;&#1086;&#1076;&#1085;&#1103;&#1090;&#1086;&#1081; &#1079;&#1072;&#1097;&#1080;&#1090;&#1086;&#1081; &#1101;&#1090;&#1086; &#1073;&#1077;&#1079;&#1085;&#1072;&#1076;&#1105;&#1078;&#1085;&#1086;.&quot;
+ 
+-#: src/moving.c:696
++#: src/moving.c:695
+ msgid &quot;His desperate attempt to rescue you . . .&quot;
+ msgstr &quot;&#1045;&#1075;&#1086; &#1086;&#1090;&#1095;&#1072;&#1103;&#1085;&#1085;&#1072;&#1103; &#1087;&#1086;&#1087;&#1099;&#1090;&#1082;&#1072; &#1089;&#1087;&#1072;&#1089;&#1090;&#1080; &#1074;&#1072;&#1089; . . .&quot;
+ 
+-#: src/moving.c:698 src/moving.c:1017
++#: src/moving.c:697 src/moving.c:1015
+ msgid &quot;fails.&quot;
+ msgstr &quot;&#1087;&#1088;&#1086;&#1074;&#1072;&#1083;&#1080;&#1083;&#1072;&#1089;&#1100;.&quot;
+ 
+-#: src/moving.c:702
++#: src/moving.c:701
+ msgid &quot;SUCCEEDS!&quot;
+ msgstr &quot;&#1059;&#1042;&#1045;&#1053;&#1063;&#1040;&#1051;&#1040;&#1057;&#1068; &#1059;&#1057;&#1055;&#1045;&#1061;&#1054;&#1052;!&quot;
+ 
+-#: src/moving.c:705
++#: src/moving.c:704
+ msgid &quot;The crystals mined were &quot;
+ msgstr &quot;&#1057;&#1086;&#1073;&#1088;&#1072;&#1085;&#1085;&#1099;&#1077; &#1082;&#1088;&#1080;&#1089;&#1090;&#1072;&#1083;&#1083;&#1099; &quot;
+ 
+-#: src/moving.c:707
++#: src/moving.c:706
+ msgid &quot;lost.&quot;
+ msgstr &quot;&#1087;&#1088;&#1086;&#1087;&#1072;&#1083;&#1080;.&quot;
+ 
+-#: src/moving.c:710
++#: src/moving.c:709
+ msgid &quot;saved.&quot;
+ msgstr &quot;&#1089;&#1086;&#1093;&#1088;&#1072;&#1085;&#1080;&#1083;&#1080;&#1089;&#1100;.&quot;
+ 
+-#: src/moving.c:729
++#: src/moving.c:728
+ msgid &quot; has stopped in a quadrant containing&quot;
+ msgstr &quot; &#1086;&#1089;&#1090;&#1072;&#1085;&#1086;&#1074;&#1080;&#1083;&#1089;&#1103; &#1074; &#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090;&#1077; &#1089;&#1086;&quot;
+ 
+-#: src/moving.c:730
++#: src/moving.c:729
+ msgid &quot;   a supernova.&quot;
+ msgstr &quot;   &#1089;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1074;&#1086;&#1081;.&quot;
+ 
+-#: src/moving.c:733
++#: src/moving.c:732
+ msgid &quot;***Emergency automatic override attempts to hurl &quot;
+ msgstr &quot;***&#1040;&#1074;&#1090;&#1086;&#1087;&#1080;&#1083;&#1086;&#1090; &#1087;&#1099;&#1090;&#1072;&#1077;&#1090;&#1089;&#1103; &#1074;&#1099;&#1088;&#1074;&#1072;&#1090;&#1100; &quot;
+ 
+-#: src/moving.c:736
++#: src/moving.c:735
+ msgid &quot;safely out of quadrant.&quot;
+ msgstr &quot;&#1080;&#1079; &#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090;&#1072;.&quot;
+ 
+-#: src/moving.c:742
++#: src/moving.c:741
+ msgid &quot;Warp engines damaged.&quot;
+ msgstr &quot;&#1052;&#1077;&#1078;&#1087;&#1088;&#1086;&#1089;&#1090;&#1088;&#1072;&#1085;&#1089;&#1090;&#1074;&#1077;&#1085;&#1085;&#1099;&#1077; &#1076;&#1074;&#1080;&#1075;&#1072;&#1090;&#1077;&#1083;&#1080; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1105;&#1085;&#1099;.&quot;
+ 
+-#: src/moving.c:748
++#: src/moving.c:747
+ #, c-format
+ msgid &quot;Warp factor set to %d&quot;
+ msgstr &quot;&#1057;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; &#1091;&#1089;&#1090;&#1072;&#1085;&#1086;&#1074;&#1083;&#1077;&#1085;&#1072; &#1085;&#1072; %d&quot;
+ 
+-#: src/moving.c:762
++#: src/moving.c:761
+ msgid &quot;Insufficient energy to leave quadrant.&quot;
+ msgstr &quot;&#1053;&#1077;&#1076;&#1086;&#1089;&#1090;&#1072;&#1090;&#1086;&#1095;&#1085;&#1086; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1095;&#1090;&#1086;&#1073;&#1099; &#1087;&#1086;&#1082;&#1080;&#1085;&#1091;&#1090;&#1100; &#1082;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090;.&quot;
+ 
+-#: src/moving.c:778
++#: src/moving.c:777
+ msgid &quot;***TIME WARP ENTERED.&quot;
+ msgstr &quot;***&#1048;&#1057;&#1050;&#1056;&#1048;&#1042;&#1051;&#1045;&#1053;&#1048;&#1045; &#1042;&#1056;&#1045;&#1052;&#1045;&#1053;&#1053;&#1054;&#1043;&#1054; &#1050;&#1054;&#1053;&#1058;&#1048;&#1053;&#1059;&#1059;&#1052;&#1040;.&quot;
+ 
+-#: src/moving.c:781
++#: src/moving.c:780
+ #, c-format
+ msgid &quot;You are traveling backwards in time %d stardates.&quot;
+ msgstr &quot;&#1042;&#1099; &#1087;&#1091;&#1090;&#1077;&#1096;&#1077;&#1089;&#1090;&#1074;&#1091;&#1077;&#1090;&#1077; &#1085;&#1072;&#1079;&#1072;&#1076; &#1074;&#1086; &#1074;&#1088;&#1077;&#1084;&#1077;&#1085;&#1080; &#1085;&#1072; %d &#1076;&#1085;&#1077;&#1081;.&quot;
+ 
+-#: src/moving.c:806
++#: src/moving.c:805
+ msgid &quot;Checkov-  \&quot;Security reports the Galileo has disappeared, Sir!&quot;
+ msgstr &quot;&#1063;&#1077;&#1093;&#1086;&#1074;- \&quot;&#1054;&#1093;&#1088;&#1072;&#1085;&#1072; &#1076;&#1086;&#1082;&#1083;&#1072;&#1076;&#1099;&#1074;&#1072;&#1077;&#1090; &#1086; &#1087;&#1088;&#1086;&#1087;&#1072;&#1078;&#1077; &#1043;&#1072;&#1083;&#1080;&#1083;&#1077;&#1103;, &#1057;&#1101;&#1088;!&quot;
+ 
+-#: src/moving.c:814
++#: src/moving.c:813
+ msgid &quot;Checkov-  \&quot;Security reports the Galileo has reappeared in the dock!\&quot;&quot;
+ msgstr &quot;&#1063;&#1077;&#1093;&#1086;&#1074;- \&quot;&#1054;&#1093;&#1088;&#1072;&#1085;&#1072; &#1076;&#1086;&#1082;&#1083;&#1072;&#1076;&#1099;&#1074;&#1072;&#1090; &#1086; &#1087;&#1086;&#1103;&#1074;&#1083;&#1077;&#1085;&#1080;&#1080; &#1043;&#1072;&#1083;&#1080;&#1083;&#1077;&#1103; &#1074; &#1076;&#1086;&#1082;&#1077;!\&quot;&quot;
+ 
+-#: src/moving.c:821
++#: src/moving.c:820
+ msgid &quot;Spock has reconstructed a correct star chart from memory&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082; &#1074;&#1086;&#1089;&#1089;&#1090;&#1072;&#1085;&#1086;&#1074;&#1080;&#1083; &#1079;&#1074;&#1105;&#1079;&#1076;&#1085;&#1091;&#1102; &#1082;&#1072;&#1088;&#1090;&#1091; &#1087;&#1086; &#1087;&#1072;&#1084;&#1103;&#1090;&#1080;&quot;
+ 
+-#: src/moving.c:826
++#: src/moving.c:825
+ #, c-format
+ msgid &quot;You are traveling forward in time %d stardates.&quot;
+ msgstr &quot;&#1042;&#1099; &#1087;&#1091;&#1090;&#1077;&#1096;&#1077;&#1089;&#1090;&#1074;&#1091;&#1077;&#1090;&#1077; &#1074;&#1087;&#1077;&#1088;&#1105;&#1076; &#1074;&#1086; &#1074;&#1088;&#1077;&#1084;&#1077;&#1085;&#1080; &#1085;&#1072; %d &#1076;&#1085;&#1077;&#1081;.&quot;
+ 
+-#: src/moving.c:845
++#: src/moving.c:844
+ msgid &quot;Engineer Scott- \&quot;We have no more deep space probes, Sir.\&quot;&quot;
+ msgstr &quot;&quot;
+ &quot;&#1048;&#1085;&#1078;&#1077;&#1085;&#1077;&#1088; &#1057;&#1082;&#1086;&#1090;- \&quot;&#1059; &#1085;&#1072;&#1089; &#1073;&#1086;&#1083;&#1100;&#1096;&#1077; &#1085;&#1077;&#1090; &#1076;&#1072;&#1083;&#1100;&#1085;&#1086;&#1073;&#1086;&#1081;&#1085;&#1099;&#1093; &#1082;&#1086;&#1089;&#1084;&#1080;&#1095;&#1077;&#1089;&#1082;&#1080;&#1093; &#1088;&#1072;&#1082;&#1077;&#1090;, &#1057;&#1101;&#1088;.\&quot;&quot;
+ 
+-#: src/moving.c:847
++#: src/moving.c:846
+ msgid &quot;Ye Faerie Queene has no deep space probes.&quot;
+ msgstr &quot;&#1053;&#1072; &#1042;&#1086;&#1083;&#1096;&#1077;&#1073;&#1085;&#1086;&#1081; &#1050;&#1086;&#1088;&#1086;&#1083;&#1077;&#1074;&#1077; &#1085;&#1077;&#1090; &#1076;&#1072;&#1083;&#1100;&#1085;&#1086;&#1073;&#1086;&#1081;&#1085;&#1099;&#1093; &#1082;&#1086;&#1089;&#1084;&#1080;&#1095;&#1077;&#1089;&#1082;&#1080;&#1093; &#1088;&#1072;&#1082;&#1077;&#1090;.&quot;
+ 
+-#: src/moving.c:853
++#: src/moving.c:852
+ msgid &quot;Engineer Scott- \&quot;The probe launcher is damaged, Sir.\&quot;&quot;
+ msgstr &quot;&#1048;&#1085;&#1078;&#1077;&#1085;&#1077;&#1088; &#1057;&#1082;&#1086;&#1090;- \&quot;&#1055;&#1091;&#1089;&#1082;&#1086;&#1074;&#1086;&#1081; &#1072;&#1087;&#1087;&#1072;&#1088;&#1072;&#1090; &#1089;&#1083;&#1086;&#1084;&#1072;&#1085;, &#1057;&#1101;&#1088;.\&quot;&quot;
+ 
+-#: src/moving.c:860
++#: src/moving.c:859
+ msgid &quot;Spock-  \&quot;Records show the previous probe has not yet&quot;
+ msgstr &quot;&#1057;&#1082;&#1086;&#1090;- \&quot;&#1057;&#1080;&#1075;&#1085;&#1072;&#1083;&#1099; &#1089; &#1087;&#1088;&#1077;&#1076;&#1099;&#1076;&#1091;&#1097;&#1077;&#1081; &#1088;&#1072;&#1082;&#1077;&#1090;&#1099; &#1075;&#1086;&#1074;&#1086;&#1088;&#1103;&#1090; &#1086; &#1090;&#1086;&#1084;, &#1095;&#1090;&#1086; &#1086;&#1085;&#1072; &#1077;&#1097;&#1105; &#1085;&#1077;&quot;
+ 
+-#: src/moving.c:861
++#: src/moving.c:860
+ msgid &quot;   reached its destination.\&quot;&quot;
+ msgstr &quot;   &#1076;&#1086;&#1089;&#1090;&#1080;&#1075;&#1083;&#1072; &#1087;&#1091;&#1085;&#1082;&#1090;&#1072; &#1085;&#1072;&#1079;&#1085;&#1072;&#1095;&#1077;&#1085;&#1080;&#1103;.\&quot;&quot;
+ 
+-#: src/moving.c:864
++#: src/moving.c:863
+ msgid &quot;Uhura- \&quot;The previous probe is still reporting data, Sir.\&quot;&quot;
+ msgstr &quot;&#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1055;&#1088;&#1077;&#1076;&#1099;&#1076;&#1091;&#1097;&#1072;&#1103; &#1088;&#1072;&#1082;&#1077;&#1090;&#1072; &#1074;&#1089;&#1105; &#1077;&#1097;&#1105; &#1087;&#1077;&#1088;&#1077;&#1076;&#1072;&#1105;&#1090; &#1089;&#1080;&#1075;&#1085;&#1072;&#1083;&#1099;, &#1057;&#1101;&#1088;.\&quot;&quot;
+ 
+-#: src/moving.c:871
++#: src/moving.c:870
+ #, c-format
+ msgid &quot;%d probe left.&quot;
+ msgstr &quot;&#1054;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100; %d &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;&#1072;.&quot;
+ 
+-#: src/moving.c:871
++#: src/moving.c:870
+ #, c-format
+ msgid &quot;%d probes left.&quot;
+ msgstr &quot;&#1054;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100; %d &#1090;&#1086;&#1088;&#1087;&#1077;&#1076;.&quot;
+ 
+-#: src/moving.c:872
++#: src/moving.c:871
+ msgid &quot;Are you sure you want to fire a probe? &quot;
+ msgstr &quot;&#1042;&#1099; &#1091;&#1074;&#1077;&#1088;&#1077;&#1085;&#1099;, &#1095;&#1090;&#1086; &#1093;&#1086;&#1090;&#1080;&#1090;&#1077; &#1079;&#1072;&#1087;&#1091;&#1089;&#1090;&#1080;&#1090;&#1100; &#1088;&#1072;&#1082;&#1077;&#1090;&#1091;? &quot;
+ 
+-#: src/moving.c:882
++#: src/moving.c:881
+ msgid &quot;Arm NOVAMAX warhead? &quot;
+ msgstr &quot;&#1057;&#1085;&#1072;&#1088;&#1103;&#1076;&#1080;&#1090;&#1100; &#1072;&#1090;&#1086;&#1084;&#1085;&#1086;&#1081; &#1073;&#1086;&#1077;&#1075;&#1086;&#1083;&#1086;&#1074;&#1082;&#1086;&#1081;? &quot;
+ 
+-#: src/moving.c:903
++#: src/moving.c:902
+ msgid &quot;Ensign Chekov-  \&quot;The deep space probe is launched, Captain.\&quot;&quot;
+ msgstr &quot;&quot;
+ &quot;&#1055;&#1088;&#1072;&#1087;&#1086;&#1088;&#1097;&#1080;&#1082; &#1063;&#1077;&#1093;&#1086;&#1074;- \&quot;&#1044;&#1072;&#1083;&#1100;&#1085;&#1086;&#1073;&#1086;&#1081;&#1085;&#1072;&#1103; &#1082;&#1086;&#1089;&#1084;&#1080;&#1095;&#1077;&#1089;&#1082;&#1072;&#1103; &#1088;&#1072;&#1082;&#1077;&#1090;&#1072; &#1074;&#1099;&#1087;&#1091;&#1097;&#1077;&#1085;&#1072;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;.\&quot;&quot;
+ 
+-#: src/moving.c:938
++#: src/moving.c:937
+ msgid &quot;Lt. Uhura-  \&quot;But Captain, we're already docked.\&quot;&quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1053;&#1086; &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1084;&#1099; &#1074;&#1077;&#1076;&#1100; &#1091;&#1078;&#1077; &#1087;&#1088;&#1080;&#1096;&#1074;&#1072;&#1088;&#1090;&#1086;&#1074;&#1072;&#1083;&#1080;&#1089;&#1100;.\&quot;&quot;
+ 
+-#: src/moving.c:942
++#: src/moving.c:941
+ msgid &quot;Subspace radio damaged.&quot;
+ msgstr &quot;&#1052;&#1077;&#1078;&#1087;&#1088;&#1086;&#1089;&#1090;&#1088;&#1072;&#1085;&#1089;&#1090;&#1074;&#1077;&#1085;&#1085;&#1072;&#1103; &#1088;&#1072;&#1094;&#1080;&#1103; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1077;&#1085;&#1072;.&quot;
+ 
+-#: src/moving.c:946
++#: src/moving.c:945
+ msgid &quot;Lt. Uhura-  \&quot;Captain, I'm not getting any response from Starbase.\&quot;&quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1103; &#1085;&#1077; &#1087;&#1086;&#1083;&#1091;&#1095;&#1072;&#1102; &#1085;&#1080;&#1082;&#1072;&#1082;&#1080;&#1093; &#1089;&#1080;&#1075;&#1085;&#1072;&#1083;&#1086;&#1074; &#1086;&#1090; &#1073;&#1072;&#1079;&#1099;.\&quot;&quot;
+ 
+-#: src/moving.c:950
++#: src/moving.c:949
+ msgid &quot;You must be aboard the &quot;
+ msgstr &quot;&#1042;&#1099; &#1076;&#1086;&#1083;&#1078;&#1085;&#1099; &#1073;&#1099;&#1090;&#1100; &#1085;&#1072; &#1073;&#1086;&#1088;&#1090;&#1091; &#1082;&#1072;&#1088;&#1072;&#1073;&#1083;&#1103; &quot;
+ 
+-#: src/moving.c:976
++#: src/moving.c:975
+ #, c-format
+ msgid &quot;Starbase in %s responds--&quot;
+ msgstr &quot;&#1041;&#1072;&#1079;&#1072; &#1080;&#1079; %s &#1086;&#1090;&#1074;&#1077;&#1095;&#1072;&#1077;&#1090;--&quot;
+ 
+-#: src/moving.c:979
++#: src/moving.c:977
+ msgid &quot; dematerializes.&quot;
+ msgstr &quot; &#1076;&#1077;&#1084;&#1072;&#1090;&#1077;&#1088;&#1080;&#1072;&#1083;&#1080;&#1079;&#1086;&#1074;&#1072;&#1083;&#1089;&#1103;.&quot;
+ 
+-#: src/moving.c:992
++#: src/moving.c:990
+ msgid &quot;You have been lost in space...&quot;
+ msgstr &quot;&#1042;&#1099; &#1087;&#1088;&#1086;&#1087;&#1072;&#1083;&#1080; &#1074; &#1082;&#1086;&#1089;&#1084;&#1080;&#1095;&#1077;&#1089;&#1082;&#1086;&#1081; &#1087;&#1091;&#1089;&#1090;&#1086;&#1090;&#1077;...&quot;
+ 
+-#: src/moving.c:1000
++#: src/moving.c:998
+ msgid &quot;1st&quot;
+ msgstr &quot;1-&#1072;&#1103;&quot;
+ 
+-#: src/moving.c:1001
++#: src/moving.c:999
+ msgid &quot;2nd&quot;
+ msgstr &quot;2-&#1072;&#1103;&quot;
+ 
+-#: src/moving.c:1002
++#: src/moving.c:1000
+ msgid &quot;3rd&quot;
+ msgstr &quot;3-&#1103;&quot;
+ 
+-#: src/moving.c:1004
++#: src/moving.c:1002
+ msgid &quot; attempt to re-materialize &quot;
+ msgstr &quot; &#1087;&#1086;&#1087;&#1099;&#1090;&#1082;&#1072; &#1084;&#1072;&#1090;&#1077;&#1088;&#1080;&#1072;&#1083;&#1080;&#1079;&#1072;&#1094;&#1080;&#1080; &quot;
+ 
+-#: src/moving.c:1031
++#: src/moving.c:1029
+ msgid &quot;succeeds.&quot;
+ msgstr &quot;&#1091;&#1074;&#1077;&#1085;&#1095;&#1072;&#1083;&#1072;&#1089;&#1100; &#1091;&#1089;&#1087;&#1077;&#1093;&#1086;&#1084;.&quot;
+ 
+-#: src/moving.c:1035
++#: src/moving.c:1033
+ msgid &quot;Lt. Uhura-  \&quot;Captain, we made it!\&quot;&quot;
+ msgstr &quot;&#1051;&#1090;. &#1059;&#1093;&#1091;&#1088;&#1072;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1087;&#1086;&#1083;&#1091;&#1095;&#1083;&#1086;&#1089;&#1100;!\&quot;&quot;
+ 
+-#: src/moving.c:1068
++#: src/moving.c:1066
+ msgid &quot;You cannot abandon Ye Faerie Queene.&quot;
+ msgstr &quot;&#1042;&#1099; &#1085;&#1077; &#1084;&#1086;&#1078;&#1077;&#1090;&#1077; &#1086;&#1089;&#1090;&#1072;&#1074;&#1080;&#1090;&#1100; &#1042;&#1086;&#1083;&#1096;&#1077;&#1073;&#1085;&#1091;&#1102; &#1050;&#1086;&#1088;&#1086;&#1083;&#1077;&#1074;&#1091;.&quot;
+ 
+-#: src/moving.c:1075
++#: src/moving.c:1073
+ msgid &quot;Ye Faerie Queene has no shuttle craft.&quot;
+ msgstr &quot;&#1053;&#1072; &#1042;&#1086;&#1083;&#1096;&#1077;&#1073;&#1085;&#1086;&#1081; &#1050;&#1086;&#1088;&#1086;&#1083;&#1077;&#1074;&#1077; &#1085;&#1077;&#1090; &#1095;&#1077;&#1083;&#1085;&#1086;&#1082;&#1072;.&quot;
+ 
+-#: src/moving.c:1079
++#: src/moving.c:1077
+ msgid &quot;Shuttle craft now serving Big Macs.&quot;
+ msgstr &quot;&#1063;&#1077;&#1083;&#1085;&#1086;&#1082; &#1087;&#1088;&#1080;&#1089;&#1087;&#1086;&#1089;&#1086;&#1073;&#1080;&#1083;&#1080; &#1076;&#1083;&#1103; &#1093;&#1088;&#1072;&#1085;&#1077;&#1085;&#1080;&#1103; &#1041;&#1080;&#1075; &#1052;&#1072;&#1082;&#1086;&#1074;.&quot;
+ 
+-#: src/moving.c:1083
++#: src/moving.c:1081
+ msgid &quot;Shuttle craft damaged.&quot;
+ msgstr &quot;&#1063;&#1077;&#1083;&#1085;&#1086;&#1082; &#1087;&#1086;&#1074;&#1088;&#1077;&#1078;&#1076;&#1105;&#1085;.&quot;
+ 
+-#: src/moving.c:1087
+-#, fuzzy
+-msgid &quot;You must be aboard the Enterprise.&quot;
+-msgstr &quot;&#1042;&#1099; &#1076;&#1086;&#1083;&#1078;&#1085;&#1099; &#1073;&#1099;&#1090;&#1100; &#1085;&#1072; &#1073;&#1086;&#1088;&#1090;&#1091; &#1082;&#1072;&#1088;&#1072;&#1073;&#1083;&#1103; &quot;
++#: src/moving.c:1085
++msgid &quot;You must be aboard the ship.&quot;
++msgstr &quot;&#1042;&#1099; &#1076;&#1086;&#1083;&#1078;&#1085;&#1099; &#1073;&#1099;&#1090;&#1100; &#1085;&#1072; &#1073;&#1086;&#1088;&#1090;&#1091; &#1082;&#1072;&#1088;&#1072;&#1073;&#1083;&#1103;.&quot;
+ 
+-#: src/moving.c:1091 src/planets.c:302
++#: src/moving.c:1089 src/planets.c:302
+ msgid &quot;Shuttle craft not currently available.&quot;
+ msgstr &quot;&#1063;&#1077;&#1083;&#1085;&#1086;&#1082; &#1089;&#1077;&#1081;&#1095;&#1072;&#1089; &#1085;&#1077;&#1076;&#1086;&#1089;&#1090;&#1091;&#1087;&#1077;&#1085;.&quot;
+ 
+-#: src/moving.c:1096
++#: src/moving.c:1094
+ msgid &quot;***ABANDON SHIP!  ABANDON SHIP!&quot;
+ msgstr &quot;***&#1055;&#1054;&#1050;&#1048;&#1053;&#1059;&#1058;&#1068; &#1050;&#1054;&#1056;&#1040;&#1041;&#1051;&#1068;!  &#1055;&#1054;&#1050;&#1048;&#1053;&#1059;&#1058;&#1068; &#1050;&#1054;&#1056;&#1040;&#1041;&#1051;&#1068;!&quot;
+ 
+-#: src/moving.c:1098
++#: src/moving.c:1096
+ msgid &quot;***ALL HANDS ABANDON SHIP!&quot;
+ msgstr &quot;***&#1042;&#1057;&#1045;&#1052;&#1059; &#1055;&#1045;&#1056;&#1057;&#1054;&#1053;&#1040;&#1051;&#1059; &#1055;&#1054;&#1050;&#1048;&#1053;&#1059;&#1058;&#1068; &#1050;&#1054;&#1056;&#1040;&#1041;&#1051;&#1068;!&quot;
+ 
+-#: src/moving.c:1100
++#: src/moving.c:1098
+ msgid &quot;Captain and crew escape in shuttle craft.&quot;
+ msgstr &quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085; &#1089; &#1101;&#1082;&#1080;&#1087;&#1072;&#1078;&#1077;&#1084; &#1091;&#1076;&#1088;&#1072;&#1083;&#1080; &#1085;&#1072; &#1095;&#1077;&#1083;&#1085;&#1086;&#1082;&#1077;.&quot;
+ 
+-#: src/moving.c:1109 src/moving.c:1112
++#: src/moving.c:1107 src/moving.c:1110
+ msgid &quot;Remainder of ship's complement beam down&quot;
+ msgstr &quot;&#1054;&#1089;&#1090;&#1072;&#1090;&#1082;&#1080; &#1083;&#1080;&#1095;&#1085;&#1086;&#1075;&#1086; &#1089;&#1086;&#1089;&#1090;&#1072;&#1074;&#1072; &#1090;&#1077;&#1083;&#1077;&#1087;&#1086;&#1088;&#1090;&#1080;&#1088;&#1086;&#1074;&#1072;&#1083;&#1080;&#1089;&#1100;&quot;
+ 
+-#: src/moving.c:1110
++#: src/moving.c:1108
+ msgid &quot;to nearest habitable planet.&quot;
+ msgstr &quot;&#1085;&#1072; &#1073;&#1083;&#1080;&#1078;&#1072;&#1081;&#1096;&#1091;&#1102; &#1087;&#1088;&#1080;&#1075;&#1086;&#1076;&#1085;&#1091;&#1102; &#1076;&#1083;&#1103; &#1078;&#1080;&#1079;&#1085;&#1080; &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1091;.&quot;
+ 
+-#: src/moving.c:1113
++#: src/moving.c:1111
+ #, c-format
+ msgid &quot;to %s.&quot;
+ msgstr &quot;&#1074; %s.&quot;
+ 
+-#: src/moving.c:1115
++#: src/moving.c:1113
+ #, c-format
+ msgid &quot;Entire crew of %d left to die in outer space.&quot;
+ msgstr &quot;&#1042;&#1077;&#1089;&#1100; &#1101;&#1082;&#1080;&#1087;&#1072;&#1078; &#1074; &#1089;&#1086;&#1089;&#1090;&#1072;&#1074;&#1077; %d &#1095;&#1077;&#1083;&#1086;&#1074;&#1077;&#1082; &#1087;&#1086;&#1075;&#1080;&#1073; &#1074; &#1086;&#1090;&#1082;&#1088;&#1099;&#1090;&#1086;&#1084; &#1082;&#1086;&#1089;&#1084;&#1086;&#1089;&#1077;.&quot;
+ 
+-#: src/moving.c:1124
++#: src/moving.c:1123
+ msgid &quot;You are captured by Klingons and released to&quot;
+ msgstr &quot;&#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1099; &#1087;&#1086;&#1081;&#1084;&#1072;&#1083;&#1080; &#1074;&#1072;&#1089; &#1080;&quot;
+ 
+-#: src/moving.c:1125
++#: src/moving.c:1124
+ msgid &quot;the Federation in a prisoner-of-war exchange.&quot;
+ msgstr &quot;&#1091;&#1089;&#1090;&#1088;&#1086;&#1080;&#1083;&#1080; &#1086;&#1073;&#1084;&#1077;&#1085; &#1074;&#1086;&#1077;&#1085;&#1085;&#1086;&#1087;&#1083;&#1077;&#1085;&#1085;&#1099;&#1084;&#1080; &#1089; &#1060;&#1077;&#1076;&#1077;&#1088;&#1072;&#1094;&#1080;&#1077;&#1081;.&quot;
+ 
+-#: src/moving.c:1151
++#: src/moving.c:1150
+ msgid &quot;Starfleet puts you in command of another ship,&quot;
+ msgstr &quot;&#1047;&#1074;&#1105;&#1079;&#1076;&#1085;&#1099;&#1081; &#1060;&#1083;&#1086;&#1090; &#1076;&#1086;&#1074;&#1077;&#1088;&#1080;&#1083; &#1074;&#1072;&#1084; &#1082;&#1086;&#1084;&#1072;&#1085;&#1076;&#1086;&#1074;&#1072;&#1085;&#1080;&#1077; &#1077;&#1097;&#1105; &#1086;&#1076;&#1085;&#1080;&#1084; &#1082;&#1086;&#1088;&#1072;&#1073;&#1083;&#1105;&#1084;,&quot;
+ 
+-#: src/moving.c:1152
++#: src/moving.c:1151
+ msgid &quot;the Faerie Queene, which is antiquated but,&quot;
+ msgstr &quot;&#1042;&#1086;&#1083;&#1096;&#1077;&#1073;&#1085;&#1072;&#1103; &#1050;&#1086;&#1088;&#1086;&#1083;&#1077;&#1074;&#1072;, &#1082;&#1086;&#1090;&#1086;&#1088;&#1099;&#1081; &#1085;&#1077;&#1084;&#1085;&#1086;&#1075;&#1086; &#1091;&#1089;&#1090;&#1072;&#1088;&#1077;&#1083;, &#1085;&#1086;&quot;
+ 
+-#: src/moving.c:1153
++#: src/moving.c:1152
+ msgid &quot;still useable.&quot;
+ msgstr &quot;&#1074;&#1089;&#1105; &#1077;&#1097;&#1105; &#1088;&#1072;&#1073;&#1086;&#1090;&#1072;&#1077;&#1090;.&quot;
+ 
+-#: src/moving.c:1154
++#: src/moving.c:1153
+ msgid &quot;The dilithium crystals have been moved.&quot;
+ msgstr &quot;&#1050;&#1088;&#1080;&#1089;&#1090;&#1072;&#1083;&#1083;&#1099; &#1076;&#1080;&#1083;&#1080;&#1090;&#1080;&#1103; &#1074;&#1079;&#1103;&#1090;&#1099; &#1089; &#1089;&#1086;&#1073;&#1086;&#1081;.&quot;
+ 
+@@ -2070,7 +2069,6 @@
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1080;&#1085;&#1089;&#1090;&#1088;&#1091;&#1082;&#1094;&#1080;&#1080; &#1047;&#1074;&#1105;&#1079;&#1076;&#1085;&#1086;&#1075;&#1086; &#1060;&#1083;&#1086;&#1090;&#1072; &#1079;&#1072;&#1087;&#1088;&#1077;&#1097;&#1072;&#1102;&#1090; &#1101;&#1090;&#1080; &#1076;&#1077;&#1081;&#1089;&#1090;&#1074;&#1080;&#1103;,&quot;
+ 
+ #: src/planets.c:238
+-#, fuzzy
+ msgid &quot;  except when Condition Yellow exists.&quot;
+ msgstr &quot; &#1082;&#1088;&#1086;&#1084;&#1077; &#1089;&#1083;&#1091;&#1095;&#1072;&#1077;&#1074; &#1046;&#1105;&#1083;&#1090;&#1086;&#1075;&#1086; &#1089;&#1086;&#1089;&#1090;&#1086;&#1103;&#1085;&#1080;&#1103;.&quot;
+ 
+@@ -2386,424 +2384,432 @@
+ msgid &quot;Starbase in %s is under Super-commander attack.&quot;
+ msgstr &quot;&#1041;&#1072;&#1079;&#1072; &#1074; %s &#1072;&#1090;&#1072;&#1082;&#1086;&#1074;&#1072;&#1085;&#1072; &#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084;&#1086;&#1084; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;.&quot;
+ 
+-#: src/reports.c:24
++#: src/reports.c:22
++msgid &quot;No Starbase is currently under attack.&quot;
++msgstr &quot;&#1041;&#1072;&#1079;&#1099; &#1089;&#1077;&#1081;&#1095;&#1072;&#1089; &#1085;&#1077; &#1072;&#1090;&#1072;&#1082;&#1086;&#1074;&#1072;&#1085;&#1099;.&quot;
++
++#: src/reports.c:26
+ #, c-format
+ msgid &quot;Base in %i - %i attacked by C. Alive until %.1f&quot;
+ msgstr &quot;&#1041;&#1072;&#1079;&#1072; &#1074; %i - %i &#1072;&#1090;&#1072;&#1082;&#1086;&#1074;&#1072;&#1085;&#1072; C. &#1044;&#1086;&#1078;&#1080;&#1074;&#1105;&#1090; &#1076;&#1086; %.1f&quot;
+ 
+-#: src/reports.c:26
++#: src/reports.c:28
+ #, c-format
+ msgid &quot;Base in %i - %i attacked by S. Alive until %.1f&quot;
+ msgstr &quot;&#1041;&#1072;&#1079;&#1072; &#1074; %i - %i &#1072;&#1090;&#1072;&#1082;&#1086;&#1074;&#1072;&#1085;&#1072; S. &#1044;&#1086;&#1078;&#1080;&#1074;&#1105;&#1090; &#1076;&#1086; %.1f&quot;
+ 
+-#: src/reports.c:38
++#: src/reports.c:40
+ msgid &quot;thawed &quot;
+ msgstr &quot;&#1089;&#1086;&#1093;&#1088;&#1072;&#1085;&#1105;&#1085;&#1085;&#1091;&#1102; &quot;
+ 
+-#: src/reports.c:40
++#: src/reports.c:42
+ msgid &quot;short&quot;
+ msgstr &quot;&#1082;&#1086;&#1088;&#1086;&#1090;&#1082;&#1091;&#1102;&quot;
+ 
+-#: src/reports.c:41
++#: src/reports.c:43
+ msgid &quot;medium&quot;
+ msgstr &quot;&#1089;&#1088;&#1091;&#1076;&#1085;&#1102;&#1102;&quot;
+ 
+-#: src/reports.c:42
++#: src/reports.c:44
+ msgid &quot;long&quot;
+ msgstr &quot;&#1076;&#1083;&#1080;&#1085;&#1085;&#1091;&#1102;&quot;
+ 
+-#: src/reports.c:43
++#: src/reports.c:45
+ msgid &quot;unknown length&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/reports.c:46
++#: src/reports.c:48
+ msgid &quot;novice&quot;
+ msgstr &quot;&#1085;&#1086;&#1074;&#1080;&#1095;&#1105;&#1082;&quot;
+ 
+-#: src/reports.c:47
++#: src/reports.c:49
+ msgid &quot;fair&quot;
+ msgstr &quot;&#1089;&#1088;&#1077;&#1076;&#1085;&#1080;&#1081;&quot;
+ 
+-#: src/reports.c:48
++#: src/reports.c:50
+ msgid &quot;good&quot;
+ msgstr &quot;&#1091;&#1084;&#1077;&#1083;&#1099;&#1081;&quot;
+ 
+-#: src/reports.c:49
++#: src/reports.c:51
+ msgid &quot;expert&quot;
+ msgstr &quot;&#1089;&#1087;&#1077;&#1094;&#1080;&#1072;&#1083;&#1080;&#1089;&#1090;&quot;
+ 
+-#: src/reports.c:50
++#: src/reports.c:52
+ msgid &quot;emeritus&quot;
+ msgstr &quot;&#1086;&#1090;&#1089;&#1090;&#1072;&#1074;&#1085;&#1086;&#1081; &#1082;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;&quot;
+ 
+-#: src/reports.c:51
++#: src/reports.c:53
+ msgid &quot;skilled&quot;
+ msgstr &quot;&quot;
+ 
+-#: src/reports.c:54
++#: src/reports.c:56
+ #, c-format
+ msgid &quot;You %s a %s%s %s game.&quot;
+ msgstr &quot;&#1042;&#1099; %s &#1080;&#1075;&#1088;&#1091; %s%s %s.&quot;
+ 
+-#: src/reports.c:55
++#: src/reports.c:57
+ msgid &quot;were playing&quot;
+ msgstr &quot;&#1089;&#1099;&#1075;&#1088;&#1072;&#1083;&#1080;&quot;
+ 
+-#: src/reports.c:55
++#: src/reports.c:57
+ msgid &quot;are playing&quot;
+ msgstr &quot;&#1080;&#1075;&#1088;&#1072;&#1077;&#1090;&#1077;&quot;
+ 
+-#: src/reports.c:56
++#: src/reports.c:58
+ msgid &quot;No plaque is allowed.&quot;
+ msgstr &quot;&#1043;&#1088;&#1072;&#1084;&#1086;&#1090;&#1099; &#1085;&#1077; &#1073;&#1091;&#1076;&#1077;&#1090;.&quot;
+ 
+-#: src/reports.c:57
++#: src/reports.c:59
+ #, c-format
+ msgid &quot;This is tournament game %d.&quot;
+ msgstr &quot;&#1069;&#1090;&#1086; &#1090;&#1091;&#1088;&#1085;&#1080;&#1088;&#1085;&#1072;&#1103; &#1080;&#1075;&#1088;&#1072; &#1085;&#1086;&#1084;&#1077;&#1088; %d.&quot;
+ 
+-#: src/reports.c:58
++#: src/reports.c:60
+ #, c-format
+ msgid &quot;Your secret password is \&quot;%s\&quot;&quot;
+ msgstr &quot;&#1042;&#1072;&#1096; &#1087;&#1072;&#1088;&#1086;&#1083;&#1100; \&quot;%s\&quot;&quot;
+ 
+-#: src/reports.c:59
++#: src/reports.c:61
+ #, c-format
+ msgid &quot;%d of %d Klingons have been killed&quot;
+ msgstr &quot;%d &#1080;&#1079; %d &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074; &#1091;&#1073;&#1080;&#1090;&#1099;&quot;
+ 
+-#: src/reports.c:60
++#: src/reports.c:62
+ #, c-format
+ msgid &quot;, including %d Commander%s.&quot;
+ msgstr &quot;, &#1074;&#1082;&#1083;&#1102;&#1095;&#1072;&#1103; %d &#1050;&#1086;&#1084;&#1072;&#1085;&#1076;&#1080;&#1088;&#1072;%s.&quot;
+ 
+-#: src/reports.c:60 src/reports.c:83 src/reports.c:89 src/reports.c:112
++#: src/reports.c:62 src/reports.c:85 src/reports.c:91 src/reports.c:114
+ msgid &quot;s&quot;
+ msgstr &quot;(&#1086;&#1074;)&quot;
+ 
+-#: src/reports.c:61
++#: src/reports.c:63
+ msgid &quot;, but no Commanders.&quot;
+ msgstr &quot;, &#1085;&#1086; &#1073;&#1077;&#1079; &#1050;&#1086;&#1084;&#1072;&#1085;&#1076;&#1080;&#1088;&#1086;&#1074;.&quot;
+ 
+-#: src/reports.c:63
++#: src/reports.c:65
+ #, c-format
+ msgid &quot;The Super Commander has %sbeen destroyed.&quot;
+ msgstr &quot;&#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084; %s&#1073;&#1099;&#1083; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1077;&#1085;.&quot;
+ 
+-#: src/reports.c:64
++#: src/reports.c:66
+ msgid &quot;not &quot;
+ msgstr &quot;&#1085;&#1077; &quot;
+ 
+-#: src/reports.c:66
++#: src/reports.c:68
+ msgid &quot;There &quot;
+ msgstr &quot; &quot;
+ 
+-#: src/reports.c:67
++#: src/reports.c:69
+ msgid &quot;has been 1 base&quot;
+ msgstr &quot;1 &#1073;&#1072;&#1079;&quot;
+ 
+-#: src/reports.c:69
++#: src/reports.c:71
+ #, c-format
+ msgid &quot;have been %d bases&quot;
+ msgstr &quot;%d &#1073;&#1072;&#1079;&quot;
+ 
+-#: src/reports.c:71
++#: src/reports.c:73
+ #, c-format
+ msgid &quot; destroyed, %d remaining.&quot;
+ msgstr &quot; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1077;&#1085;&#1086;, %d &#1086;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100;.&quot;
+ 
+-#: src/reports.c:73
++#: src/reports.c:75
+ #, c-format
+ msgid &quot;There are %d bases.&quot;
+ msgstr &quot;&#1054;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100; %d &#1073;&#1072;&#1079;.&quot;
+ 
+-#: src/reports.c:80
++#: src/reports.c:82
+ #, c-format
+ msgid &quot;%d casualt%s suffered so far.&quot;
+ msgstr &quot;%d &#1087;&#1086;&#1089;&#1090;&#1088;&#1072;&#1076;&#1072;&#1074;&#1096;&#1080;&#1093;%s &#1091;&#1078;&#1077; &#1091;&#1084;&#1077;&#1088;&#1083;&#1080;.\&quot;&quot;
+ 
+-#: src/reports.c:82
++#: src/reports.c:84
+ #, c-format
+ msgid &quot;There were %d call%s for help.&quot;
+ msgstr &quot;&#1042;&#1099; &#1089;&#1076;&#1077;&#1083;&#1072;&#1083;&#1080; %d &#1074;&#1099;&#1079;&#1086;&#1074;%s &#1073;&#1072;&#1079;&#1099;.&quot;
+ 
+-#: src/reports.c:85
++#: src/reports.c:87
+ msgid &quot;You have &quot;
+ msgstr &quot;&#1059; &#1074;&#1072;&#1089; &quot;
+ 
+-#: src/reports.c:87
++#: src/reports.c:89
+ msgid &quot;no&quot;
+ msgstr &quot;&#1086;&#1090;&#1089;&#1091;&#1090;&#1089;&#1090;&#1074;&#1091;&#1102;&#1090;&quot;
+ 
+-#: src/reports.c:88
++#: src/reports.c:90
+ msgid &quot; deep space probe&quot;
+ msgstr &quot; &#1076;&#1072;&#1083;&#1100;&#1085;&#1086;&#1073;&#1086;&#1081;&#1085;&#1099;&#1077; &#1082;&#1086;&#1089;&#1084;&#1080;&#1095;&#1077;&#1089;&#1082;&#1080;&#1077; &#1088;&#1072;&#1082;&#1077;&#1090;&#1099;&quot;
+ 
+-#: src/reports.c:95
++#: src/reports.c:97
+ msgid &quot;An armed deep space probe is in&quot;
+ msgstr &quot;&#1044;&#1072;&#1083;&#1100;&#1085;&#1086;&#1073;&#1086;&#1081;&#1085;&#1072;&#1103; &#1082;&#1086;&#1089;&#1084;&#1080;&#1095;&#1077;&#1089;&#1082;&#1072;&#1103; &#1088;&#1072;&#1082;&#1077;&#1090;&#1072; &#1089; &#1072;&#1090;&#1086;&#1084;&#1085;&#1099;&#1084; &#1079;&#1072;&#1088;&#1103;&#1076;&#1086;&#1084; &#1089;&#1077;&#1081;&#1095;&#1072;&#1089; &#1074;&quot;
+ 
+-#: src/reports.c:97
++#: src/reports.c:99
+ msgid &quot;A deep space probe is in&quot;
+ msgstr &quot;&#1044;&#1072;&#1083;&#1100;&#1085;&#1086;&#1073;&#1086;&#1081;&#1085;&#1072;&#1103; &#1082;&#1086;&#1089;&#1084;&#1080;&#1095;&#1077;&#1089;&#1082;&#1072;&#1103; &#1088;&#1072;&#1082;&#1077;&#1090;&#1072; &#1089;&#1077;&#1081;&#1095;&#1072;&#1089; &#1074;&quot;
+ 
+-#: src/reports.c:103
++#: src/reports.c:105
+ msgid &quot;Dilithium crystals aboard ship... not yet used.&quot;
+ msgstr &quot;&#1050;&#1088;&#1080;&#1089;&#1090;&#1072;&#1083;&#1083;&#1099; &#1076;&#1080;&#1083;&#1080;&#1090;&#1080;&#1103; &#1085;&#1072; &#1073;&#1086;&#1088;&#1090;&#1091;... &#1087;&#1086;&#1082;&#1072; &#1085;&#1077; &#1080;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1086;&#1074;&#1072;&#1083;&#1080;&#1089;&#1100;.&quot;
+ 
+-#: src/reports.c:111
++#: src/reports.c:113
+ #, c-format
+ msgid &quot;Dilithium crystals have been used %d time%s.&quot;
+ msgstr &quot;&#1050;&#1088;&#1080;&#1089;&#1090;&#1072;&#1083;&#1083;&#1099; &#1076;&#1080;&#1083;&#1080;&#1090;&#1080;&#1103; &#1080;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1086;&#1074;&#1072;&#1083;&#1080;&#1089;&#1100; %d &#1088;&#1072;&#1079;%s.&quot;
+ 
+-#: src/reports.c:126
++#: src/reports.c:127
+ msgid &quot;LONG-RANGE SENSORS DAMAGED.&quot;
+ msgstr &quot;&#1057;&#1045;&#1053;&#1057;&#1054;&#1056;&#1067; &#1044;&#1040;&#1051;&#1068;&#1053;&#1045;&#1043;&#1054; &#1054;&#1041;&#1047;&#1054;&#1056;&#1040; &#1057;&#1051;&#1054;&#1052;&#1040;&#1053;&#1067;.&quot;
+ 
+-#: src/reports.c:129
++#: src/reports.c:130
+ msgid &quot;Starbase's long-range scan&quot;
+ msgstr &quot;&#1044;&#1072;&#1083;&#1100;&#1085;&#1080;&#1081; &#1086;&#1073;&#1079;&#1086;&#1088; &#1089; &#1073;&#1072;&#1079;&#1099;&quot;
+ 
+-#: src/reports.c:132
++#: src/reports.c:133
+ msgid &quot;Long-range scan&quot;
+ msgstr &quot;&#1044;&#1072;&#1083;&#1100;&#1085;&#1080;&#1081; &#1086;&#1073;&#1079;&#1086;&#1088;&quot;
+ 
+-#: src/reports.c:165
++#: src/reports.c:166
+ msgid &quot;DEVICE            -REPAIR TIMES-&quot;
+ msgstr &quot;&#1059;&#1057;&#1058;&#1056;&#1054;&#1049;&#1057;&#1058;&#1042;&#1054;        -&#1042;&#1056;&#1045;&#1052;&#1071; &#1056;&#1045;&#1052;&#1054;&#1053;&#1058;&#1040;-&quot;
+ 
+-#: src/reports.c:166
++#: src/reports.c:167
+ msgid &quot;                IN FLIGHT   DOCKED&quot;
+ msgstr &quot;                &#1042; &#1055;&#1054;&#1051;&#1025;&#1058;&#1045;    &#1055;&#1056;&#1048;&#1064;&#1042;&#1040;&#1056;&#1058;&#1054;&#1042;&#1040;&#1053;&quot;
+ 
+-#: src/reports.c:175
++#: src/reports.c:176
+ msgid &quot;All devices functional.&quot;
+ msgstr &quot;&#1042;&#1089;&#1077; &#1091;&#1089;&#1090;&#1088;&#1086;&#1081;&#1089;&#1090;&#1074;&#1072; &#1074; &#1087;&#1086;&#1088;&#1103;&#1076;&#1082;&#1077;.&quot;
+ 
+-#: src/reports.c:202
++#: src/reports.c:203
+ msgid &quot;Spock-  \&quot;I revised the Star Chart from the starbase's records.\&quot;&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1071; &#1086;&#1073;&#1085;&#1086;&#1074;&#1080;&#1083; &#1079;&#1074;&#1105;&#1079;&#1076;&#1085;&#1091;&#1102; &#1082;&#1072;&#1088;&#1090;&#1091; &#1087;&#1086; &#1079;&#1072;&#1087;&#1080;&#1089;&#1103;&#1084; &#1089; &#1073;&#1072;&#1079;&#1099;.\&quot;&quot;
+ 
+-#: src/reports.c:206
++#: src/reports.c:207
+ msgid &quot;       STAR CHART FOR THE KNOWN GALAXY&quot;
+ msgstr &quot;       &#1047;&#1042;&#1025;&#1047;&#1044;&#1053;&#1040;&#1071; &#1050;&#1040;&#1056;&#1058;&#1040; &#1048;&#1057;&#1057;&#1051;&#1045;&#1044;&#1054;&#1042;&#1040;&#1053;&#1053;&#1067;&#1061; &#1059;&#1063;&#1040;&#1057;&#1058;&#1050;&#1054;&#1042;&quot;
+ 
+-#: src/reports.c:208
++#: src/reports.c:209
+ #, c-format
+ msgid &quot;(Last surveillance update %d stardates ago).&quot;
+ msgstr &quot;(&#1055;&#1086;&#1089;&#1083;&#1077;&#1076;&#1085;&#1077;&#1077; &#1086;&#1073;&#1085;&#1086;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1073;&#1099;&#1083;&#1086; %d &#1076;&#1085;&#1077;&#1081; &#1085;&#1072;&#1079;&#1072;&#1076;).&quot;
+ 
+-#: src/reports.c:268
++#: src/reports.c:269
++msgid &quot;Stardate&quot;
++msgstr &quot;&#1063;&#1080;&#1089;&#1083;&#1086;&quot;
++
++#: src/reports.c:269
+ #, c-format
+-msgid &quot;Stardate      %.1f, Time Left %.2f&quot;
+-msgstr &quot;&#1063;&#1080;&#1089;&#1083;&#1086;       %.1f, &#1054;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100; %.2f&quot;
++msgid &quot;%.1f, Time Left %.2f&quot;
++msgstr &quot;%.1f, &#1054;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100; %.2f&quot;
+ 
+-#: src/reports.c:273
++#: src/reports.c:275
+ msgid &quot;RED&quot;
+ msgstr &quot;&#1050;&#1056;&#1040;&#1057;&#1053;&#1067;&#1049;&quot;
+ 
+-#: src/reports.c:274
++#: src/reports.c:276
+ msgid &quot;GREEN&quot;
+ msgstr &quot;&#1047;&#1045;&#1051;&#1025;&#1053;&#1067;&#1049;&quot;
+ 
+-#: src/reports.c:275
++#: src/reports.c:277
+ msgid &quot;YELLOW&quot;
+ msgstr &quot;&#1046;&#1025;&#1051;&#1058;&#1067;&#1049;&quot;
+ 
+-#: src/reports.c:276
++#: src/reports.c:278
+ msgid &quot;DOCKED&quot;
+ msgstr &quot;&#1055;&#1056;&#1048;&#1064;&#1042;&#1040;&#1056;&#1058;&quot;
+ 
+-#: src/reports.c:277
++#: src/reports.c:279
+ msgid &quot;DEAD&quot;
+ msgstr &quot;&#1055;&#1054;&#1043;&#1048;&#1041;&quot;
+ 
+-#: src/reports.c:282
+-#, c-format
+-msgid &quot;Condition     %s, %i DAMAGES&quot;
+-msgstr &quot;&#1057;&#1086;&#1089;&#1090;&#1086;&#1103;&#1085;&#1080;&#1077;     %s, %i &#1055;&#1054;&#1042;&#1056;&#1045;&#1046;&#1044;&#1045;&#1053;&#1048;&#1049;&quot;
++#: src/reports.c:284
++msgid &quot;Condition&quot;
++msgstr &quot;&#1057;&#1086;&#1089;&#1090;&#1086;&#1103;&#1085;&#1080;&#1077;&quot;
+ 
+-#: src/reports.c:285
++#: src/reports.c:284
+ #, c-format
+-msgid &quot;Position      %d - %d , %d - %d&quot;
+-msgstr &quot;&#1055;&#1086;&#1083;&#1086;&#1078;&#1077;&#1085;&#1080;&#1077;      %d - %d , %d - %d&quot;
++msgid &quot;%s, %i DAMAGES&quot;
++msgstr &quot;%s, %i &#1055;&#1054;&#1042;&#1056;&#1045;&#1046;&#1044;&#1045;&#1053;&#1048;&#1049;&quot;
+ 
+-#: src/reports.c:289
+-msgid &quot;Life Support  &quot;
+-msgstr &quot;&#1046;&#1080;&#1079;&#1085;&#1077;&#1086;&#1073;&#1077;&#1089;&#1087;&#1077;&#1095;&#1077;&#1085;&#1080;&#1077;  &quot;
++#: src/reports.c:288
++msgid &quot;Position&quot;
++msgstr &quot;&#1055;&#1086;&#1083;&#1086;&#1078;&#1077;&#1085;&#1080;&#1077;&quot;
+ 
+-#: src/reports.c:292
++#: src/reports.c:295
++#, c-format
+ msgid &quot;DAMAGED, Base provides&quot;
+ msgstr &quot;&#1057;&#1051;&#1054;&#1052;&#1040;&#1053;&#1054;, &#1041;&#1072;&#1079;&#1072; &#1087;&#1086;&#1076;&#1076;&#1077;&#1088;&#1078;&#1080;&#1074;&#1072;&#1077;&#1090;&quot;
+ 
+-#: src/reports.c:294
++#: src/reports.c:297
+ #, c-format
+ msgid &quot;DAMAGED, reserves=%4.2f&quot;
+ msgstr &quot;&#1057;&#1051;&#1054;&#1052;&#1040;&#1053;&#1054;, &#1086;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100;=%4.2f&quot;
+ 
+-#: src/reports.c:297
++#: src/reports.c:300
++#, c-format
+ msgid &quot;ACTIVE&quot;
+ msgstr &quot;&#1056;&#1040;&#1041;&#1054;&#1058;&#1040;&#1045;&#1058;&quot;
+ 
+-#: src/reports.c:300
+-#, c-format
+-msgid &quot;Warp Factor   %.1f&quot;
+-msgstr &quot;&#1057;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100;    %.1f&quot;
++#: src/reports.c:301 src/setup.c:160
++msgid &quot;Life Support&quot;
++msgstr &quot;&#1046;&#1080;&#1079;&#1085;&#1077;&#1086;&#1073;&#1077;&#1089;&#1087;&quot;
+ 
+-#: src/reports.c:303
+-#, c-format
+-msgid &quot;Energy        %.2f&quot;
+-msgstr &quot;&#1069;&#1085;&#1077;&#1088;&#1075;&#1080;&#1103;        %.2f&quot;
+-
+ #: src/reports.c:305
+-msgid &quot; (have crystals)&quot;
+-msgstr &quot; (&#1077;&#1089;&#1090;&#1100; &#1082;&#1088;&#1080;&#1089;&#1090;&#1072;&#1083;&#1083;&#1099;)&quot;
++msgid &quot;Warp Factor&quot;
++msgstr &quot;&#1057;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100;&quot;
+ 
+-#: src/reports.c:308
+-#, c-format
+-msgid &quot;Torpedoes     %d&quot;
+-msgstr &quot;&#1058;&#1086;&#1088;&#1087;&#1077;&#1076;&#1099;      %d&quot;
++#: src/reports.c:309
++msgid &quot;Energy&quot;
++msgstr &quot;&quot;
+ 
+ #: src/reports.c:311
+-msgid &quot;Shields       &quot;
+-msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072;        &quot;
++msgid &quot; (have crystals)&quot;
++msgstr &quot; (&#1077;&#1089;&#1090;&#1100; &#1082;&#1088;&#1080;&#1089;&#1090;&#1072;&#1083;&#1083;&#1099;)&quot;
+ 
+-#: src/reports.c:313
++#: src/reports.c:315
++msgid &quot;Torpedoes&quot;
++msgstr &quot;&#1058;&#1086;&#1088;&#1087;&#1077;&#1076;&#1099;&quot;
++
++#: src/reports.c:320
+ msgid &quot;DAMAGED,&quot;
+ msgstr &quot;&#1057;&#1051;&#1054;&#1052;&#1040;&#1053;&#1040;,&quot;
+ 
+-#: src/reports.c:315
++#: src/reports.c:322
+ msgid &quot;UP,&quot;
+ msgstr &quot;&#1055;&#1054;&#1044;&#1053;&#1071;&#1058;&#1040;,&quot;
+ 
+-#: src/reports.c:317
++#: src/reports.c:324
+ msgid &quot;DOWN,&quot;
+ msgstr &quot;&#1057;&#1053;&#1071;&#1058;&#1040;,&quot;
+ 
+-#: src/reports.c:318
++#: src/reports.c:325
+ #, c-format
+ msgid &quot; %d%% %.1f units&quot;
+ msgstr &quot; %d%% %.1f &#1077;&#1076;&#1080;&#1085;&#1080;&#1094;&quot;
+ 
+-#: src/reports.c:322
+-#, c-format
+-msgid &quot;Klingons Left %d&quot;
+-msgstr &quot;&#1054;&#1089;&#1090;&#1072;&#1083;&#1086;&#1089;&#1100; %d &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;&quot;
++#: src/reports.c:327 src/setup.c:163
++msgid &quot;Shields&quot;
++msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072;&quot;
+ 
+-#: src/reports.c:328
+-#, c-format
+-msgid &quot;Major system  %s&quot;
+-msgstr &quot;&#1054;&#1089;&#1085;&#1086;&#1074;&#1085;&#1072;&#1103; &#1089;&#1080;&#1089;&#1090;&#1077;&#1084;&#1072;  %s&quot;
++#: src/reports.c:331
++msgid &quot;Klingons Left&quot;
++msgstr &quot;&#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;&quot;
+ 
+-#: src/reports.c:330
++#: src/reports.c:338
++msgid &quot;Major system&quot;
++msgstr &quot;&#1054;&#1089;&#1085;&#1086;&#1074;&#1085;&#1072;&#1103; &#1089;&#1080;&#1089;&#1090;&quot;
++
++#: src/reports.c:340
+ msgid &quot;Sector is uninhabited&quot;
+ msgstr &quot;&#1057;&#1077;&#1082;&#1090;&#1086;&#1088; &#1085;&#1077;&#1086;&#1073;&#1080;&#1090;&#1072;&#1077;&#1084;&quot;
+ 
+-#: src/reports.c:354
++#: src/reports.c:358
++msgid &quot;Information desired? &quot;
++msgstr &quot;&#1050;&#1072;&#1082;&#1091;&#1102; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1102; &#1078;&#1077;&#1083;&#1072;&#1077;&#1090;&#1077;? &quot;
++
++#: src/reports.c:364
++msgid &quot;UNRECOGNIZED REQUEST. Legal requests are:&quot;
++msgstr &quot;&#1047;&#1040;&#1055;&#1056;&#1054;&#1057; &#1053;&#1045; &#1071;&#1057;&#1045;&#1053;. &#1042;&#1086;&#1079;&#1084;&#1086;&#1078;&#1085;&#1099;&#1077; &#1079;&#1072;&#1087;&#1088;&#1086;&#1089;&#1099;:&quot;
++
++#: src/reports.c:380
+ msgid &quot;   S.R. SENSORS DAMAGED!&quot;
+ msgstr &quot;   &#1057;&#1045;&#1053;&#1057;&#1054;&#1056;&#1067; &#1041;.&#1054;. &#1057;&#1051;&#1054;&#1052;&#1040;&#1053;&#1067;!&quot;
+ 
+-#: src/reports.c:358
++#: src/reports.c:384
+ msgid &quot;  [Using Base's sensors]&quot;
+ msgstr &quot;  [&#1048;&#1089;&#1087;&#1086;&#1083;&#1100;&#1079;&#1091;&#1102;&#1090;&#1089;&#1103; &#1089;&#1077;&#1085;&#1089;&#1086;&#1088;&#1099; &#1041;&#1072;&#1079;&#1099;]&quot;
+ 
+-#: src/reports.c:360
++#: src/reports.c:386
+ msgid &quot;     Short-range scan&quot;
+ msgstr &quot;     &#1041;&#1083;&#1080;&#1078;&#1085;&#1080;&#1081; &#1086;&#1073;&#1079;&#1086;&#1088;&quot;
+ 
+-#: src/reports.c:375
+-msgid &quot;Information desired? &quot;
+-msgstr &quot;&#1050;&#1072;&#1082;&#1091;&#1102; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1102; &#1078;&#1077;&#1083;&#1072;&#1077;&#1090;&#1077;? &quot;
+-
+-#: src/reports.c:381
+-msgid &quot;UNRECOGNIZED REQUEST. Legal requests are:&quot;
+-msgstr &quot;&#1047;&#1040;&#1055;&#1056;&#1054;&#1057; &#1053;&#1045; &#1071;&#1057;&#1045;&#1053;. &#1042;&#1086;&#1079;&#1084;&#1086;&#1078;&#1085;&#1099;&#1077; &#1079;&#1072;&#1087;&#1088;&#1086;&#1089;&#1099;:&quot;
+-
+-#: src/reports.c:422
++#: src/reports.c:412
+ msgid &quot;COMPUTER DAMAGED, USE A POCKET CALCULATOR.&quot;
+ msgstr &quot;&#1050;&#1054;&#1052;&#1055;&#1068;&#1068;&#1070;&#1058;&#1045;&#1056; &#1057;&#1051;&#1054;&#1052;&#1040;&#1053;, &#1042;&#1054;&#1057;&#1055;&#1054;&#1051;&#1068;&#1047;&#1059;&#1049;&#1058;&#1045;&#1057;&#1068; &#1050;&#1040;&#1051;&#1068;&#1050;&#1059;&#1051;&#1071;&#1058;&#1054;&#1056;&#1054;&#1052;.&quot;
+ 
+-#: src/reports.c:429
++#: src/reports.c:419
+ msgid &quot;Destination quadrant and/or sector? &quot;
+ msgstr &quot;&#1050;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090; &#1085;&#1072;&#1079;&#1085;&#1072;&#1095;&#1077;&#1085;&#1080;&#1103; &#1080;/&#1080;&#1083;&#1080; &#1089;&#1077;&#1082;&#1090;&#1086;&#1088;? &quot;
+ 
+-#: src/reports.c:464
++#: src/reports.c:454
+ msgid &quot;Answer \&quot;no\&quot; if you don't know the value:&quot;
+ msgstr &quot;&#1054;&#1090;&#1074;&#1077;&#1095;&#1072;&#1081;&#1090;&#1077; \&quot;no\&quot; &#1077;&#1089;&#1083;&#1080; &#1085;&#1077; &#1079;&#1085;&#1072;&#1077;&#1090;&#1077;:&quot;
+ 
+-#: src/reports.c:467
++#: src/reports.c:457
+ msgid &quot;Time or arrival date? &quot;
+ msgstr &quot;&#1042;&#1088;&#1077;&#1084;&#1103; &#1087;&#1088;&#1080;&#1073;&#1099;&#1090;&#1080;&#1103;?&quot;
+ 
+-#: src/reports.c:473
++#: src/reports.c:463
+ msgid &quot;We'll never make it, sir.&quot;
+ msgstr &quot;&#1053;&#1080; &#1082;&#1072;&#1082; &#1085;&#1077; &#1087;&#1086;&#1083;&#1091;&#1095;&#1080;&#1090;&#1089;&#1103;, &#1089;&#1101;&#1088;.&quot;
+ 
+-#: src/reports.c:481
++#: src/reports.c:471
+ msgid &quot;Warp factor? &quot;
+ msgstr &quot;&#1057;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100;? &quot;
+ 
+-#: src/reports.c:491
++#: src/reports.c:481
+ msgid &quot;Captain, certainly you can give me one of these.&quot;
+ msgstr &quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1074;&#1099; &#1090;&#1086;&#1095;&#1085;&#1086; &#1084;&#1086;&#1075;&#1083;&#1080; &#1091;&#1082;&#1072;&#1079;&#1072;&#1090;&#1100; &#1086;&#1076;&#1085;&#1086; &#1080;&#1079; &#1079;&#1085;&#1072;&#1095;&#1077;&#1085;&#1080;&#1081;.&quot;
+ 
+-#: src/reports.c:498
++#: src/reports.c:488
+ msgid &quot;Insufficient energy, sir.&quot;
+ msgstr &quot;&#1053;&#1077; &#1093;&#1074;&#1072;&#1090;&#1072;&#1077;&#1090; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080;, &#1089;&#1101;&#1088;.&quot;
+ 
+-#: src/reports.c:501 src/reports.c:543
++#: src/reports.c:491 src/reports.c:533
+ msgid &quot;New warp factor to try? &quot;
+ msgstr &quot;&#1055;&#1086;&#1087;&#1088;&#1086;&#1073;&#1086;&#1074;&#1072;&#1090;&#1100; &#1076;&#1088;&#1091;&#1075;&#1091;&#1102; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100;? &quot;
+ 
+-#: src/reports.c:517
++#: src/reports.c:507
+ msgid &quot;But if you lower your shields,&quot;
+ msgstr &quot;&#1053;&#1086; &#1077;&#1089;&#1083;&#1080; &#1074;&#1099; &#1089;&#1085;&#1080;&#1084;&#1080;&#1090;&#1077; &#1079;&#1072;&#1097;&#1080;&#1090;&#1091;,&quot;
+ 
+-#: src/reports.c:518
++#: src/reports.c:508
+ msgid &quot;remaining&quot;
+ msgstr &quot;&#1086;&#1089;&#1090;&#1072;&#1090;&#1086;&#1082;&quot;
+ 
+-#: src/reports.c:522
++#: src/reports.c:512
+ msgid &quot;Remaining&quot;
+ msgstr &quot;&#1054;&#1089;&#1090;&#1072;&#1090;&#1086;&#1082;&quot;
+ 
+-#: src/reports.c:523
++#: src/reports.c:513
+ #, c-format
+ msgid &quot; energy will be %.2f.&quot;
+ msgstr &quot; &#1101;&#1085;&#1077;&#1088;&#1075;&#1080;&#1080; &#1073;&#1091;&#1076;&#1077;&#1090; %.2f.&quot;
+ 
+-#: src/reports.c:525
++#: src/reports.c:515
+ #, c-format
+ msgid &quot;And we will arrive at stardate %.2f.&quot;
+ msgstr &quot;&#1040; &#1084;&#1099; &#1087;&#1088;&#1080;&#1073;&#1091;&#1076;&#1077;&#1084; %.2f &#1095;&#1080;&#1089;&#1083;&#1072;.&quot;
+ 
+-#: src/reports.c:529
++#: src/reports.c:519
+ msgid &quot;Any warp speed is adequate.&quot;
+ msgstr &quot;&#1053;&#1072; &#1083;&#1102;&#1073;&#1086;&#1081; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1080; &#1091;&#1089;&#1087;&#1077;&#1077;&#1084;.&quot;
+ 
+-#: src/reports.c:531
++#: src/reports.c:521
+ #, c-format
+ msgid &quot;Minimum warp needed is %.2f,&quot;
+ msgstr &quot;&#1052;&#1080;&#1085;&#1080;&#1084;&#1072;&#1083;&#1100;&#1085;&#1072;&#1103; &#1085;&#1077;&#1086;&#1073;&#1093;&#1086;&#1076;&#1080;&#1084;&#1072;&#1103; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1100; - %.2f,&quot;
+ 
+-#: src/reports.c:532
++#: src/reports.c:522
+ #, c-format
+ msgid &quot;and we will arrive at stardate %.2f.&quot;
+ msgstr &quot;&#1072; &#1084;&#1099; &#1087;&#1088;&#1080;&#1073;&#1091;&#1076;&#1077;&#1084; %.2f &#1095;&#1080;&#1089;&#1083;&#1072;.&quot;
+ 
+-#: src/reports.c:536
++#: src/reports.c:526
+ msgid &quot;Unfortunately, the Federation will be destroyed by then.&quot;
+ msgstr &quot;&#1050; &#1089;&#1086;&#1078;&#1072;&#1083;&#1077;&#1085;&#1080;&#1102;, &#1060;&#1077;&#1076;&#1077;&#1088;&#1072;&#1094;&#1080;&#1103; &#1082; &#1090;&#1086;&#1084;&#1091; &#1074;&#1088;&#1077;&#1084;&#1077;&#1085;&#1080; &#1073;&#1091;&#1076;&#1077;&#1090; &#1091;&#1078;&#1077; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1077;&#1085;&#1072;.&quot;
+ 
+-#: src/reports.c:538
++#: src/reports.c:528
+ msgid &quot;You'll be taking risks at that speed, Captain&quot;
+ msgstr &quot;&#1053;&#1072; &#1090;&#1072;&#1082;&#1086;&#1081; &#1089;&#1082;&#1086;&#1088;&#1086;&#1089;&#1090;&#1080; &#1083;&#1077;&#1090;&#1072;&#1090;&#1100; &#1088;&#1080;&#1089;&#1082;&#1086;&#1074;&#1072;&#1085;&#1086;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;&quot;
+ 
+-#: src/reports.c:542
++#: src/reports.c:532
+ msgid &quot;The starbase there will be destroyed by then.&quot;
+ msgstr &quot;&#1041;&#1072;&#1079;&#1072; &#1082; &#1090;&#1086;&#1084;&#1091; &#1084;&#1086;&#1084;&#1077;&#1085;&#1090;&#1091; &#1091;&#1078;&#1077; &#1073;&#1091;&#1076;&#1077;&#1090; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1077;&#1085;&#1072;.&quot;
+ 
+-#: src/reports.c:594
++#: src/reports.c:584
+ msgid &quot;Direction? &quot;
+ msgstr &quot;&#1053;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077;? &quot;
+ 
+@@ -3007,10 +3013,6 @@
+ msgid &quot;Photon Tubes&quot;
+ msgstr &quot;&#1060;&#1086;&#1090;&#1086;&#1085;&#1085;&#1099;&#1077; &#1058;&#1088;&#1091;&#1073;&#1099;&quot;
+ 
+-#: src/setup.c:160
+-msgid &quot;Life Support&quot;
+-msgstr &quot;&#1046;&#1080;&#1079;&#1085;&#1077;&#1086;&#1073;&#1077;&#1089;&#1087;&#1077;&#1095;&#1077;&#1085;&#1080;&#1077;&quot;
+-
+ #: src/setup.c:161
+ msgid &quot;Warp Engines&quot;
+ msgstr &quot;&#1052;&#1077;&#1078;&#1087;&#1088;&#1086;&#1089;&#1090;&#1088;&#1072;&#1085;&#1089;&#1090;&#1074;&#1077;&#1085;&#1085;&#1099;&#1077; &#1044;&#1074;&#1080;&#1075;&#1072;&#1090;&#1077;&#1083;&#1080;&quot;
+@@ -3019,10 +3021,6 @@
+ msgid &quot;Impulse Engines&quot;
+ msgstr &quot;&#1048;&#1084;&#1087;&#1091;&#1083;&#1100;&#1089;&#1085;&#1099;&#1077; &#1044;&#1074;&#1080;&#1075;&#1072;&#1090;&#1077;&#1083;&#1080;&quot;
+ 
+-#: src/setup.c:163
+-msgid &quot;Shields&quot;
+-msgstr &quot;&#1047;&#1072;&#1097;&#1080;&#1090;&#1072;&quot;
+-
+ #: src/setup.c:164
+ msgid &quot;Subspace Radio&quot;
+ msgstr &quot;&#1052;&#1077;&#1078;&#1087;&#1088;&#1086;&#1089;&#1090;&#1088;&#1072;&#1085;&#1089;&#1090;&#1074;&#1077;&#1085;&#1085;&#1072;&#1103; &#1056;&#1072;&#1094;&#1080;&#1103;&quot;
+@@ -3055,104 +3053,104 @@
+ msgid &quot;D. S. Probe&quot;
+ msgstr &quot;&#1044;. &#1050;. &#1056;&#1072;&#1082;&#1077;&#1090;&#1072;&quot;
+ 
+-#: src/setup.c:374
++#: src/setup.c:375
+ #, c-format
+ msgid &quot;It is stardate %d. The Federation is being attacked by&quot;
+ msgstr &quot;&#1057;&#1077;&#1075;&#1086;&#1076;&#1085;&#1103; %d &#1095;&#1080;&#1089;&#1083;&#1086;. &#1060;&#1077;&#1076;&#1077;&#1088;&#1072;&#1094;&#1080;&#1103; &#1072;&#1090;&#1072;&#1082;&#1086;&#1074;&#1072;&#1085;&#1072;&quot;
+ 
+-#: src/setup.c:376
++#: src/setup.c:377
+ msgid &quot;a deadly Klingon invasion force. As captain of the United&quot;
+ msgstr &quot;&#1073;&#1077;&#1089;&#1087;&#1086;&#1097;&#1072;&#1076;&#1085;&#1099;&#1084;&#1080; &#1079;&#1072;&#1093;&#1074;&#1072;&#1090;&#1095;&#1080;&#1082;&#1072;&#1084;&#1080; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1072;&#1084;&#1080;. &#1050;&#1072;&#1082; &#1082;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;&quot;
+ 
+-#: src/setup.c:377
++#: src/setup.c:378
+ msgid &quot;Starship U.S.S. Enterprise, it is your mission to seek out&quot;
+ msgstr &quot;&#1079;&#1074;&#1077;&#1079;&#1076;&#1086;&#1083;&#1105;&#1090;&#1072; &#1069;&#1085;&#1090;&#1077;&#1088;&#1087;&#1088;&#1072;&#1081;&#1079;, &#1074;&#1099; &#1076;&#1086;&#1083;&#1078;&#1085;&#1099; &#1085;&#1072;&#1081;&#1090;&#1080;&quot;
+ 
+-#: src/setup.c:378
++#: src/setup.c:379
+ #, c-format
+ msgid &quot;and destroy this invasion force of %d battle cruisers.&quot;
+ msgstr &quot;&#1080; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1080;&#1090;&#1100; &#1074;&#1089;&#1077; &#1074;&#1090;&#1086;&#1088;&#1075;&#1096;&#1080;&#1077;&#1089;&#1103; &#1074;&#1086;&#1081;&#1089;&#1082;&#1072; &#1074; &#1089;&#1086;&#1089;&#1090;&#1072;&#1074;&#1077; %d &#1073;&#1086;&#1077;&#1074;&#1099;&#1093; &#1082;&#1088;&#1077;&#1081;&#1089;&#1077;&#1088;&#1086;&#1074;.&quot;
+ 
+-#: src/setup.c:380
++#: src/setup.c:381
+ #, c-format
+ msgid &quot;You have an initial allotment of %d stardates to complete&quot;
+ msgstr &quot;&#1059; &#1074;&#1072;&#1089; &#1077;&#1089;&#1090;&#1100; %d &#1076;&#1085;&#1077;&#1081; &#1095;&#1090;&#1086;&#1073;&#1099; &#1079;&#1072;&#1074;&#1077;&#1088;&#1096;&#1080;&#1090;&#1100;&quot;
+ 
+-#: src/setup.c:381
++#: src/setup.c:382
+ msgid &quot;your mission.  As you proceed you may be given more time.&quot;
+ msgstr &quot;&#1101;&#1090;&#1091; &#1084;&#1080;&#1089;&#1089;&#1080;&#1102;.  &#1055;&#1086; &#1093;&#1086;&#1076;&#1091; &#1076;&#1077;&#1083;&#1072; &#1074;&#1072;&#1084; &#1084;&#1086;&#1075;&#1091;&#1090; &#1076;&#1072;&#1090;&#1100; &#1077;&#1097;&#1105; &#1074;&#1088;&#1077;&#1084;&#1077;&#1085;&#1080;.&quot;
+ 
+-#: src/setup.c:383
++#: src/setup.c:384
+ #, c-format
+ msgid &quot;You will have %d supporting starbases.&quot;
+ msgstr &quot;&#1059; &#1074;&#1072;&#1089; &#1073;&#1091;&#1076;&#1077;&#1090; %d &#1073;&#1072;&#1079;.&quot;
+ 
+-#: src/setup.c:384
++#: src/setup.c:385
+ msgid &quot;Starbase locations-  &quot;
+ msgstr &quot;&#1050;&#1086;&#1086;&#1088;&#1076;&#1080;&#1085;&#1072;&#1090;&#1099; &#1041;&#1072;&#1079;-  &quot;
+ 
+-#: src/setup.c:387
++#: src/setup.c:388
+ #, c-format
+ msgid &quot;Stardate %d.&quot;
+ msgstr &quot;&#1063;&#1080;&#1089;&#1083;&#1086; %d.&quot;
+ 
+-#: src/setup.c:389
++#: src/setup.c:390
+ #, c-format
+ msgid &quot;%d Klingons.&quot;
+ msgstr &quot;%d &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;.&quot;
+ 
+-#: src/setup.c:390
++#: src/setup.c:391
+ msgid &quot;An unknown number of Romulans.&quot;
+ msgstr &quot;&#1052;&#1085;&#1086;&#1078;&#1077;&#1089;&#1090;&#1074;&#1086; &#1056;&#1086;&#1084;&#1091;&#1083;&#1072;&#1085;.&quot;
+ 
+-#: src/setup.c:391
++#: src/setup.c:392
+ msgid &quot;And one (GULP) Super-Commander.&quot;
+ msgstr &quot;&#1048; &#1086;&#1076;&#1080;&#1085; (&#1080;&#1082;!) &#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084; &#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&#1086;&#1074;.&quot;
+ 
+-#: src/setup.c:392
++#: src/setup.c:393
+ #, c-format
+ msgid &quot;%d stardates.&quot;
+ msgstr &quot;%d &#1076;&#1085;&#1077;&#1081;.&quot;
+ 
+-#: src/setup.c:393
++#: src/setup.c:394
+ #, c-format
+ msgid &quot;%d starbases in &quot;
+ msgstr &quot;%d &#1073;&#1072;&#1079; &#1074; &quot;
+ 
+-#: src/setup.c:400
++#: src/setup.c:401
+ msgid &quot;The Enterprise is currently in &quot;
+ msgstr &quot;&#1069;&#1085;&#1090;&#1077;&#1088;&#1087;&#1088;&#1072;&#1081;&#1079; &#1089;&#1077;&#1081;&#1095;&#1072;&#1089; &#1074; &quot;
+ 
+-#: src/setup.c:405
++#: src/setup.c:406
+ msgid &quot;Good Luck!&quot;
+ msgstr &quot;&#1059;&#1076;&#1072;&#1095;&#1080;!&quot;
+ 
+-#: src/setup.c:406
++#: src/setup.c:407
+ msgid &quot;  YOU'LL NEED IT.&quot;
+ msgstr &quot;  &#1054;&#1053;&#1040; &#1042;&#1040;&#1052; &#1055;&#1054;&#1053;&#1040;&#1044;&#1054;&#1041;&#1048;&#1058;&#1057;&#1071;.&quot;
+ 
+-#: src/setup.c:422
++#: src/setup.c:423
+ msgid &quot;Would you like a regular, tournament, or saved game? &quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1086;&#1073;&#1099;&#1095;&#1085;&#1091;&#1102; (r), &#1090;&#1091;&#1088;&#1085;&#1080;&#1088;&#1085;&#1091;&#1102; (t), &#1080;&#1083;&#1080; &#1089;&#1086;&#1093;&#1088;&#1072;&#1085;&#1105;&#1085;&#1085;&#1091;&#1102; (s) &#1080;&#1075;&#1088;&#1091;? &quot;
+ 
+-#: src/setup.c:427
++#: src/setup.c:428
+ msgid &quot;Type in tournament number-&quot;
+ msgstr &quot;&#1042;&#1074;&#1077;&#1076;&#1080;&#1090;&#1077; &#1085;&#1086;&#1084;&#1077;&#1088; &#1090;&#1091;&#1088;&#1085;&#1080;&#1088;&#1072;-&quot;
+ 
+-#: src/setup.c:448 src/setup.c:464 src/setup.c:494
++#: src/setup.c:449 src/setup.c:465 src/setup.c:495
+ msgid &quot;What is \&quot;&quot;
+ msgstr &quot;&#1063;&#1090;&#1086; &#1079;&#1072; \&quot;&quot;
+ 
+-#: src/setup.c:471
++#: src/setup.c:472
+ msgid &quot;Would you like a Short, Medium, or Long game? &quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1082;&#1086;&#1088;&#1086;&#1090;&#1082;&#1091;&#1102; (s), &#1089;&#1088;&#1077;&#1076;&#1085;&#1102;&#1102; (m), &#1080;&#1083;&#1080; &#1076;&#1083;&#1080;&#1085;&#1085;&#1091;&#1102; (l) &#1080;&#1075;&#1088;&#1091;? &quot;
+ 
+-#: src/setup.c:472
++#: src/setup.c:473
+ msgid &quot;Are you a Novice, Fair, Good, Expert, or Emeritus player? &quot;
+ msgstr &quot;&quot;
+ &quot;&#1042;&#1099; &#1085;&#1086;&#1074;&#1080;&#1095;&#1105;&#1082; (n), &#1089;&#1088;&#1077;&#1076;&#1085;&#1080;&#1081; (f), &#1091;&#1084;&#1077;&#1083;&#1099;&#1081; (g), &#1089;&#1087;&#1077;&#1094;&#1080;&#1072;&#1083;&#1080;&#1089;&#1090; (e), &#1080;&#1083;&#1080; &#1054;&#1090;&#1089;&#1090;&#1072;&#1074;&#1085;&#1086;&#1081; (em)? &quot;
+ 
+-#: src/setup.c:478
++#: src/setup.c:479
+ msgid &quot;Choose your game style (or just press enter): &quot;
+ msgstr &quot;&#1042;&#1099;&#1073;&#1077;&#1088;&#1080;&#1090;&#1077; &#1089;&#1090;&#1080;&#1090;&#1100; &#1080;&#1075;&#1088;&#1099; (&#1080;&#1083;&#1080; &#1085;&#1072;&#1078;&#1084;&#1080;&#1090;&#1077; &#1074;&#1074;&#1086;&#1076;): &quot;
+ 
+@@ -3180,9 +3178,9 @@
+ msgid &quot;    Please examine your short-range scan.\&quot;&quot;
+ msgstr &quot;    &#1055;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072; &#1087;&#1086;&#1089;&#1084;&#1086;&#1090;&#1088;&#1080;&#1090;&#1077; &#1088;&#1077;&#1079;&#1091;&#1083;&#1100;&#1090;&#1072;&#1090;&#1099; &#1073;&#1083;&#1080;&#1078;&#1085;&#1077;&#1075;&#1086; &#1089;&#1082;&#1072;&#1085;&#1080;&#1088;&#1086;&#1074;&#1072;&#1085;&#1080;&#1103;.\&quot;&quot;
+ 
+-#: src/setup.c:767
+-msgid &quot;Please type in a secret password-&quot;
+-msgstr &quot;&#1055;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072; &#1085;&#1072;&#1073;&#1077;&#1088;&#1080;&#1090;&#1077; &#1087;&#1072;&#1088;&#1086;&#1083;&#1100;-&quot;
++#: src/setup.c:764
++msgid &quot;Please type in a secret password- &quot;
++msgstr &quot;&#1055;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072; &#1085;&#1072;&#1073;&#1077;&#1088;&#1080;&#1090;&#1077; &#1087;&#1072;&#1088;&#1086;&#1083;&#1100;- &quot;
+ 
+ #: src/sst.c:292
+ msgid &quot;LEGAL COMMANDS ARE:&quot;
+@@ -3216,94 +3214,94 @@
+ msgid &quot;Spock- \&quot;Captain, I've found the following information:\&quot;&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1103; &#1085;&#1072;&#1096;&#1105;&#1083; &#1082;&#1086;&#1077;-&#1082;&#1072;&#1082;&#1091;&#1102; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1102;:\&quot;&quot;
+ 
+-#: src/sst.c:547
++#: src/sst.c:541
+ msgid &quot;WARNING--Saved games produce no plaques!&quot;
+ msgstr &quot;&#1055;&#1056;&#1045;&#1044;&#1059;&#1055;&#1056;&#1045;&#1046;&#1044;&#1045;&#1053;&#1048;&#1045;--&#1057;&#1086;&#1093;&#1088;&#1072;&#1085;&#1105;&#1085;&#1085;&#1099;&#1077; &#1080;&#1075;&#1088;&#1099; &#1085;&#1077; &#1076;&#1072;&#1102;&#1090; &#1075;&#1088;&#1072;&#1084;&#1086;&#1090;&#1099;!&quot;
+ 
+-#: src/sst.c:670
++#: src/sst.c:664
+ msgid &quot;Do you want your score recorded?&quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1079;&#1072;&#1087;&#1080;&#1089;&#1072;&#1090;&#1100; &#1089;&#1074;&#1086;&#1081; &#1089;&#1095;&#1105;&#1090;? &quot;
+ 
+-#: src/sst.c:676
++#: src/sst.c:670
+ msgid &quot;Do you want to play again? &quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1089;&#1099;&#1075;&#1088;&#1072;&#1090;&#1100; &#1089;&#1085;&#1086;&#1074;&#1072;? &quot;
+ 
+-#: src/sst.c:680
++#: src/sst.c:674
+ msgid &quot;May the Great Bird of the Galaxy roost upon your home planet.&quot;
+ msgstr &quot;&#1048; &#1087;&#1091;&#1089;&#1090;&#1100; &#1042;&#1077;&#1083;&#1080;&#1082;&#1072;&#1103; &#1055;&#1090;&#1080;&#1094;&#1072; &#1043;&#1072;&#1083;&#1072;&#1082;&#1090;&#1080;&#1082;&#1080; &#1085;&#1072;&#1075;&#1072;&#1076;&#1080;&#1090; &#1085;&#1072; &#1090;&#1074;&#1086;&#1102; &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1091;.&quot;
+ 
+-#: src/sst.c:692
++#: src/sst.c:686
+ msgid &quot;Romulan&quot;
+ msgstr &quot;&#1056;&#1086;&#1084;&#1091;&#1083;&#1072;&#1085;&quot;
+ 
+-#: src/sst.c:693
++#: src/sst.c:687
+ msgid &quot;Klingon&quot;
+ msgstr &quot;&#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&quot;
+ 
+-#: src/sst.c:694
++#: src/sst.c:688
+ msgid &quot;Commander&quot;
+ msgstr &quot;&#1050;&#1086;&#1084;&#1072;&#1085;&#1076;&#1080;&#1088;&quot;
+ 
+-#: src/sst.c:695
++#: src/sst.c:689
+ msgid &quot;Super-commander&quot;
+ msgstr &quot;&#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084;&quot;
+ 
+-#: src/sst.c:696
++#: src/sst.c:690
+ msgid &quot;Star&quot;
+ msgstr &quot;&#1047;&#1074;&#1077;&#1079;&#1076;&#1072;&quot;
+ 
+-#: src/sst.c:697
++#: src/sst.c:691
+ msgid &quot;Planet&quot;
+ msgstr &quot;&#1055;&#1083;&#1072;&#1085;&#1077;&#1090;&#1072;&quot;
+ 
+-#: src/sst.c:698
++#: src/sst.c:692
+ msgid &quot;Starbase&quot;
+ msgstr &quot;&#1041;&#1072;&#1079;&#1072;&quot;
+ 
+-#: src/sst.c:699
++#: src/sst.c:693
+ msgid &quot;Black hole&quot;
+ msgstr &quot;&#1063;&#1105;&#1088;&#1085;&#1072;&#1103; &#1076;&#1099;&#1088;&#1072;&quot;
+ 
+-#: src/sst.c:700
++#: src/sst.c:694
+ msgid &quot;Tholian&quot;
+ msgstr &quot;&#1058;&#1086;&#1083;&#1080;&#1072;&#1085;&quot;
+ 
+-#: src/sst.c:701
++#: src/sst.c:695
+ msgid &quot;Tholian web&quot;
+ msgstr &quot;&#1058;&#1086;&#1083;&#1080;&#1072;&#1085;&#1089;&#1082;&#1072;&#1103; &#1089;&#1077;&#1090;&#1100;&quot;
+ 
+-#: src/sst.c:702
++#: src/sst.c:696
+ msgid &quot;Stranger&quot;
+ msgstr &quot;&#1057;&#1090;&#1088;&#1072;&#1085;&#1085;&#1080;&#1082;&quot;
+ 
+-#: src/sst.c:703
++#: src/sst.c:697
+ msgid &quot;Inhabited World&quot;
+ msgstr &quot;&#1054;&#1073;&#1080;&#1090;&#1072;&#1077;&#1084;&#1099;&#1081; &#1052;&#1080;&#1088;&quot;
+ 
+-#: src/sst.c:714
++#: src/sst.c:708
+ msgid &quot;Quadrant &quot;
+ msgstr &quot;&#1050;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090; &quot;
+ 
+-#: src/sst.c:715
++#: src/sst.c:709
+ msgid &quot;Sector &quot;
+ msgstr &quot;&#1057;&#1077;&#1082;&#1090;&#1086;&#1088; &quot;
+ 
+-#: src/sst.c:725
++#: src/sst.c:719
+ msgid &quot; at &quot;
+ msgstr &quot; &#1074; &quot;
+ 
+-#: src/sst.c:734
++#: src/sst.c:728
+ msgid &quot;Enterprise&quot;
+ msgstr &quot;&#1069;&#1085;&#1090;&#1077;&#1088;&#1087;&#1088;&#1072;&#1081;&#1079;&quot;
+ 
+-#: src/sst.c:735
++#: src/sst.c:729
+ msgid &quot;Faerie Queene&quot;
+ msgstr &quot;&#1042;&#1086;&#1083;&#1096;&#1077;&#1073;&#1085;&#1072;&#1103; &#1050;&#1086;&#1088;&#1086;&#1083;&#1077;&#1074;&#1072;&quot;
+ 
+-#: src/sst.c:844
++#: src/sst.c:838
+ msgid &quot;Please answer with \&quot;y\&quot; or \&quot;n\&quot;: &quot;
+ msgstr &quot;&#1055;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072; &#1086;&#1090;&#1074;&#1077;&#1095;&#1072;&#1081;&#1090;&#1077; &#1044;&#1072; (\&quot;y\&quot;) &#1080;&#1083;&#1080; &#1053;&#1077;&#1090; (\&quot;n\&quot;): &quot;
+ 
+-#: src/sst.c:853
++#: src/sst.c:847
+ msgid &quot;Beg your pardon, Captain?&quot;
+ msgstr &quot;&#1055;&#1088;&#1086;&#1096;&#1091; &#1087;&#1088;&#1086;&#1097;&#1077;&#1085;&#1080;&#1103;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;?&quot;
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/ai.c	2006-09-22 17:09:23 UTC (rev 629)
+@@ -231,7 +231,7 @@
+ 	
+     }
+     if (idebug)
+-	prout(&quot;&quot;);
++	skip(1);
+     /* Put commander in place within same quadrant */
+     game.quad[com.x][com.y] = IHDOT;
+     game.quad[next.x][next.y] = ienm;
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/battle.c	2006-09-22 17:09:23 UTC (rev 629)
+@@ -276,7 +276,8 @@
+ 	if (iquad==IHDOT) continue;
+ 	/* hit something */
+ 	setwnd(message_window);
+-	skip(1);	/* start new line after text track */
++	if (damaged(DSRSENS) &amp;&amp; !game.condition==docked)
++	    skip(1);	/* start new line after text track */
+ 	switch(iquad) {
+ 	case IHE: /* Hit our ship */
+ 	case IHF:
+@@ -703,7 +704,6 @@
+     /* Added mv to allow enemy to &quot;move&quot; before dying */
+     int i,j;
+ 
+-    skip(1);
+     crmena(true, type, sector, mv);
+     /* Decide what kind of enemy it is and update appropriately */
+     if (type == IHR) {
+@@ -1098,7 +1098,7 @@
+ 	}
+ 	if (key != IHREAL &amp;&amp; game.nenhere != 0) {
+ 	    prout(_(&quot;Phasers locked on target. Energy available: %.2f&quot;),
+-		  ifast?game.energy-200.0:game.energy,1,2);
++		  ifast?game.energy-200.0:game.energy);
+ 	}
+ 	irec=0;
+ 	do {
+@@ -1169,7 +1169,7 @@
+ 	chew();
+ 	key = IHEOL;
+ 	if (damaged(DCOMPTR))
+-	    prout(_(&quot;Battle computer damaged, manual file only.&quot;));
++	    prout(_(&quot;Battle computer damaged, manual fire only.&quot;));
+ 	else {
+ 	    skip(1);
+ 	    prouts(_(&quot;---WORKING---&quot;));
+@@ -1326,7 +1326,7 @@
+ 	else /* decide whether or not to emasculate klingon */
+ 	    if (kpow &gt; 0 &amp;&amp; Rand() &gt;= 0.9 &amp;&amp;
+ 		kpow &lt;= ((0.4 + 0.4*Rand())*kpini)) {
+-		prout(_(&quot;***Mr. Spock-  \&quot;Captain, the vessel at &quot;),
++		prout(_(&quot;***Mr. Spock-  \&quot;Captain, the vessel at %s&quot;),
+ 		      cramlc(sector, w));
+ 		prout(_(&quot;   has just lost its firepower.\&quot;&quot;));
+ 		game.kpower[kk] = -kpow;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/events.c	2006-09-22 17:09:23 UTC (rev 629)
+@@ -850,7 +850,7 @@
+ 	skip(1);
+ 	prouts(_(&quot;***RED ALERT!  RED ALERT!&quot;));
+ 	skip(1);
+-	prout(_(&quot;***Incipient supernova detected at &quot;), cramlc(sector, ns));
++	prout(_(&quot;***Incipient supernova detected at %s&quot;), cramlc(sector, ns));
+ 	if (square(ns.x-game.sector.x) + square(ns.y-game.sector.y) &lt;= 2.1) {
+ 	    proutn(_(&quot;Emergency override attempts t&quot;));
+ 	    prouts(&quot;***************&quot;);
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/io.c	2006-09-22 17:09:23 UTC (rev 629)
+@@ -1,5 +1,6 @@
+ #include &lt;stdio.h&gt;
+ #include &lt;unistd.h&gt;
++#include &lt;wchar.h&gt;
+ 
+ #include &quot;config.h&quot;
+ #include &quot;sst.h&quot;
+@@ -11,6 +12,7 @@
+ WINDOW *fullscreen_window;
+ WINDOW *srscan_window;
+ WINDOW *report_window;
++WINDOW *status_window;
+ WINDOW *lrscan_window;
+ WINDOW *message_window;
+ WINDOW *prompt_window;
+@@ -42,7 +44,8 @@
+ 	exit(1);
+     }
+     if (!(game.options &amp; OPTION_CURSES)) {
+-	rows = atoi(getenv(&quot;LINES&quot;));
++	char *ln_env = getenv(&quot;LINES&quot;);
++	rows = ln_env ? atoi(ln_env) : 25;
+     } else {
+ 	(void)initscr();
+ #ifdef KEY_MIN
+@@ -67,7 +70,8 @@
+ 	//(void)noecho();
+ 	fullscreen_window = stdscr;
+ 	srscan_window     = newwin(12, 25, 0,       0);
+-	report_window     = newwin(10, 0,  1,       25);
++	report_window     = newwin(11, 0,  1,       25);
++	status_window     = newwin(10, 0,  1,       39);
+ 	lrscan_window     = newwin(10, 0,  0,       64); 
+ 	message_window    = newwin(0,  0,  12,      0);
+ 	prompt_window     = newwin(1,  0,  LINES-2, 0); 
+@@ -129,13 +133,11 @@
+ {
+     while (i-- &gt; 0) {
+ 	if (game.options &amp; OPTION_CURSES) {
+-	    if (curwnd == message_window &amp;&amp; linecount &gt;= getmaxy(curwnd) - 3) {
++	    if (curwnd == message_window &amp;&amp; getcury(curwnd) &gt;= getmaxy(curwnd) - 3) {
+ 		pause_game(false);
+ 		clrscr();
+ 	    } else {
+ 		proutn(&quot;\n&quot;);
+-		if (curwnd == message_window)
+-		    linecount++;
+ 	    }
+ 	} else {
+ 	    linecount++;
+@@ -147,7 +149,7 @@
+     }
+ }
+ 
+-static void vproutn(char *fmt, va_list ap) 
++static void vproutn(const char *fmt, va_list ap) 
+ {
+     if (game.options &amp; OPTION_CURSES) {
+ 	vwprintw(curwnd, fmt, ap);
+@@ -157,7 +159,7 @@
+ 	vprintf(fmt, ap);
+ }
+ 
+-void proutn(char *fmt, ...) 
++void proutn(const char *fmt, ...) 
+ {
+     va_list ap;
+     va_start(ap, fmt);
+@@ -165,7 +167,7 @@
+     va_end(ap);
+ }
+ 
+-void prout(char *fmt, ...) 
++void prout(const char *fmt, ...) 
+ {
+     va_list ap;
+     va_start(ap, fmt);
+@@ -174,25 +176,32 @@
+     skip(1);
+ }
+ 
+-void prouts(char *fmt, ...) 
++void prouts(const char *fmt, ...) 
+ /* print slowly! */
+ {
+-    char *s, buf[BUFSIZ];
++    char buf[BUFSIZ];
++    wchar_t *s, mbuf[BUFSIZ];
+     va_list ap;
+     va_start(ap, fmt);
+     vsprintf(buf, fmt, ap);
+     va_end(ap);
+-    for (s = buf; *s; s++) {
++    mbstowcs(mbuf, buf, BUFSIZ);
++    for (s = mbuf; *s; s++) {
++	/* HOW to convince ncurses to use wchar_t?? */
++	/* WHY putwchar() doesn't work?? */
++	/* OK then, convert back to mbs... */
++	char c[MB_CUR_MAX*2];
++	int n;
++	n = wctomb(c, *s);
++	c[n] = 0;
+ 	delay(30);
+-	if (game.options &amp; OPTION_CURSES) {
+-	    waddch(curwnd, *s);
++	proutn(c);
++	if (game.options &amp; OPTION_CURSES)
+ 	    wrefresh(curwnd);
+-	}
+-	else {
+-	    putchar(*s);
++	else
+ 	    fflush(stdout);
+-	}
+     }
++    delay(300);
+ }
+ 
+ void cgetline(char *line, int max)
+@@ -221,7 +230,7 @@
+     }
+ }
+ 
+-void clreol (void)
++void clreol(void)
+ /* clear to end of line -- can be a no-op in tty mode */
+ {
+    if (game.options &amp; OPTION_CURSES) {
+@@ -230,7 +239,7 @@
+    }
+ }
+ 
+-void clrscr (void)
++void clrscr(void)
+ /* clear screen -- can be a no-op in tty mode */
+ {
+    if (game.options &amp; OPTION_CURSES) {
+@@ -241,7 +250,7 @@
+    linecount = 0;
+ }
+ 
+-void textcolor (int color)
++void textcolor(int color)
+ {
+ #ifdef A_COLOR
+     if (game.options &amp; OPTION_CURSES) {
+@@ -302,7 +311,7 @@
+ #endif /* A_COLOR */
+ }
+ 
+-void highvideo (void)
++void highvideo(void)
+ {
+     if (game.options &amp; OPTION_CURSES) {
+ 	wattron(curwnd, A_REVERSE);
+@@ -324,17 +333,18 @@
+ 	    sensor();
+         setwnd(srscan_window);
+         wmove(curwnd, 0, 0);
+-        enqueue(&quot;no&quot;);
+-        srscan(SCAN_FULL);
++        srscan();
+ 	if (mode != 2) {
++	    setwnd(status_window);
++	    wclear(status_window);
++	    wmove(status_window, 0, 0);
+ 	    setwnd(report_window);
+ 	    wclear(report_window);
+ 	    wmove(report_window, 0, 0);
+-	    srscan(SCAN_NO_LEFTSIDE);
++	    status(0);
+ 	    setwnd(lrscan_window);
+ 	    wclear(lrscan_window);
+ 	    wmove(lrscan_window, 0, 0);
+-	    enqueue(&quot;l&quot;);
+ 	    lrscan();
+ 	}
+     }
+@@ -429,6 +439,31 @@
+     if (game.options &amp; OPTION_CURSES) {
+ 	setwnd(message_window);
+ 	wclear(message_window);
+-	chart(false);
+     }
++    chart();
++    if (game.options &amp; OPTION_TTY) {
++	skip(1);
++    }
+ }
++
++void prstat(const char *txt, const char *fmt, ...)
++{
++#define NSYM 14
++    int i;
++    va_list args;
++    proutn(txt);
++    if (game.options &amp; OPTION_CURSES) {
++	skip(1);
++    } else  {
++	for (i = mblen(txt, strlen(txt)); i &lt; NSYM; i++)
++	    proutn(&quot; &quot;);
++    }
++    if (game.options &amp; OPTION_CURSES)
++	setwnd(status_window);
++    va_start(args, fmt);
++    vproutn(fmt, args);
++    va_end(args);
++    skip(1);
++    if (game.options &amp; OPTION_CURSES)
++	setwnd(report_window);
++}
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/moving.c	2006-09-22 17:09:23 UTC (rev 629)
+@@ -973,7 +973,6 @@
+     /* dematerialize starship */
+     game.quad[game.sector.x][game.sector.y]=IHDOT;
+     proutn(_(&quot;Starbase in %s responds--&quot;), cramlc(quadrant, game.quadrant));
+-    proutn(&quot;&quot;);
+     crmshp();
+     prout(_(&quot; dematerializes.&quot;));
+     game.sector.x=0;
+@@ -1083,7 +1082,7 @@
+ 	    return;
+ 	}
+ 	if (game.landed) {
+-	    prout(_(&quot;You must be aboard the Enterprise.&quot;));
++	    prout(_(&quot;You must be aboard the ship.&quot;));
+ 	    return;
+ 	}
+ 	if (game.iscraft != onship) {
+@@ -1111,7 +1110,8 @@
+ 	    prout(_(&quot;Remainder of ship's complement beam down&quot;));
+ 	    prout(_(&quot;to %s.&quot;), systnames[q-&gt;planet]);
+ 	} else {
+-	    prout(_(&quot;Entire crew of %d left to die in outer space.&quot;));
++	    prout(_(&quot;Entire crew of %d left to die in outer space.&quot;),
++		    game.state.crew);
+ 	    game.casual += game.state.crew;
+ 	    game.abandoned += game.state.crew;
+ 	}
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/reports.c	2006-09-22 17:09:23 UTC (rev 629)
+@@ -13,11 +13,13 @@
+ 	    prout(_(&quot;It can hold out until Stardate %d.&quot;),
+ 		  (int)scheduled(FCDBAS));
+ 	}
+-	if (game.isatb == 1) {
++	else if (game.isatb == 1) {
+ 	    prout(_(&quot;Starbase in %s is under Super-commander attack.&quot;),
+ 		  cramlc(quadrant, game.state.kscmdr));
+ 	    prout(_(&quot;It can hold out until Stardate %d.&quot;),
+ 		  (int)scheduled(FSCDBAS));
++	} else {
++	    prout(_(&quot;No Starbase is currently under attack.&quot;));
+ 	}
+     } else {
+         if (is_scheduled(FCDBAS))
+@@ -50,7 +52,7 @@
+     case SKILL_EMERITUS: s3=_(&quot;emeritus&quot;); break;
+     default: s3=_(&quot;skilled&quot;); break;
+     }
+-    prout(&quot;&quot;);
++    skip(1);
+     prout(_(&quot;You %s a %s%s %s game.&quot;),
+ 	  game.alldone? _(&quot;were playing&quot;) : _(&quot;are playing&quot;), s1, s2, s3);
+     if (game.skill&gt;SKILL_GOOD &amp;&amp; game.thawed &amp;&amp; !game.alldone) prout(_(&quot;No plaque is allowed.&quot;));
+@@ -119,7 +121,6 @@
+ /* long-range sensor scan */
+ {
+     int x, y;
+-    chew();
+     if (damaged(DLRSENS)) {
+ 	/* Now allow base's sensors if docked */
+ 	if (game.condition != docked) {
+@@ -189,7 +190,7 @@
+ 	    }
+ }
+ 
+-void chart(bool title)
++void chart(void)
+ /* display the star chart */ 
+ {
+     int i,j;
+@@ -203,7 +204,7 @@
+ 	rechart();
+     }
+ 
+-    if (!title) prout(_(&quot;       STAR CHART FOR THE KNOWN GALAXY&quot;));
++    prout(_(&quot;       STAR CHART FOR THE KNOWN GALAXY&quot;));
+     if (game.state.date &gt; game.lastchart)
+ 	prout(_(&quot;(Last surveillance update %d stardates ago).&quot;),
+ 	      (int)(game.state.date-game.lastchart));
+@@ -233,7 +234,6 @@
+ 	proutn(&quot;  |&quot;);
+ 	if (i&lt;GALSIZE) skip(1);
+     }
+-    prout(&quot;&quot;);
+ }
+ 
+ static void sectscan(int goodScan, int i, int j) 
+@@ -258,157 +258,147 @@
+ 	proutn(&quot;- &quot;);
+ }
+ 
+-static void status(int req)
++void status(int req)
+ /* print status report lines */
+ {
+-    char *cp = NULL;
++#define RQ(n, a) if (!req || req == n) do { a } while(0)
++    char *cp = NULL, s[256];
+     int t, dam = 0;
+-    switch (req) {
+-    case 1:
+-	proutn(_(&quot;Stardate      %.1f, Time Left %.2f&quot;), game.state.date, game.state.remtime);
+-	break;
+-    case 2:
++
++    RQ(1,
++	prstat(_(&quot;Stardate&quot;), _(&quot;%.1f, Time Left %.2f&quot;), game.state.date, game.state.remtime);
++    );
++
++    RQ(2,
+ 	if (game.condition != docked) newcnd();
+ 	switch (game.condition) {
+-	case red: cp = _(&quot;RED&quot;); break;
+-	case green: cp = _(&quot;GREEN&quot;); break;
+-	case yellow: cp = _(&quot;YELLOW&quot;); break;
+-	case docked: cp = _(&quot;DOCKED&quot;); break;
+-	case dead: cp = _(&quot;DEAD&quot;); break;
++	    case red: cp = _(&quot;RED&quot;); break;
++	    case green: cp = _(&quot;GREEN&quot;); break;
++	    case yellow: cp = _(&quot;YELLOW&quot;); break;
++	    case docked: cp = _(&quot;DOCKED&quot;); break;
++	    case dead: cp = _(&quot;DEAD&quot;); break;
+ 	}
+ 	for (t=0;t&lt;NDEVICES;t++)
+ 	    if (game.damage[t]&gt;0) 
+ 		dam++;
+-	proutn(_(&quot;Condition     %s, %i DAMAGES&quot;), cp, dam);
+-	break;
+-    case 3:
+-	proutn(_(&quot;Position      %d - %d , %d - %d&quot;),
+-	       game.quadrant.x, game.quadrant.y, game.sector.x, game.sector.y);
+-	break;
+-    case 4:
+-	proutn(_(&quot;Life Support  &quot;));
++	prstat(_(&quot;Condition&quot;), _(&quot;%s, %i DAMAGES&quot;), cp, dam);
++    );
++
++    RQ(3,
++	prstat(_(&quot;Position&quot;), &quot;%d - %d , %d - %d&quot;,
++	      game.quadrant.x, game.quadrant.y, game.sector.x, game.sector.y);
++    );
++
++    RQ(4,
+ 	if (damaged(DLIFSUP)) {
+ 	    if (game.condition == docked)
+-		proutn(_(&quot;DAMAGED, Base provides&quot;));
++		sprintf(s, _(&quot;DAMAGED, Base provides&quot;));
+ 	    else
+-		proutn(_(&quot;DAMAGED, reserves=%4.2f&quot;), game.lsupres);
++		sprintf(s, _(&quot;DAMAGED, reserves=%4.2f&quot;), game.lsupres);
+ 	}
+ 	else
+-	    proutn(_(&quot;ACTIVE&quot;));
+-	break;
+-    case 5:
+-	proutn(_(&quot;Warp Factor   %.1f&quot;), game.warpfac);
+-	break;
+-    case 6:
+-	proutn(_(&quot;Energy        %.2f&quot;), game.energy);
+-	if (game.icrystl &amp;&amp; (game.options &amp; OPTION_SHOWME))	/* ESR */
+-	    proutn(_(&quot; (have crystals)&quot;));
+-	break;
+-    case 7:
+-	proutn(_(&quot;Torpedoes     %d&quot;), game.torps);
+-	break;
+-    case 8:
+-	proutn(_(&quot;Shields       &quot;));
++	    sprintf(s, _(&quot;ACTIVE&quot;));
++	prstat(_(&quot;Life Support&quot;), s);
++    );
++
++    RQ(5,
++	prstat(_(&quot;Warp Factor&quot;), &quot;%.1f&quot;, game.warpfac);
++    );
++
++    RQ(6,
++	prstat(_(&quot;Energy&quot;), &quot;%.2f%s&quot;, game.energy,
++		(game.icrystl &amp;&amp; (game.options &amp; OPTION_SHOWME)) ? /* ESR */
++		_(&quot; (have crystals)&quot;) : &quot;&quot;);
++    );
++
++    RQ(7,
++	prstat(_(&quot;Torpedoes&quot;), &quot;%d&quot;, game.torps);
++    );
++
++    RQ(8,
+ 	if (damaged(DSHIELD))
+-	    proutn(_(&quot;DAMAGED,&quot;));
++	    strcpy(s, _(&quot;DAMAGED,&quot;));
+ 	else if (game.shldup)
+-	    proutn(_(&quot;UP,&quot;));
++	    strcpy(s, _(&quot;UP,&quot;));
+ 	else
+-	    proutn(_(&quot;DOWN,&quot;));
+-	proutn(_(&quot; %d%% %.1f units&quot;),
++	    strcpy(s, _(&quot;DOWN,&quot;));
++	sprintf(s + strlen(s), _(&quot; %d%% %.1f units&quot;),
+ 	       (int)((100.0*game.shield)/game.inshld + 0.5), game.shield);
+-	break;
+-    case 9:
+-	proutn(_(&quot;Klingons Left %d&quot;), KLINGREM);
+-	break;
+-    case 10:
++	prstat(_(&quot;Shields&quot;), s);
++    );
++
++    RQ(9,
++        prstat(_(&quot;Klingons Left&quot;), &quot;%d&quot;, KLINGREM);
++    );
++
++    RQ(10,
+ 	if (game.options &amp; OPTION_WORLDS) {
+ 	    int plnet = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet;
+ 	    if (plnet != NOPLANET &amp;&amp; game.state.plnets[plnet].inhabited != UNINHABITED)
+-		proutn(_(&quot;Major system  %s&quot;), systnames[plnet]);
++		prstat(_(&quot;Major system&quot;), &quot;%s&quot;, systnames[plnet]);
+ 	    else
+-		proutn(_(&quot;Sector is uninhabited&quot;));
++		prout(_(&quot;Sector is uninhabited&quot;));
+ 	}
++    );
+ 
+-	break;
+-    case 11:
+-	attakreport(true);
+-	break;
++    RQ(11,
++	attakreport(!req);
++    );
++
++#undef RQ
++}
++
++void request(void)
++{
++    int req;
++    static char requests[][3] =
++	{&quot;da&quot;,&quot;co&quot;,&quot;po&quot;,&quot;ls&quot;,&quot;wa&quot;,&quot;en&quot;,&quot;to&quot;,&quot;sh&quot;,&quot;kl&quot;,&quot;sy&quot;, &quot;ti&quot;};
++
++    while (scan() == IHEOL)
++	proutn(_(&quot;Information desired? &quot;));
++    chew();
++    for (req = 0; req &lt; ARRAY_SIZE(requests); req++)
++	if (strncmp(citem, requests[req], min(2,strlen(citem)))==0)
++	    break;
++    if (req &gt;= ARRAY_SIZE(requests)) {
++	prout(_(&quot;UNRECOGNIZED REQUEST. Legal requests are:&quot;));
++	prout((&quot;  date, condition, position, lsupport, warpfactor,&quot;));
++	prout((&quot;  energy, torpedoes, shields, klingons, system, time.&quot;));
++	return;
+     }
++    status(req + 1);
+ }
+ 		
+-void srscan(scantype type)
++void srscan(void)
+ /* short-range scan */
+ {
+-    /* the &quot;sy&quot; request is undocumented */
+-    static char requests[][3] =
+-	{&quot;&quot;,&quot;da&quot;,&quot;co&quot;,&quot;po&quot;,&quot;ls&quot;,&quot;wa&quot;,&quot;en&quot;,&quot;to&quot;,&quot;sh&quot;,&quot;kl&quot;,&quot;sy&quot;, &quot;ti&quot;};
+-    
+-    int i, j, jj, req=0;
+-    int goodScan=true, leftside=true, rightside=true, title=false; 
+-    switch (type) {
+-    case SCAN_FULL: // SRSCAN
+-	if (damaged(DSRSENS)) {
+-	    /* Allow base's sensors if docked */
+-	    if (game.condition != docked) {
+-		prout(_(&quot;   S.R. SENSORS DAMAGED!&quot;));
+-		goodScan=false;
+-	    }
+-	    else
+-		prout(_(&quot;  [Using Base's sensors]&quot;));
++    int i, j;
++    int goodScan=true;
++    if (damaged(DSRSENS)) {
++	/* Allow base's sensors if docked */
++	if (game.condition != docked) {
++	    prout(_(&quot;   S.R. SENSORS DAMAGED!&quot;));
++	    goodScan=false;
+ 	}
+-	else prout(_(&quot;     Short-range scan&quot;));
+-	if (goodScan &amp;&amp; !damaged(DRADIO)) { 
+-	    game.state.chart[game.quadrant.x][game.quadrant.y].klingons = game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons;
+-	    game.state.chart[game.quadrant.x][game.quadrant.y].starbase = game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase;
+-	    game.state.chart[game.quadrant.x][game.quadrant.y].stars = game.state.galaxy[game.quadrant.x][game.quadrant.y].stars;
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = true;
+-	}
+-	scan();
+-	if (isit(&quot;chart&quot;)) title = true;
+-	if (isit(&quot;no&quot;)) rightside = false;
+-	chew();
+-	prout(&quot;    1 2 3 4 5 6 7 8 9 10&quot;);
+-	break;
+-    case SCAN_REQUEST:
+-	while (scan() == IHEOL)
+-	    proutn(_(&quot;Information desired? &quot;));
+-	chew();
+-	for (req = 1; req &lt;= sizeof(requests)/sizeof(requests[0]); req++)
+-	    if (strncmp(citem,requests[req],min(2,strlen(citem)))==0)
+-		break;
+-	if (req &gt; sizeof(requests)/sizeof(requests[0])) {
+-	    prout(_(&quot;UNRECOGNIZED REQUEST. Legal requests are:&quot;));
+-	    prout((&quot;  date, condition, position, lsupport, warpfactor,&quot;));
+-	    prout((&quot;  energy, torpedoes, shields, klingons, time, system, bases.&quot;));
+-	    return;
+-	}
+-	// no break
+-    case SCAN_STATUS: // STATUS
+-	chew();
+-	leftside = false;
+-	skip(1);
+-	// no break
+-    case SCAN_NO_LEFTSIDE: // REQUEST
+-	leftside=false;
+-	break;
++	else
++	    prout(_(&quot;  [Using Base's sensors]&quot;));
+     }
++    else prout(_(&quot;     Short-range scan&quot;));
++    if (goodScan &amp;&amp; !damaged(DRADIO)) { 
++	game.state.chart[game.quadrant.x][game.quadrant.y].klingons = game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons;
++	game.state.chart[game.quadrant.x][game.quadrant.y].starbase = game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase;
++	game.state.chart[game.quadrant.x][game.quadrant.y].stars = game.state.galaxy[game.quadrant.x][game.quadrant.y].stars;
++	game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = true;
++    }
++    prout(&quot;    1 2 3 4 5 6 7 8 9 10&quot;);
+     if (game.condition != docked) newcnd();
+-    for (i = 1; i &lt;= max(QUADSIZE, sizeof(requests)/sizeof(requests[0])); i++) {
+-	jj = (req!=0 ? req : i);
+-	if (leftside &amp;&amp; i &lt;= QUADSIZE) {
+-	    proutn(&quot;%2d  &quot;, i);
+-	    for_sectors(j) {
+-		sectscan(goodScan, i, j);
+-	    }
++    for (i = 1; i &lt;= QUADSIZE; i++) {
++	proutn(&quot;%2d  &quot;, i);
++	for_sectors(j) {
++	    sectscan(goodScan, i, j);
+ 	}
+-	if (rightside)
+-	    status(jj);
+-	if (i&lt;sizeof(requests)/sizeof(requests[0])) skip(1);
+-	if (req!=0) return;
++	skip(1);
+     }
+-    prout(&quot;&quot;);
+-    if (title) chart(true);
+ }
+ 			
+ 			
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/setup.c	2006-09-22 17:09:23 UTC (rev 629)
+@@ -380,13 +380,13 @@
+ 	      INKLINGTOT);
+ 	prout(_(&quot;You have an initial allotment of %d stardates to complete&quot;), (int)game.intime);
+ 	prout(_(&quot;your mission.  As you proceed you may be given more time.&quot;));
+-	prout(&quot;&quot;);
++	skip(1);
+ 	prout(_(&quot;You will have %d supporting starbases.&quot;), game.inbase);
+ 	proutn(_(&quot;Starbase locations-  &quot;));
+     }
+     else {
+ 	prout(_(&quot;Stardate %d.&quot;), (int)game.state.date);
+-	prout(&quot;&quot;);
++	skip(1);
+ 	prout(_(&quot;%d Klingons.&quot;), INKLINGTOT);
+ 	prout(_(&quot;An unknown number of Romulans.&quot;));
+ 	if (game.state.nscrem) prout(_(&quot;And one (GULP) Super-Commander.&quot;));
+@@ -758,13 +758,13 @@
+ void setpassword(void)
+ /* set the self-destruct password */
+ {
+-    if (!(game.options &amp; OPTION_CURSES)) {
++    if (game.options &amp; OPTION_PLAIN) {
+ 	while (TRUE) {
++	    chew();
++	    proutn(_(&quot;Please type in a secret password- &quot;));
+ 	    scan();
+ 	    strcpy(game.passwd, citem);
+-	    chew();
+ 	    if (*game.passwd != 0) break;
+-	    proutn(_(&quot;Please type in a secret password-&quot;));
+ 	}
+     } else {
+ 	int i;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/sst.c	2006-09-22 17:09:23 UTC (rev 629)
+@@ -282,7 +282,7 @@
+ #endif
+ };
+ 
+-#define NUMCOMMANDS	sizeof(commands)/sizeof(commands[0])
++#define NUMCOMMANDS	ARRAY_SIZE(commands)
+ #define ACCEPT(i)	(!commands[i].option || (commands[i].option &amp; game.options))
+ 
+ static void listCommands(void) 
+@@ -387,13 +387,6 @@
+     fclose(fp);
+ }
+ 
+-void enqueue(char *s)
+-/* enqueue input for the command parser */
+-{
+-    chew();
+-    strcpy(line, s);
+-}
+-
+ static void makemoves(void)
+ /* command-interpretation loop */
+ {
+@@ -413,7 +406,8 @@
+ 	    clrscr();
+ 	    proutn(&quot;COMMAND&gt; &quot;);
+ 	    if (scan() == IHEOL) {
+-		makechart();
++		if (game.options &amp; OPTION_CURSES)
++		    makechart();
+ 		continue;
+ 	    }
+ 	    game.ididit = false;
+@@ -439,13 +433,13 @@
+ 	commandhook(commands[i].name, true);
+ 	switch (v) { /* command switch */
+ 	case SRSCAN:                 // srscan
+-	    srscan(SCAN_FULL);
++	    srscan();
+ 	    break;
+ 	case STATUS:                 // status
+-	    srscan(SCAN_STATUS);
++	    status(0);
+ 	    break;
+ 	case REQUEST:			// status request 
+-	    srscan(SCAN_REQUEST);
++	    request();
+ 	    break;
+ 	case LRSCAN:			// lrscan
+ 	    lrscan();
+@@ -476,7 +470,7 @@
+ 	    dreprt();
+ 	    break;
+ 	case CHART:			// chart
+-	    chart(false);
++	    makechart();
+ 	    break;
+ 	case IMPULSE:			// impulse
+ 	    impuls();
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/sst.h	2006-09-22 17:09:23 UTC (rev 629)
+@@ -341,13 +341,6 @@
+ 
+ enum loctype {neither, quadrant, sector};
+ 
+-typedef enum {
+-    SCAN_FULL,
+-    SCAN_REQUEST,
+-    SCAN_STATUS,
+-    SCAN_NO_LEFTSIDE,
+-} scantype;
+-
+ /* Function prototypes */
+ void prelim(void);
+ void attack(bool);
+@@ -355,7 +348,7 @@
+ void setup(bool);
+ void score(void);
+ void atover(bool);
+-void srscan(scantype);
++void srscan(void);
+ void lrscan(void);
+ void phasers(void);
+ void photon(void);
+@@ -363,7 +356,7 @@
+ void doshield(bool);
+ void dock(bool);
+ void dreprt(void);
+-void chart(bool);
++void chart(void);
+ void rechart(void);
+ void impuls(void);
+ void wait(void);
+@@ -380,14 +373,19 @@
+ bool thaw(void);
+ void plaque(void);
+ int scan(void);
++void status(int req);
++void request(void);
+ #define IHEOL (0)
+ #define IHALPHA (1)
+ #define IHREAL (2)
+ void chew(void);
+ void chew2(void);
+ void skip(int);
+-void prout(char *, ...);
+-void proutn(char *, ...);
++void prout(const char *, ...) __attribute__((format(printf, 1, 2)));
++void proutn(const char *, ...) __attribute__((format(printf, 1, 2)));
++void prouts(const char *, ...) __attribute__((format(printf, 1, 2)));
++void prstat(const char *txt, const char *fmt, ...)
++	__attribute__((format(printf, 2, 3)));
+ void stars(void);
+ void newqad(bool);
+ bool ja(void);
+@@ -413,7 +411,6 @@
+ void snova(bool, coord *);
+ void scom(bool *);
+ void hittem(double *);
+-void prouts(char *, ...);
+ bool isit(char *);
+ void preport(void);
+ void orbit(void);
+@@ -438,7 +435,6 @@
+ void setpassword(void);
+ void commandhook(char *, bool);
+ void makechart(void);
+-void enqueue(char *);
+ coord newkling(int);
+ #if BSD_BUG_FOR_BUG
+ void visual(void);
+
+Modified: trunk/src/xio.c
+===================================================================
+--- trunk/src/xio.c	2006-09-22 16:18:30 UTC (rev 628)
++++ trunk/src/xio.c	2006-09-22 17:09:23 UTC (rev 629)
+@@ -180,7 +180,7 @@
+     misclabel  = XtVaCreateManagedWidget(&quot;misclabel&quot;, 
+ 					 labelWidgetClass, misc,
+ 					 NULL); 
+-    for (cp = commands; cp &lt; commands + sizeof(commands)/sizeof(commands[0]); cp++) {
++    for (cp = commands; cp &lt; commands + ARRAY_SIZE(commands); cp++) {
+ 	cp-&gt;widget = XtVaCreateManagedWidget(cp-&gt;name, 
+ 					     commandWidgetClass, 
+ 					     *cp-&gt;parent, 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000095.html">[Sst-commit-watch] r628 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000097.html">[Sst-commit-watch] r630 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#96">[ date ]</a>
+              <a href="thread.html#96">[ thread ]</a>
+              <a href="subject.html#96">[ subject ]</a>
+              <a href="author.html#96">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

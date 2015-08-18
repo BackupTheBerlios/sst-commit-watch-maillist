@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r729 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r729%20-%20trunk/src&In-Reply-To=%3C200610100621.k9A6LuMg027261%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000195.html">
+   <LINK REL="Next"  HREF="000197.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r729 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r729%20-%20trunk/src&In-Reply-To=%3C200610100621.k9A6LuMg027261%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r729 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 08:21:56 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000195.html">[Sst-commit-watch] r728 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000197.html">[Sst-commit-watch] r730 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#196">[ date ]</a>
+              <a href="thread.html#196">[ thread ]</a>
+              <a href="subject.html#196">[ subject ]</a>
+              <a href="author.html#196">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 08:21:55 +0200 (Tue, 10 Oct 2006)
+New Revision: 729
+
+Modified:
+   trunk/src/sst.py
+Log:
+Simplify tac movement, handle more torpedo input cases correctly.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 02:18:09 UTC (rev 728)
++++ trunk/src/sst.py	2006-10-10 06:21:55 UTC (rev 729)
+@@ -755,10 +755,7 @@
+             else:
+                 motion = game.skill
+     # calculate preferred number of steps 
+-    if motion &lt; 0:
+-        nsteps = -motion
+-    else:
+-        nsteps = motion
++    nsteps = abs(int(motion))
+     if motion &gt; 0 and nsteps &gt; mdist:
+ 	nsteps = mdist; # don't overshoot 
+     if nsteps &gt; QUADSIZE:
+@@ -773,16 +770,7 @@
+ 	m.i = 0
+     if 2.0 * abs(m.j) &lt; abs(game.sector.i-enemy.kloc.i):
+ 	m.j = 0
+-    if m.i != 0:
+-        if m.i*motion &lt; 0:
+-            m.i = -1
+-        else:
+-            m.i = 1
+-    if m.j != 0:
+-        if m.j*motion &lt; 0:
+-            m.j = -1
+-        else:
+-            m.j = 1
++    m = (motion * m).sgn()
+     next = enemy.kloc
+     # main move loop 
+     for ll in range(nsteps):
+@@ -1285,6 +1273,10 @@
+ 
+ def torpedo(origin, course, dispersion, number, nburst):
+     &quot;Let a photon torpedo fly&quot; 
++    if not damaged(DSRSENS) or game.condition==&quot;docked&quot;:
++	setwnd(srscan_window)
++    else: 
++	setwnd(message_window)
+     shoved = False
+     ac = course + 0.25*dispersion
+     angle = (15.0-ac)*0.5235988
+@@ -1292,17 +1284,12 @@
+     delta = coord(-math.sin(angle), math.cos(angle))          
+     bigger = max(abs(delta.i), abs(delta.j))
+     delta /= bigger
+-    x = origin.i; y = origin.j
+     w = coord(0, 0); jw = coord(0, 0)
+-    if not damaged(DSRSENS) or game.condition==&quot;docked&quot;:
+-	setwnd(srscan_window)
+-    else: 
+-	setwnd(message_window)
++    ungridded = copy.copy(origin)
+     # Loop to move a single torpedo 
+-    for step in range(1, 15+1):
+-	x += delta.i
+-	y += delta.j
+-	w = coord(x, y).snaptogrid()
++    for step in range(1, QUADSIZE*2):
++	ungridded += delta
++	w = ungridded.snaptogrid()
+ 	if not VALID_SECTOR(w.i, w.j):
+ 	    break
+ 	iquad=game.quad[w.i][w.j]
+@@ -1785,19 +1772,19 @@
+ 	if i==1 and key == &quot;IHEOL&quot;:
+ 	    # direct all torpedoes at one target 
+ 	    while i &lt; n:
+-		target.append(targets[0])
++		target.append(target[0])
+ 		course.append(course[0])
+ 		i += 1
+ 	    break
+-        scanner.push(key)
++        scanner.push(scanner.token)
+         target.append(scanner.getcoord())
+         if target[-1] == None:
+             return
+-        course.append(targetcheck(target[1]))
+-        if course[i] == None:
++        course.append(targetcheck(target[-1]))
++        if course[-1] == None:
+ 	    return
+     scanner.chew()
+-    if i == 0:
++    if len(target) == 0:
+ 	# prompt for each one 
+ 	for i in range(n):
+ 	    proutn(_(&quot;Target sector for torpedo number %d- &quot;) % (i+1))
+@@ -6395,8 +6382,6 @@
+                 clrscr()
+             if line == '':
+                 return None
+-            # Skip leading white space
+-            line = line.lstrip()
+             if not line:
+                 continue
+             else:
+@@ -6417,8 +6402,10 @@
+         self.type = &quot;IHALPHA&quot;
+         self.real = None
+         return &quot;IHALPHA&quot;
+-    def push(self, tok):
++    def append(self, tok):
+         self.inqueue.append(tok)
++    def push(self, tok):
++        self.inqueue.insert(0, tok)
+     def waiting(self):
+         return self.inqueue
+     def chew(self):
+@@ -6611,7 +6598,7 @@
+             logfp.write(&quot;# options %s\n&quot; % &quot; &quot;.join(arguments))
+         random.seed(seed)
+         scanner = sstscanner()
+-        map(scanner.push, arguments)
++        map(scanner.append, arguments)
+         try:
+             iostart()
+             while True: # Play a game 
+@@ -6642,5 +6629,5 @@
+             ioend()
+         raise SystemExit, 0
+     except KeyboardInterrupt:
+-        print&quot;&quot;
++        print &quot;&quot;
+         pass
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000195.html">[Sst-commit-watch] r728 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000197.html">[Sst-commit-watch] r730 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#196">[ date ]</a>
+              <a href="thread.html#196">[ thread ]</a>
+              <a href="subject.html#196">[ subject ]</a>
+              <a href="author.html#196">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

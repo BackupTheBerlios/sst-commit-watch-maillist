@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r554 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r554%20-%20trunk/src&In-Reply-To=%3C200609140239.k8E2dTcR026270%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000020.html">
+   <LINK REL="Next"  HREF="000022.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r554 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r554%20-%20trunk/src&In-Reply-To=%3C200609140239.k8E2dTcR026270%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r554 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 14 04:39:29 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000020.html">[Sst-commit-watch] r553 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000022.html">[Sst-commit-watch] r555 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#21">[ date ]</a>
+              <a href="thread.html#21">[ thread ]</a>
+              <a href="subject.html#21">[ subject ]</a>
+              <a href="author.html#21">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-14 04:39:28 +0200 (Thu, 14 Sep 2006)
+New Revision: 554
+
+Modified:
+   trunk/src/xio.c
+Log:
+More reasonably-sized windows.
+
+
+Modified: trunk/src/xio.c
+===================================================================
+--- trunk/src/xio.c	2006-09-13 23:52:07 UTC (rev 553)
++++ trunk/src/xio.c	2006-09-14 02:39:28 UTC (rev 554)
+@@ -77,6 +77,9 @@
+     {&quot;Help&quot;,		noargs_proc,	&amp;misc,		0},
+ };
+ 
++#define MAXWIDTH	640
++#define TEXTHEIGHT	200
++
+ int main(int argc, char **argv)
+ { 
+     struct cmd_t *cp;
+@@ -88,21 +91,23 @@
+     form = XtVaCreateManagedWidget(&quot;form&quot;, formWidgetClass, toplevel, NULL);
+     /* the command window */
+     text = XtVaCreateManagedWidget(&quot;text&quot;, asciiTextWidgetClass, form, 
+-				   XtNwidth, 400, XtNheight, 200,
++				   XtNwidth, MAXWIDTH, XtNheight, TEXTHEIGHT,
+ 				   NULL);
+     XtVaSetValues(text, XtNeditType,XawtextRead, XtNdisplayCaret,False, NULL);
+     /* The button panels */
+     navigation  = XtVaCreateManagedWidget(&quot;navigation&quot;, 
+-				       boxWidgetClass, form,
+-				       XtNfromVert, text, 
+-				       XtNorientation, XtorientHorizontal,
+-				       NULL); 
++					  boxWidgetClass, form,
++					  XtNborderWidth, 0,
++					  XtNfromVert, text,
++					  XtNorientation, XtorientHorizontal,
++					  NULL); 
+     navlabel  = XtVaCreateManagedWidget(&quot;Navigation:   &quot;, 
+ 					labelWidgetClass, navigation,
+ 					XtNborderWidth, 0,
+ 					NULL); 
+     weapons  = XtVaCreateManagedWidget(&quot;weapons&quot;, 
+ 				       boxWidgetClass, form,
++				       XtNborderWidth, 0,
+ 				       XtNfromVert, navigation, 
+ 				       XtNorientation, XtorientHorizontal,
+ 				       NULL); 
+@@ -112,6 +117,7 @@
+ 					 NULL); 
+     status   = XtVaCreateManagedWidget(&quot;status&quot;, 
+ 				       boxWidgetClass, form,
++				       XtNborderWidth, 0,
+ 				       XtNfromVert, weapons, 
+ 				       XtNorientation, XtorientHorizontal,
+ 				       NULL); 
+@@ -121,6 +127,7 @@
+ 					 NULL); 
+     planets  = XtVaCreateManagedWidget(&quot;planets&quot;, 
+ 				       boxWidgetClass, form,
++				       XtNborderWidth, 0,
+ 				       XtNfromVert, status, 
+ 				       XtNorientation, XtorientHorizontal,
+ 				       NULL); 
+@@ -130,6 +137,7 @@
+ 					 NULL); 
+     misc  = XtVaCreateManagedWidget(&quot;misc&quot;, 
+ 				       boxWidgetClass, form,
++				       XtNborderWidth, 0,
+ 				       XtNfromVert, planets, 
+ 				       XtNorientation, XtorientHorizontal,
+ 				       NULL); 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000020.html">[Sst-commit-watch] r553 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000022.html">[Sst-commit-watch] r555 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#21">[ date ]</a>
+              <a href="thread.html#21">[ thread ]</a>
+              <a href="subject.html#21">[ subject ]</a>
+              <a href="author.html#21">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

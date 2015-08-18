@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r782 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2007-December/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r782%20-%20trunk/src&In-Reply-To=%3C200712132359.lBDNxOQX019328%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000250.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r782 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r782%20-%20trunk/src&In-Reply-To=%3C200712132359.lBDNxOQX019328%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r782 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Dec 14 00:59:24 CET 2007</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000250.html">[Sst-commit-watch] r783 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#249">[ date ]</a>
+              <a href="thread.html#249">[ thread ]</a>
+              <a href="subject.html#249">[ subject ]</a>
+              <a href="author.html#249">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2007-12-14 00:59:23 +0100 (Fri, 14 Dec 2007)
+New Revision: 782
+
+Modified:
+   trunk/src/sst.py
+Log:
+Use /tmp for logs, as /usr/tmp is not available under Ubuntu.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-27 19:06:09 UTC (rev 781)
++++ trunk/src/sst.py	2007-12-13 23:59:23 UTC (rev 782)
+@@ -6200,9 +6200,10 @@
+                 raise SystemExit, 1
+         # where to save the input in case of bugs
+         try:
+-            logfp = open(&quot;/usr/tmp/sst-input.log&quot;, &quot;w&quot;)
++            logfp = open(&quot;/tmp/sst-input.log&quot;, &quot;w&quot;)
+         except IOError:
+             sys.stderr.write(&quot;sst: warning, can't open logfile\n&quot;)
++            sys.exit(1)
+         if logfp:
+             logfp.write(&quot;# seed %s\n&quot; % seed)
+             logfp.write(&quot;# options %s\n&quot; % &quot; &quot;.join(arguments))
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000250.html">[Sst-commit-watch] r783 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#249">[ date ]</a>
+              <a href="thread.html#249">[ thread ]</a>
+              <a href="subject.html#249">[ subject ]</a>
+              <a href="author.html#249">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

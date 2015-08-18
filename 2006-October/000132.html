@@ -1,0 +1,978 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r665 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r665%20-%20trunk/src&In-Reply-To=%3C200610041924.k94JOena027931%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000131.html">
+   <LINK REL="Next"  HREF="000133.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r665 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r665%20-%20trunk/src&In-Reply-To=%3C200610041924.k94JOena027931%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r665 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Oct  4 21:24:40 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000131.html">[Sst-commit-watch] r664 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000133.html">[Sst-commit-watch] r666 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#132">[ date ]</a>
+              <a href="thread.html#132">[ thread ]</a>
+              <a href="subject.html#132">[ subject ]</a>
+              <a href="author.html#132">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-04 21:24:39 +0200 (Wed, 04 Oct 2006)
+New Revision: 665
+
+Modified:
+   trunk/src/sst.py
+Log:
+Python translation now incorporates reports.c.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-04 16:37:14 UTC (rev 664)
++++ trunk/src/sst.py	2006-10-04 19:24:39 UTC (rev 665)
+@@ -192,6 +192,7 @@
+ SKILL_EMERITUS	= 5
+ 
+ def damaged(dev):	return (game.damage[dev] != 0.0)
++def communicating():	return not damaged(DRADIO) or game.condition==&quot;docked&quot;
+ 
+ # Define future events 
+ FSPY	= 0	# Spy event happens always (no future[] entry)
+@@ -397,10 +398,10 @@
+ 	# avoid intruding on another commander's territory 
+ 	if ienm == IHC:
+ 	    for n in range(1, game.state.remcom+1):
+-		if same(game.state.kcmdr[n],iq):
++		if game.state.kcmdr[n] == iq:
+ 		    return False
+ 	    # refuse to leave if currently attacking starbase 
+-	    if same(game.battle, game.quadrant):
++	    if game.battle == game.quadrant:
+ 		return False
+ 	# don't leave if over 1000 units of energy 
+ 	if game.kpower[loccom] &gt; 1000.0:
+@@ -434,7 +435,7 @@
+ 	game.state.kscmdr=iq
+     else:
+ 	for n in range(1, game.state.remcom+1):
+-	    if same(game.state.kcmdr[n], game.quadrant):
++	    if game.state.kcmdr[n] == game.quadrant:
+ 		game.state.kcmdr[n]=iq
+ 		break
+ 	game.comhere = False
+@@ -626,7 +627,7 @@
+     # Put commander in place within same quadrant 
+     game.quad[com.x][com.y] = IHDOT
+     game.quad[next.x][next.y] = ienm
+-    if not same(next, com):
++    if next != com:
+ 	# it moved 
+ 	game.ks[loccom] = next
+ 	game.kdist[loccom] = game.kavgd[loccom] = distance(game.sector, next)
+@@ -670,14 +671,14 @@
+ 
+ def movescom(iq, avoid):
+     # commander movement helper 
+-    if same(iq, game.quadrant) or not VALID_QUADRANT(iq.x, iq.y) or \
++    if iq == game.quadrant or not VALID_QUADRANT(iq.x, iq.y) or \
+ 	game.state.galaxy[iq.x][iq.y].supernova or \
+ 	game.state.galaxy[iq.x][iq.y].klingons &gt; MAXKLQUAD-1:
+ 	return 1
+     if avoid:
+ 	# Avoid quadrants with bases if we want to avoid Enterprise 
+ 	for i in range(1, game.state.rembase+1):
+-	    if same(game.state.baseq[i], iq):
++	    if game.state.baseq[i] == iq:
+ 		return True
+     if game.justin and not game.iscate:
+ 	return True
+@@ -707,12 +708,12 @@
+ 	sortklings()
+     # check for a helpful planet 
+     for i in range(game.inplan):
+-	if same(game.state.planets[i].w, game.state.kscmdr) and \
+-	    game.state.planets[i].crystals == present:
++	if game.state.planets[i].w == game.state.kscmdr and \
++	    game.state.planets[i].crystals == &quot;present&quot;:
+ 	    # destroy the planet 
+-	    game.state.planets[i].pclass = destroyed
++	    game.state.planets[i].pclass = &quot;destroyed&quot;
+ 	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET
+-	    if not damaged(DRADIO) or game.condition == docked:
++	    if communicating():
+ 		announce()
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;))
+ 		proutn(_(&quot;   a planet in Quadrant %s has been destroyed&quot;) % game.state.kscmdr)
+@@ -753,14 +754,14 @@
+ 	for i2 in range(1, game.state.rembase+1):
+ 	    i = basetbl[i2][0];	# bug in original had it not finding nearest
+ 	    ibq = game.state.baseq[i]
+-	    if same(ibq, game.quadrant) or same(ibq, game.battle) or \
++	    if ibq == game.quadrant or ibq == game.battle or \
+ 		game.state.galaxy[ibq.x][ibq.y].supernova or \
+ 		game.state.galaxy[ibq.x][ibq.y].klingons &gt; MAXKLQUAD-1:
+ 		continue
+ 	    # if there is a commander, and no other base is appropriate,
+ 	    #   we will take the one with the commander
+ 	    for j in range(1, game.state.remcom+1):
+-		if same(ibq, game.state.kcmdr[j]) and ifindit!= 2:
++		if ibq == game.state.kcmdr[j] and ifindit!= 2:
+ 		    ifindit = 2
+ 		    iwhichb = i
+ 		    break
+@@ -806,7 +807,7 @@
+     else:
+ 	for i in range(1, game.state.rembase+1):
+ 	    ibq = game.state.baseq[i]
+-	    if same(ibq, game.state.kscmdr) and same(game.state.kscmdr, game.battle):
++	    if ibq == game.state.kscmdr and game.state.kscmdr == game.battle:
+ 		# attack the base 
+ 		if avoid:
+ 		    return; # no, don't attack base! 
+@@ -815,7 +816,7 @@
+ 		schedule(FSCDBAS, 1.0 +2.0*Rand())
+ 		if is_scheduled(FCDBAS):
+ 		    postpone(FSCDBAS, scheduled(FCDBAS)-game.state.date)
+-		if damaged(DRADIO) and game.condition != docked:
++		if not communicating():
+ 		    return; # no warning 
+ 		game.iseenit = True
+ 		announce()
+@@ -835,7 +836,7 @@
+     # Check for intelligence report 
+     if not idebug and \
+ 	(Rand() &gt; 0.2 or \
+-	 (damaged(DRADIO) and game.condition != docked) or \
++	 (not communicating()) or \
+ 	 not game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].charted):
+ 	return
+     announce()
+@@ -1184,7 +1185,7 @@
+ 	elif iquad in (IHR, IHK): # Hit a regular enemy 
+ 	    # find the enemy 
+ 	    for ll in range(1, game.nenhere+1):
+-		if same(w, game.ks[ll]):
++		if w == game.ks[ll]:
+ 		    break
+ 	    kp = math.fabs(game.kpower[ll])
+ 	    h1 = 700.0 + 100.0*Rand() - \
+@@ -1228,7 +1229,7 @@
+ 	    skip(1)
+ 	    prout(_(&quot;***STARBASE DESTROYED..&quot;))
+ 	    for ll in range(1, game.state.rembase+1):
+-		if same(game.state.baseq[ll], game.quadrant):
++		if game.state.baseq[ll] == game.quadrant:
+ 		    game.state.baseq[ll]=game.state.baseq[game.state.rembase]
+ 		    break
+ 	    game.quad[w.x][w.y]=IHDOT
+@@ -1568,7 +1569,7 @@
+ 	if type == IHC:
+ 	    game.comhere = False
+ 	    for i in range(1, game.state.remcom+1):
+-		if same(game.state.kcmdr[i], game.quadrant):
++		if game.state.kcmdr[i] == game.quadrant:
+ 		    break
+ 	    game.state.kcmdr[i] = game.state.kcmdr[game.state.remcom]
+ 	    game.state.kcmdr[game.state.remcom].x = 0
+@@ -1596,10 +1597,10 @@
+ 	return
+     game.recompute()
+     # Remove enemy ship from arrays describing local conditions 
+-    if is_scheduled(FCDBAS) and same(game.battle, game.quadrant) and type==IHC:
++    if is_scheduled(FCDBAS) and game.battle == game.quadrant and type==IHC:
+ 	unschedule(FCDBAS)
+     for i in range(1, game.nenhere+1):
+-	if same(game.ks[i], w):
++	if game.ks[i] == w:
+ 	    break
+     game.nenhere -= 1
+     if i &lt;= game.nenhere:
+@@ -2159,10 +2160,8 @@
+             game.quadrant = game.state.kcmdr[i]
+         game.sector = randplace(QUADSIZE)
+         crmshp()
+-        proutn(_(&quot; is pulled to &quot;))
+-        proutn(cramlc(quadrant, game.quadrant))
+-        proutn(&quot;, &quot;)
+-        prout(cramlc(sector, game.sector))
++        prout(_(&quot; is pulled to Quadrant %s, Sector %s&quot;) \
++               % (game.quadrant, game.sector))
+         if game.resting:
+             prout(_(&quot;(Remainder of rest/repair period cancelled.)&quot;))
+             game.resting = False
+@@ -2185,22 +2184,19 @@
+         # Code merges here for any commander destroying base 
+         # Not perfect, but will have to do 
+         # Handle case where base is in same quadrant as starship 
+-        if same(game.battle, game.quadrant):
++        if game.battle == game.quadrant:
+             game.state.chart[game.battle.x][game.battle.y].starbase = False
+             game.quad[game.base.x][game.base.y] = IHDOT
+             game.base.x=game.base.y=0
+             newcnd()
+             skip(1)
+             prout(_(&quot;Spock-  \&quot;Captain, I believe the starbase has been destroyed.\&quot;&quot;))
+-        elif game.state.rembase != 1 and \
+-                 (not damaged(DRADIO) or game.condition == &quot;docked&quot;):
++        elif game.state.rembase != 1 and communicating():
+             # Get word via subspace radio 
+             announce()
+             skip(1)
+             prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Command reports that&quot;))
+-            proutn(_(&quot;   the starbase in &quot;))
+-            proutn(cramlc(quadrant, game.battle))
+-            prout(_(&quot; has been destroyed by&quot;))
++            proutn(_(&quot;   the starbase in Quadrant %s has been destroyed by&quot;) % game.battle)
+             if game.isatb == 2: 
+                 prout(_(&quot;the Klingon Super-Commander&quot;))
+             else:
+@@ -2209,7 +2205,7 @@
+         # Remove Starbase from galaxy 
+         game.state.galaxy[game.battle.x][game.battle.y].starbase = False
+         for i in range(1, game.state.rembase+1):
+-            if same(game.state.baseq[i], game.battle):
++            if game.state.baseq[i] == game.battle:
+                 game.state.baseq[i] = game.state.baseq[game.state.rembase]
+         game.state.rembase -= 1
+         if game.isatb == 2:
+@@ -2345,9 +2341,9 @@
+ 	    i = 0
+ 	    for j in range(1, game.state.rembase+1):
+ 		for k in range(1, game.state.remcom+1):
+-		    if same(game.state.baseq[j], game.state.kcmdr[k]) and \
+-			not same(game.state.baseq[j], game.quadrant) and \
+-                        not same(game.state.baseq[j], game.state.kscmdr):
++		    if game.state.baseq[j] == game.state.kcmdr[k] and \
++			not game.state.baseq[j] == game.quadrant and \
++                        not game.state.baseq[j] == game.state.kscmdr:
+ 			i = 1
+ 		if i == 1:
+ 		    continue
+@@ -2363,7 +2359,7 @@
+ 		postpone(FCDBAS, scheduled(FSCDBAS)-game.state.date)
+ 	    game.future[FBATTAK].date = game.future[FCDBAS].date + expran(0.3*game.intime)
+ 	    game.iseenit = False
+-	    if damaged(DRADIO) and game.condition != &quot;docked&quot;: 
++            if not communicating():
+ 		continue # No warning :-( 
+ 	    game.iseenit = True
+ 	    announce()
+@@ -2387,7 +2383,7 @@
+ 		unschedule(FCDBAS)
+ 		# find the lucky pair 
+ 		for i in range(1, game.state.remcom+1):
+-		    if same(game.state.kcmdr[i], game.battle): 
++		    if game.state.kcmdr[i] == game.battle: 
+ 			break
+ 		if i &gt; game.state.remcom or game.state.rembase == 0 or \
+ 		    not game.state.galaxy[game.battle.x][game.battle.y].starbase:
+@@ -2412,7 +2408,7 @@
+ 		if not VALID_QUADRANT(i, j) or \
+ 		    game.state.galaxy[game.probec.x][game.probec.y].supernova:
+ 		    # Left galaxy or ran into supernova
+-		    if not damaged(DRADIO) or game.condition == &quot;docked&quot;:
++                    if comunicating():
+ 			announce()
+ 			skip(1)
+ 			proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe &quot;))
+@@ -2423,15 +2419,13 @@
+ 			prout(&quot;.\&quot;&quot;)
+ 		    unschedule(FDSPROB)
+ 		    continue
+-		if not damaged(DRADIO) or game.condition == &quot;docked&quot;:
++                if not communicating():
+ 		    announce()
+ 		    skip(1)
+-		    proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe is now in &quot;))
+-		    proutn(cramlc(quadrant, game.probec))
+-		    prout(&quot;.\&quot;&quot;)
++		    proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe is now in Quadrant %s.\&quot;&quot;) % game.probec)
+ 	    pdest = game.state.galaxy[game.probec.x][game.probec.y]
+ 	    # Update star chart if Radio is working or have access to radio
+-	    if not damaged(DRADIO) or game.condition == &quot;docked&quot;:
++	    if communicating():
+ 		chp = game.state.chart[game.probec.x][game.probec.y]
+ 		chp.klingons = pdest.klingons
+ 		chp.starbase = pdest.starbase
+@@ -2454,7 +2448,7 @@
+ 		# supernova'ed, and which has some Klingons in it
+ 		w = randplace(GALSIZE)
+ 		q = game.state.galaxy[w.x][w.y]
+-                if not (same(game.quadrant, w) or q.planet == NOPLANET or \
++                if not (game.quadrant == w or q.planet == NOPLANET or \
+ 		      game.state.planets[q.planet].inhabited == UNINHABITED or \
+ 		      q.supernova or q.status!=secure or q.klingons&lt;=0):
+                     break
+@@ -2469,7 +2463,7 @@
+ 	    q.status = distressed
+ 
+ 	    # tell the captain about it if we can 
+-	    if not damaged(DRADIO) or game.condition == &quot;docked&quot;:
++	    if communicating():
+ 		prout(_(&quot;Uhura- Captain, %s in Quadrant %s reports it is under attack&quot;) \
+                         % (q.planet, `w`))
+ 		prout(_(&quot;by a Klingon invasion fleet.&quot;))
+@@ -2489,7 +2483,7 @@
+ 	    ev2.quadrant = ev.quadrant
+ 
+ 	    # report the disaster if we can 
+-	    if not damaged(DRADIO) or game.condition == &quot;docked&quot;:
++	    if communicating():
+ 		prout(_(&quot;Uhura- We've lost contact with starsystem %s&quot;) % \
+                         q.planet)
+ 		prout(_(&quot;in Quadrant %s.\n&quot;) % ev.quadrant)
+@@ -2526,14 +2520,14 @@
+ 	    # deliver the child 
+ 	    game.state.remkl += 1
+ 	    q.klingons += 1
+-	    if same(game.quadrant, w):
+-		newkling(++game.klhere)
+-
++	    if game.quadrant == w:
++                game.klhere += 1
++		newkling(game.klhere)
+ 	    # recompute time left
+             game.recompute()
+ 	    # report the disaster if we can 
+-	    if not damaged(DRADIO) or game.condition == &quot;docked&quot;:
+-		if same(game.quadrant, w):
++	    if communicating():
++		if game.quadrant == w:
+ 		    prout(_(&quot;Spock- sensors indicate the Klingons have&quot;))
+ 		    prout(_(&quot;launched a warship from %s.&quot;) % q.planet)
+ 		else:
+@@ -2667,7 +2661,7 @@
+ 		    elif iquad == IHB: # Destroy base 
+ 			game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase = False
+ 			for i in range(1, game.state.rembase+1):
+-			    if same(game.state.baseq[i], game.quadrant): 
++			    if game.state.baseq[i] == game.quadrant: 
+ 				break
+ 			game.state.baseq[i] = game.state.baseq[game.state.rembase]
+ 			game.state.rembase -= 1
+@@ -2702,7 +2696,7 @@
+ 			deadkl(scratch,iquad, scratch)
+                     elif iquad in (IHC,IHS,IHR): # Damage/destroy big enemies 
+ 			for ll in range(1, game.nenhere+1):
+-			    if same(game.ks[ll], scratch):
++			    if game.ks[ll] == scratch:
+ 				break
+ 			game.kpower[ll] -= 800.0 # If firepower is lost, die 
+ 			if game.kpower[ll] &lt;= 0.0:
+@@ -2727,8 +2721,7 @@
+ 			    # can't move into something else 
+ 			    skip(1)
+ 			    break
+-			proutn(_(&quot;, buffeted to &quot;))
+-			proutn(cramlc(sector, newc))
++			proutn(_(&quot;, buffeted to Sector %s&quot;) % newc)
+ 			game.quad[scratch.x][scratch.y] = IHDOT
+ 			game.quad[newc.x][newc.y] = iquad
+ 			game.ks[ll] = newc
+@@ -2787,9 +2780,9 @@
+ 	    if ja() == True:
+ 		nq = game.quadrant
+ 
+-    if not same(nq, game.quadrant) or game.justin:
++    if not nq == game.quadrant or game.justin:
+ 	# it isn't here, or we just entered (treat as enroute) 
+-	if not damaged(DRADIO) or game.condition == &quot;docked&quot;:
++	if communicating():
+ 	    skip(1)
+ 	    prout(_(&quot;Message from Starfleet Command       Stardate %.2f&quot;) % game.state.date)
+ 	    prout(_(&quot;     Supernova in Quadrant %s; caution advised.&quot;) % nq)
+@@ -2820,7 +2813,7 @@
+     # destroy any Klingons in supernovaed quadrant 
+     kldead = game.state.galaxy[nq.x][nq.y].klingons
+     game.state.galaxy[nq.x][nq.y].klingons = 0
+-    if same(nq, game.state.kscmdr):
++    if nq == game.state.kscmdr:
+ 	# did in the Supercommander! 
+ 	game.state.nscrem = game.state.kscmdr.x = game.state.kscmdr.y = game.isatb =  0
+ 	game.iscate = False
+@@ -2829,7 +2822,7 @@
+     if game.state.remcom:
+ 	maxloop = game.state.remcom
+ 	for l in range(1, maxloop+1):
+-	    if same(game.state.kcmdr[l], nq):
++	    if game.state.kcmdr[l] == nq:
+ 		game.state.kcmdr[l] = game.state.kcmdr[game.state.remcom]
+ 		invalidate(game.state.kcmdr[game.state.remcom])
+ 		game.state.remcom -= 1
+@@ -2844,14 +2837,14 @@
+     game.state.nromrem -= nrmdead
+     # Destroy planets 
+     for loop in range(game.inplan):
+-	if same(game.state.planets[loop].w, nq):
++	if game.state.planets[loop].w == nq:
+ 	    game.state.planets[loop].pclass = destroyed
+ 	    npdead += 1
+     # Destroy any base in supernovaed quadrant 
+     if game.state.rembase:
+ 	maxloop = game.state.rembase
+ 	for loop in range(1, maxloop+1):
+-	    if same(game.state.baseq[loop], nq):
++	    if game.state.baseq[loop] == nq:
+ 		game.state.baseq[loop] = game.state.baseq[game.state.rembase]
+ 		invalidate(game.state.baseq[game.state.rembase])
+ 		game.state.rembase -= 1
+@@ -2862,10 +2855,10 @@
+ 	game.state.basekl += game.state.galaxy[nq.x][nq.y].starbase
+ 	game.state.nplankl += npdead
+     # mark supernova in galaxy and in star chart 
+-    if same(game.quadrant, nq) or not damaged(DRADIO) or game.condition == &quot;docked&quot;:
++    if game.quadrant == nq or communicating():
+ 	game.state.galaxy[nq.x][nq.y].supernova = True
+     # If supernova destroys last Klingons give special message 
+-    if (game.state.remkl + game.state.remcom + game.state.nscrem)==0 and not same(nq, game.quadrant):
++    if (game.state.remkl + game.state.remcom + game.state.nscrem)==0 and not nq == game.quadrant:
+ 	skip(2)
+ 	if not induced:
+ 	    prout(_(&quot;Lucky you!&quot;))
+@@ -4611,7 +4604,7 @@
+ 	prout(_(&quot;the Federation in a prisoner-of-war exchange.&quot;))
+ 	nb = Rand()*game.state.rembase+1
+ 	# Set up quadrant and position FQ adjacient to base 
+-	if not same(game.quadrant, game.state.baseq[nb]):
++	if not game.quadrant == game.state.baseq[nb]:
+ 	    game.quadrant = game.state.baseq[nb]
+ 	    game.sector.x = game.sector.y = 5
+ 	    newqad(True)
+@@ -4679,7 +4672,7 @@
+ 	    iknow = True
+ 	    if idebug and game.state.planets[i].known==&quot;unknown&quot;:
+ 		proutn(&quot;(Unknown) &quot;)
+-	    proutn(cramlc(quadrant, game.state.planets[i].w))
++	    proutn(_(&quot;Quadrant %s&quot;) % game.state.planets[i].w)
+ 	    proutn(_(&quot;   class &quot;))
+ 	    proutn(game.state.planets[i].pclass)
+ 	    proutn(&quot;   &quot;)
+@@ -5112,3 +5105,484 @@
+     prout(_(&quot;  in Engineering, we can't move for 'em, Captain.\&quot;&quot;))
+     finish(FTRIBBLE)
+     return
++
++# Code from reports.c begins here
++
++def attackreport(curt):
++    # report status of bases under attack 
++    if not curt:
++	if is_scheduled(FCDBAS):
++	    prout(_(&quot;Starbase in Quadrant %s is currently under Commander attack.&quot;) % game.battle)
++	    prout(_(&quot;It can hold out until Stardate %d.&quot;) % int(scheduled(FCDBAS)))
++	elif game.isatb == 1:
++	    prout(_(&quot;Starbase in Quadrant %s is under Super-commander attack.&quot;) % game.state.kscmdr)
++	    prout(_(&quot;It can hold out until Stardate %d.&quot;) % int(scheduled(FSCDBAS)))
++	else:
++	    prout(_(&quot;No Starbase is currently under attack.&quot;))
++    else:
++        if is_scheduled(FCDBAS):
++	    proutn(_(&quot;Base in %s attacked by C. Alive until %.1f&quot;) % (game.battle, scheduled(FCDBAS)))
++        if game.isatb:
++	    proutn(_(&quot;Base in %s attacked by S. Alive until %.1f&quot;) % (game.state.kscmdr, scheduled(FSCDBAS)))
++	clreol()
++
++def report():
++    # report on general game status 
++    chew()
++    s1 = &quot;&quot; and game.thawed and _(&quot;thawed &quot;)
++    s2 = {1:&quot;short&quot;, 2:&quot;medium&quot;, 4:&quot;long&quot;}[game.length]
++    s3 = (None, _(&quot;novice&quot;). _(&quot;fair&quot;),
++          _(&quot;good&quot;), _(&quot;expert&quot;), _(&quot;emeritus&quot;))[game.skill]
++    prout(_(&quot;You %s a %s%s %s game.&quot;) % ((_(&quot;were playing&quot;), _(&quot;are playing&quot;))[game.alldone], s1, s2, s3))
++    if game.skill&gt;SKILL_GOOD and game.thawed and not game.alldone:
++	prout(_(&quot;No plaque is allowed.&quot;))
++    if game.tourn:
++	prout(_(&quot;This is tournament game %d.&quot;) % game.tourn)
++    prout(_(&quot;Your secret password is \&quot;%s\&quot;&quot;) % game.passwd)
++    proutn(_(&quot;%d of %d Klingons have been killed&quot;) % (((game.inkling + game.incom + game.inscom) - (game.state.remkl + game.state.remcom + game.state.nscrem)), 
++	   (game.inkling + game.incom + game.inscom)))
++    if game.incom - game.state.remcom:
++	prout(_(&quot;, including %d Commander%s.&quot;) % (game.incom - game.state.remcom, (_(&quot;s&quot;), &quot;&quot;)[(game.incom - game.state.remcom)==1]))
++    elif game.inkling - game.state.remkl + (game.inscom - game.state.nscrem) &gt; 0:
++	prout(_(&quot;, but no Commanders.&quot;))
++    else:
++	prout(&quot;.&quot;)
++    if game.skill &gt; SKILL_FAIR:
++	prout(_(&quot;The Super Commander has %sbeen destroyed.&quot;) % (&quot;&quot;, _(&quot;not &quot;))[game.state.nscrem])
++    if game.state.rembase != game.inbase:
++	proutn(_(&quot;There &quot;))
++	if game.inbase-game.state.rembase==1:
++	    proutn(_(&quot;has been 1 base&quot;))
++	else:
++	    proutn(_(&quot;have been %d bases&quot;) % (game.inbase-game.state.rembase))
++	prout(_(&quot; destroyed, %d remaining.&quot;) % game.state.rembase)
++    else:
++	prout(_(&quot;There are %d bases.&quot;) % game.inbase)
++    if communicating() or game.iseenit:
++	# Don't report this if not seen and
++	# either the radio is dead or not at base!
++	attackreport(False)
++	game.iseenit = True
++    if game.casual: 
++	prout(_(&quot;%d casualt%s suffered so far.&quot;) % (game.casual, (&quot;y&quot;, &quot;ies&quot;)[game.casual!=1]))
++    if game.nhelp:
++	prout(_(&quot;There were %d call%s for help.&quot;) % (game.nhelp,  (&quot;&quot; , _(&quot;s&quot;))[game.nhelp!=1]))
++    if game.ship == IHE:
++	proutn(_(&quot;You have &quot;))
++	if game.nprobes:
++	    proutn(&quot;%d&quot; % (game.nprobes))
++	else:
++	    proutn(_(&quot;no&quot;))
++	proutn(_(&quot; deep space probe&quot;))
++	if game.nprobes!=1:
++	    proutn(_(&quot;s&quot;))
++	prout(&quot;.&quot;)
++    if communicating() and is_scheduled(FDSPROB):
++	if game.isarmed: 
++	    proutn(_(&quot;An armed deep space probe is in &quot;))
++	else:
++	    proutn(_(&quot;A deep space probe is in &quot;))
++	prout(&quot;Quadrant %s.&quot; % game.probec)
++    if game.icrystl:
++	if game.cryprob &lt;= .05:
++	    prout(_(&quot;Dilithium crystals aboard ship... not yet used.&quot;))
++	else:
++	    i=0
++	    ai = 0.05
++	    while game.cryprob &gt; ai:
++		ai *= 2.0
++		i += 1
++	    prout(_(&quot;Dilithium crystals have been used %d time%s.&quot;) % \
++                  (i, (_(&quot;s&quot;), &quot;&quot;)[i==1]))
++    skip(1)
++	
++def lrscan():
++    # long-range sensor scan 
++    if damaged(DLRSENS):
++	# Now allow base's sensors if docked 
++	if game.condition != &quot;docked&quot;:
++	    prout(_(&quot;LONG-RANGE SENSORS DAMAGED.&quot;))
++	    return
++	prout(_(&quot;Starbase's long-range scan&quot;))
++    else:
++	prout(_(&quot;Long-range scan&quot;))
++    for x in range(game.quadrant.x-1, game.quadrant.x+2):
++        proutn(&quot; &quot;)
++        for y in range(game.quadrant.y-1, game.quadrant.y+2):
++	    if not VALID_QUADRANT(x, y):
++		proutn(&quot;  -1&quot;)
++	    else:
++		if not damaged(DRADIO):
++		    game.state.galaxy[x][y].charted = True
++		game.state.chart[x][y].klingons = game.state.galaxy[x][y].klingons
++		game.state.chart[x][y].starbase = game.state.galaxy[x][y].starbase
++		game.state.chart[x][y].stars = game.state.galaxy[x][y].stars
++		if game.state.galaxy[x][y].supernova: 
++		    proutn(&quot; ***&quot;)
++		else:
++		    proutn(&quot; %3d&quot; % (game.state.chart[x][y].klingons*100 + game.state.chart[x][y].starbase * 10 + game.state.chart[x][y].stars))
++	prout(&quot; &quot;)
++
++def damagereport():
++    # damage report 
++    jdam = False
++    chew()
++
++    for i in range(NDEVICES):
++	if damaged(i):
++	    if not jdam:
++		prout(_(&quot;\tDEVICE\t\t\t-REPAIR TIMES-&quot;))
++		prout(_(&quot;\t\t\tIN FLIGHT\t\tDOCKED&quot;))
++		jdam = True
++	    prout(&quot;  %-26s\t%8.2f\t\t%8.2f&quot; % (device[i],
++                                               game.damage[i]+0.05,
++                                               game.docfac*game.damage[i]+0.005))
++    if not jdam:
++	prout(_(&quot;All devices functional.&quot;))
++
++def rechart():
++    # update the chart in the Enterprise's computer from galaxy data 
++    game.lastchart = game.state.date
++    for i in range(1, GALSIZE+1):
++	for j in range(1, GALSIZE+1):
++	    if game.state.galaxy[i][j].charted:
++		game.state.chart[i][j].klingons = game.state.galaxy[i][j].klingons
++		game.state.chart[i][j].starbase = game.state.galaxy[i][j].starbase
++		game.state.chart[i][j].stars = game.state.galaxy[i][j].stars
++
++def chart():
++    # display the star chart  
++    chew()
++    if not damaged(DRADIO):
++	rechart()
++    if game.lastchart &lt; game.state.date and game.condition == &quot;docked&quot;:
++	prout(_(&quot;Spock-  \&quot;I revised the Star Chart from the starbase's records.\&quot;&quot;))
++	rechart()
++
++    prout(_(&quot;       STAR CHART FOR THE KNOWN GALAXY&quot;))
++    if game.state.date &gt; game.lastchart:
++	prout(_(&quot;(Last surveillance update %d stardates ago).&quot;) % ((int)(game.state.date-game.lastchart)))
++    prout(&quot;      1    2    3    4    5    6    7    8&quot;)
++    for i in range(1, GALSIZE+1):
++	proutn(&quot;%d |&quot; % (i))
++	for j in range(1, GALSIZE+1):
++	    if (game.options &amp; OPTION_SHOWME) and i == game.quadrant.x and j == game.quadrant.y:
++		proutn(&quot;&lt;&quot;)
++	    else:
++		proutn(&quot; &quot;)
++	    if game.state.galaxy[i][j].supernova:
++		strcpy(buf, &quot;***&quot;)
++	    elif not game.state.galaxy[i][j].charted and game.state.galaxy[i][j].starbase:
++		strcpy(buf, &quot;.1.&quot;)
++	    elif game.state.galaxy[i][j].charted:
++		sprintf(buf, &quot;%3d&quot; % (game.state.chart[i][j].klingons*100 + game.state.chart[i][j].starbase * 10 + game.state.chart[i][j].stars))
++	    else:
++		strcpy(buf, &quot;...&quot;)
++	    proutn(buf)
++	    if (game.options &amp; OPTION_SHOWME) and i == game.quadrant.x and j == game.quadrant.y:
++		proutn(&quot;&gt;&quot;)
++	    else:
++		proutn(&quot; &quot;)
++	proutn(&quot;  |&quot;)
++	if i&lt;GALSIZE:
++	    skip(1)
++
++def sectscan(goodScan, i, j):
++    # light up an individual dot in a sector 
++    if goodScan or (abs(i-game.sector.x)&lt;= 1 and abs(j-game.sector.y) &lt;= 1):
++	if (game.quad[i][j]==IHMATER0) or (game.quad[i][j]==IHMATER1) or (game.quad[i][j]==IHMATER2) or (game.quad[i][j]==IHE) or (game.quad[i][j]==IHF):
++	    if game.condition   == &quot;red&quot;: textcolor(RED)
++	    elif game.condition == &quot;green&quot;: textcolor(GREEN)
++	    elif game.condition == &quot;yellow&quot;: textcolor(YELLOW)
++	    elif game.condition == &quot;docked&quot;: textcolor(CYAN)
++	    elif game.condition == &quot;dead&quot;: textcolor(BROWN)
++	    if game.quad[i][j] != game.ship: 
++		highvideo()
++	proutn(&quot;%c &quot; % game.quad[i][j])
++	textcolor(DEFAULT)
++    else:
++	proutn(&quot;- &quot;)
++
++def status(req):
++    # print status report lines 
++
++    if not req or req == 1:
++	prstat(_(&quot;Stardate&quot;), _(&quot;%.1f, Time Left %.2f&quot;) \
++               % (game.state.date, game.state.remtime))
++    elif not req or req == 2:
++	if game.condition != &quot;docked&quot;:
++	    newcnd()
++        dam = 0
++	for t in range(0, NDEVICES):
++	    if game.damage[t]&gt;0: 
++		dam += 1
++	prstat(_(&quot;Condition&quot;), _(&quot;%s, %i DAMAGES&quot;) % (game.condition.upper(), dam))
++    elif not req or req == 3:
++	prstat(_(&quot;Position&quot;), &quot;%s , %s&quot; % (game.quadrant, game.sector))
++    elif not req or req == 4:
++	if damaged(DLIFSUP):
++	    if game.condition == &quot;docked&quot;:
++		sprintf(s, _(&quot;DAMAGED, Base provides&quot;))
++	    else:
++		sprintf(s, _(&quot;DAMAGED, reserves=%4.2f&quot;) % game.lsupres)
++	else:
++	    sprintf(s, _(&quot;ACTIVE&quot;))
++	prstat(_(&quot;Life Support&quot;), s)
++    elif not req or req == 5:
++	prstat(_(&quot;Warp Factor&quot;), &quot;%.1f&quot; % (game.warpfac))
++    elif not req or req == 6:
++        extra = &quot;&quot;
++        if game.icrystl and (game.options &amp; OPTION_SHOWME):
++            extra = _(&quot; (have crystals)&quot;)
++	prstat(_(&quot;Energy&quot;), &quot;%.2f%s&quot; % game.energy, extra)
++    elif not req or req == 7:
++	prstat(_(&quot;Torpedoes&quot;), &quot;%d&quot; % (game.torps))
++    elif not req or req == 8:
++	if damaged(DSHIELD):
++	    strcpy(s, _(&quot;DAMAGED,&quot;))
++	elif game.shldup:
++	    strcpy(s, _(&quot;UP,&quot;))
++	else:
++	    strcpy(s, _(&quot;DOWN,&quot;))
++	data = _(&quot; %d%% %.1f units&quot;) \
++               % (int((100.0*game.shield)/game.inshld + 0.5), game.shield)
++	prstat(_(&quot;Shields&quot;), s)
++    elif not req or req == 9:
++        prstat(_(&quot;Klingons Left&quot;), &quot;%d&quot; \
++               % (game.state.remkl + game.state.remcom + game.state.nscrem))
++    elif not req or req == 10:
++	if game.options &amp; OPTION_WORLDS:
++	    plnet = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet
++	    if plnet != NOPLANET and game.state.planets[plnet].inhabited != UNINHABITED:
++		prstat(_(&quot;Major system&quot;), plnet.name)
++	    else:
++		prout(_(&quot;Sector is uninhabited&quot;))
++    elif not req or req == 11:
++	attackreport(not req)
++
++def request():
++    requests = (&quot;da&quot;,&quot;co&quot;,&quot;po&quot;,&quot;ls&quot;,&quot;wa&quot;,&quot;en&quot;,&quot;to&quot;,&quot;sh&quot;,&quot;kl&quot;,&quot;sy&quot;, &quot;ti&quot;)
++    while scan() == IHEOL:
++	proutn(_(&quot;Information desired? &quot;))
++    chew()
++    if citem in requests:
++        status(requests.index(citem))
++    else:
++	prout(_(&quot;UNRECOGNIZED REQUEST. Legal requests are:&quot;))
++	prout((&quot;  date, condition, position, lsupport, warpfactor,&quot;))
++	prout((&quot;  energy, torpedoes, shields, klingons, system, time.&quot;))
++		
++def srscan():
++    # short-range scan 
++    goodScan=True
++    if damaged(DSRSENS):
++	# Allow base's sensors if docked 
++	if game.condition != &quot;docked&quot;:
++	    prout(_(&quot;   S.R. SENSORS DAMAGED!&quot;))
++	    goodScan=False
++	else:
++	    prout(_(&quot;  [Using Base's sensors]&quot;))
++    else:
++	prout(_(&quot;     Short-range scan&quot;))
++    if goodScan and not damaged(DRADIO): 
++	game.state.chart[game.quadrant.x][game.quadrant.y].klingons = game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons
++	game.state.chart[game.quadrant.x][game.quadrant.y].starbase = game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase
++	game.state.chart[game.quadrant.x][game.quadrant.y].stars = game.state.galaxy[game.quadrant.x][game.quadrant.y].stars
++	game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = True
++    prout(&quot;    1 2 3 4 5 6 7 8 9 10&quot;)
++    if game.condition != &quot;docked&quot;:
++	newcnd()
++    for i in range(1, QUADSIZE+1):
++	proutn(&quot;%2d  &quot; % (i))
++	for j in range(1, QUADSIZE+1):
++	    sectscan(goodScan, i, j)
++	skip(1)
++			
++			
++def eta():
++    # use computer to get estimated time of arrival for a warp jump 
++    w1 = coord(); w2 = coord()
++    prompt = False
++    if damaged(DCOMPTR):
++	prout(_(&quot;COMPUTER DAMAGED, USE A POCKET CALCULATOR.&quot;))
++	skip(1)
++	return
++    if scan() != IHREAL:
++	prompt = True
++	chew()
++	proutn(_(&quot;Destination quadrant and/or sector? &quot;))
++	if scan()!=IHREAL:
++	    huh()
++	    return
++    w1.y = aaitem +0.5
++    if scan() != IHREAL:
++	huh()
++	return
++    w1.x = aaitem + 0.5
++    if scan() == IHREAL:
++	w2.y = aaitem + 0.5
++	if scan() != IHREAL:
++	    huh()
++	    return
++	w2.x = aaitem + 0.5
++    else:
++	if game.quadrant.y&gt;w1.x:
++	    w2.x = 1
++	else:
++	    w2.x=QUADSIZE
++	if game.quadrant.x&gt;w1.y:
++	    w2.y = 1
++	else:
++	    w2.y=QUADSIZE
++
++    if not VALID_QUADRANT(w1.x, w1.y) or not VALID_SECTOR(w2.x, w2.y):
++	huh()
++	return
++    game.dist = math.sqrt(square(w1.y-game.quadrant.y+0.1*(w2.y-game.sector.y))+
++		square(w1.x-game.quadrant.x+0.1*(w2.x-game.sector.x)))
++    wfl = False
++
++    if prompt:
++	prout(_(&quot;Answer \&quot;no\&quot; if you don't know the value:&quot;))
++    while True:
++	chew()
++	proutn(_(&quot;Time or arrival date? &quot;))
++	if scan()==IHREAL:
++	    ttime = aaitem
++	    if ttime &gt; game.state.date:
++		ttime -= game.state.date # Actually a star date
++            twarp=(math.floor(math.sqrt((10.0*game.dist)/ttime)*10.0)+1.0)/10.0
++            if ttime &lt;= 1e-10 or twarp &gt; 10:
++		prout(_(&quot;We'll never make it, sir.&quot;))
++		chew()
++		return
++	    if twarp &lt; 1.0:
++		twarp = 1.0
++	    break
++	chew()
++	proutn(_(&quot;Warp factor? &quot;))
++	if scan()== IHREAL:
++	    wfl = True
++	    twarp = aaitem
++	    if twarp&lt;1.0 or twarp &gt; 10.0:
++		huh()
++		return
++	    break
++	prout(_(&quot;Captain, certainly you can give me one of these.&quot;))
++    while True:
++	chew()
++	ttime = (10.0*game.dist)/square(twarp)
++	tpower = game.dist*twarp*twarp*twarp*(game.shldup+1)
++	if tpower &gt;= game.energy:
++	    prout(_(&quot;Insufficient energy, sir.&quot;))
++	    if not game.shldup or tpower &gt; game.energy*2.0:
++		if not wfl:
++		    return
++		proutn(_(&quot;New warp factor to try? &quot;))
++		if scan() == IHREAL:
++		    wfl = True
++		    twarp = aaitem
++		    if twarp&lt;1.0 or twarp &gt; 10.0:
++			huh()
++			return
++		    continue
++		else:
++		    chew()
++		    skip(1)
++		    return
++	    prout(_(&quot;But if you lower your shields,&quot;))
++	    proutn(_(&quot;remaining&quot;))
++	    tpower /= 2
++	else:
++	    proutn(_(&quot;Remaining&quot;))
++	prout(_(&quot; energy will be %.2f.&quot;) % (game.energy-tpower))
++	if wfl:
++	    prout(_(&quot;And we will arrive at stardate %.2f.&quot;) % (game.state.date+ttime))
++	elif twarp==1.0:
++	    prout(_(&quot;Any warp speed is adequate.&quot;))
++	else:
++	    prout(_(&quot;Minimum warp needed is %.2f,&quot;) % (twarp))
++	    prout(_(&quot;and we will arrive at stardate %.2f.&quot;) % (game.state.date+ttime))
++	if game.state.remtime &lt; ttime:
++	    prout(_(&quot;Unfortunately, the Federation will be destroyed by then.&quot;))
++	if twarp &gt; 6.0:
++	    prout(_(&quot;You'll be taking risks at that speed, Captain&quot;))
++	if (game.isatb==1 and game.state.kscmdr == w1 and \
++	     scheduled(FSCDBAS)&lt; ttime+game.state.date) or \
++	    (scheduled(FCDBAS)&lt;ttime+game.state.date and game.battle == w1):
++	    prout(_(&quot;The starbase there will be destroyed by then.&quot;))
++	proutn(_(&quot;New warp factor to try? &quot;))
++	if scan() == IHREAL:
++	    wfl = True
++	    twarp = aaitem
++	    if twarp&lt;1.0 or twarp &gt; 10.0:
++		huh()
++		return
++	else:
++	    chew()
++	    skip(1)
++	    return
++			
++
++#ifdef BSD_BUG_FOR_BUG
++# A visual scan is made in a particular direction of three sectors
++# in the general direction specified.  This takes time, and
++# Klingons can attack you, so it should be done only when sensors
++# are out.  Code swiped from BSD-Trek.  Not presently used, as we
++# automatically display all adjacent sectors on the short-range
++# scan even when short-range sensors are out.
++
++# This struct[] has the delta x, delta y for particular directions
++
++visdelta = (
++    (-1,-1),
++    (-1, 0),
++    (-1, 1),
++    (0,	 1),
++    (1,	 1),
++    (1,	 0),
++    (1,	-1),
++    (0,	-1),
++    (-1,-1),
++    (-1, 0),
++    (-1, 1),
++)
++
++def visual():
++    v = coord()
++    if scan() != IHREAL:
++	chew()
++	proutn(_(&quot;Direction? &quot;))
++	if scan()!=IHREAL:
++	    huh()
++	    return
++    if aaitem &lt; 0.0 or aaitem &gt; 360.0:
++	return
++    co = (aaitem + 22) / 45
++    v = visdelta[co]
++    ix = game.sector.x + v.x
++    iy = game.sector.y + v.y
++    if ix &lt; 0 or ix &gt;= QUADSIZE or iy &lt; 0 or iy &gt;= QUADSIZE:
++	co = '?'
++    else:
++	co = game.quad[ix][iy]
++    printf(&quot;%d,%d %c &quot; % (ix, iy, co))
++    v += 1
++    ix = game.sector.x + v.x
++    iy = game.sector.y + v.y
++    if ix &lt; 0 or ix &gt;= QUADSIZE or iy &lt; 0 or iy &gt;= QUADSIZE:
++	co = '?'
++    else:
++	co = game.quad[ix][iy]
++    printf(&quot;%c &quot; % (co))
++    v += 1
++    ix = game.sector.x + v.x
++    iy = game.sector.y + v.y
++    if ix &lt; 0 or ix &gt;= QUADSIZE or iy &lt; 0 or iy &gt;= QUADSIZE:
++	co = '?'
++    else:
++	co = game.quad[ix][iy]
++    prout(&quot;%c %d,%d\n&quot; % (co, ix, iy))
++    game.optime = 0.5
++    game.ididit = True
++#endif
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000131.html">[Sst-commit-watch] r664 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000133.html">[Sst-commit-watch] r666 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#132">[ date ]</a>
+              <a href="thread.html#132">[ thread ]</a>
+              <a href="subject.html#132">[ subject ]</a>
+              <a href="author.html#132">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

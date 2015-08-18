@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r681 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r681%20-%20trunk/src&In-Reply-To=%3C200610060119.k961JjPG007180%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000147.html">
+   <LINK REL="Next"  HREF="000149.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r681 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r681%20-%20trunk/src&In-Reply-To=%3C200610060119.k961JjPG007180%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r681 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct  6 03:19:45 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000147.html">[Sst-commit-watch] r680 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000149.html">[Sst-commit-watch] r682 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#148">[ date ]</a>
+              <a href="thread.html#148">[ thread ]</a>
+              <a href="subject.html#148">[ subject ]</a>
+              <a href="author.html#148">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-06 03:19:43 +0200 (Fri, 06 Oct 2006)
+New Revision: 681
+
+Modified:
+   trunk/src/sst.py
+Log:
+Avoid divide-by-zero error.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-05 22:41:05 UTC (rev 680)
++++ trunk/src/sst.py	2006-10-06 01:19:43 UTC (rev 681)
+@@ -1992,7 +1992,7 @@
+ 	else: # decide whether or not to emasculate klingon 
+ 	    if kpow &gt; 0 and random.random() &gt;= 0.9 and \
+ 		kpow &lt;= ((0.4 + 0.4*random.random())*kpini):
+-		prout(_(&quot;***Mr. Spock-  \&quot;Captain, the vessel at Sector %s&quot;), w)
++		prout(_(&quot;***Mr. Spock-  \&quot;Captain, the vessel at Sector %s&quot;) % w)
+ 		prout(_(&quot;   has just lost its firepower.\&quot;&quot;))
+ 		game.kpower[kk] = -kpow
+         kk += 1
+@@ -3089,7 +3089,13 @@
+ 				
+ def killrate():
+     &quot;Compute our rate of kils over time.&quot;
+-    return ((game.inkling + game.incom + game.inscom) - (game.state.remkl + game.state.remcom + game.state.nscrem))/(game.state.date-game.indate)
++    elapsed = game.state.date - game.indate
++    if elapsed == 0:	# Avoid divide-by-zero error if calculated on turn 0
++        return 0
++    else:
++        starting = (game.inkling + game.incom + game.inscom)
++        remaining = (game.state.remkl + game.state.remcom + game.state.nscrem)
++        return (starting - remaining)/elapsed
+ 
+ def badpoints():
+     &quot;Compute demerits.&quot;
+@@ -3490,7 +3496,7 @@
+     #textdomain(PACKAGE)
+     if atexit.register(outro):
+ 	sys.stderr.write(&quot;Unable to register outro(), exiting...\n&quot;)
+-	os.exit(1)
++	raise SysExit,1
+     if not (game.options &amp; OPTION_CURSES):
+ 	ln_env = os.getenv(&quot;LINES&quot;)
+         if ln_env:
+@@ -3925,7 +3931,7 @@
+ 		# object encountered in flight path 
+ 		stopegy = 50.0*game.dist/game.optime
+ 		game.dist = distance(game.sector, w) / (QUADSIZE * 1.0)
+-                if iquad in (IHT, IHK, OHC, IHS, IHR, IHQUEST):
++                if iquad in (IHT, IHK, IHC, IHS, IHR, IHQUEST):
+ 		    game.sector = w
+ 		    ram(False, iquad, game.sector)
+ 		    final = game.sector
+@@ -6590,7 +6596,7 @@
+ 	elif cmd == &quot;EMEXIT&quot;:		# Emergency exit
+ 	    clrscr()			# Hide screen
+ 	    freeze(True)		# forced save
+-	    os.exit(1)			# And quick exit
++	    raise SysExit,1			# And quick exit
+ 	elif cmd == &quot;PROBE&quot;:
+ 	    probe()			# Launch probe
+ 	    if game.ididit:
+@@ -6880,16 +6886,17 @@
+     for (switch, val) in options:
+         if switch == '-r':
+             try:
+-                replayfp = open(optarg, &quot;r&quot;)
++                replayfp = open(val, &quot;r&quot;)
+             except IOError:
+-		sys.stderr.write(&quot;sst: can't open replay file %s\n&quot; % optarg)
+-		os.exit(1)
++		sys.stderr.write(&quot;sst: can't open replay file %s\n&quot; % val)
++		raise SysExit, 1
+             line = replayfp.readline().strip()
+             try:
+                 (key, seed) = line.split()
+                 seed = int(seed)
++                sys.stderr.write(&quot;sst2k: seed set to %d\n&quot; % seed)
+             except ValueError:
+-		sys.stderr.write(&quot;sst: replay file %s is ill-formed\n&quot;%optarg)
++		sys.stderr.write(&quot;sst: replay file %s is ill-formed\n&quot;% val)
+ 		os.exit(1)
+ 	    game.options |= OPTION_TTY
+ 	    game.options &amp;=~ OPTION_CURSES
+@@ -6933,6 +6940,7 @@
+ 	    if ja() == True:
+ 		chew2()
+ 		freeze(False)
++        chew()
+ 	proutn(_(&quot;Do you want to play again? &quot;))
+ 	if not ja():
+ 	    break
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000147.html">[Sst-commit-watch] r680 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000149.html">[Sst-commit-watch] r682 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#148">[ date ]</a>
+              <a href="thread.html#148">[ thread ]</a>
+              <a href="subject.html#148">[ subject ]</a>
+              <a href="author.html#148">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

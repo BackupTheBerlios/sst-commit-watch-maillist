@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r789 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2010-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r789%20-%20trunk/src&In-Reply-To=%3C20100913155855.58188481034%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000257.html">
+   <LINK REL="Next"  HREF="000259.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r789 - trunk/src</H1>
+    <B>esr at mail.berlios.de</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r789%20-%20trunk/src&In-Reply-To=%3C20100913155855.58188481034%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r789 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep 13 17:58:55 CEST 2010</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000257.html">[Sst-commit-watch] r788 - in trunk: doc src
+</A></li>
+        <LI>Next message: <A HREF="000259.html">[Sst-commit-watch] r790 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#258">[ date ]</a>
+              <a href="thread.html#258">[ thread ]</a>
+              <a href="subject.html#258">[ subject ]</a>
+              <a href="author.html#258">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2010-09-13 17:58:55 +0200 (Mon, 13 Sep 2010)
+New Revision: 789
+
+Modified:
+   trunk/src/sst.py
+Log:
+Forward-porting to Python 2.6 exposed a bug.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2010-09-13 15:49:11 UTC (rev 788)
++++ trunk/src/sst.py	2010-09-13 15:58:55 UTC (rev 789)
+@@ -649,7 +649,7 @@
+     game.state.kscmdr = iq
+     game.state.galaxy[game.state.kscmdr.i][game.state.kscmdr.j].klingons += 1
+     if game.state.kscmdr==game.quadrant:
+-	# SC has scooted, Remove him from current quadrant 
++	# SC has scooted, remove him from current quadrant 
+ 	game.iscate=False
+ 	game.isatb=0
+ 	game.ientesc = False
+@@ -4458,7 +4458,7 @@
+     skip(1)
+     prouts(_(&quot;Scotty-  \&quot;Keep your fingers crossed, Sir!\&quot;&quot;))
+     skip(1)
+-    if with(game.cryprob):
++    if random.random() &gt; game.cryprob:
+ 	prouts(_(&quot;  \&quot;Activating now! - - No good!  It's***&quot;))
+ 	skip(2)
+ 	prouts(_(&quot;***RED ALERT!  RED A*L********************************&quot;))
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000257.html">[Sst-commit-watch] r788 - in trunk: doc src
+</A></li>
+	<LI>Next message: <A HREF="000259.html">[Sst-commit-watch] r790 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#258">[ date ]</a>
+              <a href="thread.html#258">[ thread ]</a>
+              <a href="subject.html#258">[ subject ]</a>
+              <a href="author.html#258">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

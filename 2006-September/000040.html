@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r573 - in trunk: . doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r573%20-%20in%20trunk%3A%20.%20doc%20src&In-Reply-To=%3C200609152247.k8FMlIUh023106%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000039.html">
+   <LINK REL="Next"  HREF="000050.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r573 - in trunk: . doc src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r573%20-%20in%20trunk%3A%20.%20doc%20src&In-Reply-To=%3C200609152247.k8FMlIUh023106%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r573 - in trunk: . doc src">esr at mail.berlios.de
+       </A><BR>
+    <I>Sat Sep 16 00:47:18 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000039.html">[Sst-commit-watch] r572 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000050.html">[Sst-commit-watch] r574 - in trunk: po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#40">[ date ]</a>
+              <a href="thread.html#40">[ thread ]</a>
+              <a href="subject.html#40">[ subject ]</a>
+              <a href="author.html#40">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-16 00:47:09 +0200 (Sat, 16 Sep 2006)
+New Revision: 573
+
+Modified:
+   trunk/ChangeLog
+   trunk/doc/sst-doc.xml
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+Make inhabited worlds display as '@'.  Document this.
+Turn off generation of inhabited worlds in plain and almy versions.
+
+
+Modified: trunk/ChangeLog
+===================================================================
+--- trunk/ChangeLog	2006-09-15 21:14:45 UTC (rev 572)
++++ trunk/ChangeLog	2006-09-15 22:47:09 UTC (rev 573)
+@@ -1,3 +1,26 @@
++2006-09-15  Eric S. Raymond  &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">esr at snark.thyrsus.com</A>&gt;
++
++	* TODO: Fixed these bug items from the TO-DO list:
++	
++	* Bring the online help in sync with our commands changes
++	
++	* Find out why the online help contains the escape sequences like
++	~@~T (Eric?)
++	
++	The first was due to bugs in some macro definitions in sst.c, now
++	fixed.  The second was from escape sequences generated into
++	sst.doc by xmlto for left-and right-quotes, dashes, and no-break
++	spaces; that is fixed by an additional translation step in
++	makehelp.py.
++	
++	xmlto still generates line-drawing characters for the tables in
++	the LRSCAN and REPORT help items, but those look OK on an xterm in
++	text mode and their help items are suppressed (along with their
++	commands) in curses mode.
++	
++	This is not a completely satisfactory solution, but it will do
++	until a design change makes those help items visible again.
++
+ 2006-09-12  gettextize  &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">bug-gnu-gettext at gnu.org</A>&gt;
+ 
+ 	* Makefile.am (SUBDIRS): Add po.
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2006-09-15 21:14:45 UTC (rev 572)
++++ trunk/doc/sst-doc.xml	2006-09-15 22:47:09 UTC (rev 573)
+@@ -253,13 +253,14 @@
+ 
+ &lt;para&gt;The fourth question, new in SST2K, sets your game options.  A
+ blank answer or 'fancy' enables all SST2K features.  The option
+-'plain' disables a number of features (Tholians, planets &amp;
+-dilithium, Thingies shooting back, deep-space-probes, Klingon ramming
+-and movement, time-warping through black holes, death-ray upgrade),
+-approximating the original CDC 6600 FORTRAN game from UT Austin.  The
+-option 'almy' approximates Tom Almy's C translation from 1979,
+-disabling Thingies shooting back, base shields, and time-warping
+-through black holes.&lt;/para&gt;
++'plain' approximated the original CDC 6600 FORTRAN game from UT Austin
++and disables a number of features: Tholians, planets &amp; dilithium,
++Thingies shooting back, deep-space-probes, Klingon ramming and
++movement, time-warping through black holes, death-ray
++upgrade. inhabited worlds.  The option 'almy' approximates Tom Almy's
++C translation from 1979, disabling Thingies shooting back, base
++shields, time-warping through black holes, and inhabited
++worlds.&lt;/para&gt;
+ 
+ &lt;/chapter&gt;
+ &lt;chapter&gt;&lt;title&gt;How To Issue Commands&lt;/title&gt;
+@@ -387,7 +388,8 @@
+ There are ordinary Klingons (K) at sectors 5 - 8 and 6 - 2, and a
+ Klingon Commander (C) at 9 - 9.  The (GULP)
+ &lt;quote&gt;Super-commander&lt;/quote&gt; (S) is occupies sector 4 - 4, and a
+-Romulan (R) is at 1 - 6.  A planet (P) is at sector 7 - 6.  There are
++Romulan (R) is at 1 - 6.  An uninhabited planet (P) is at sector 7 - 6
++(if it were inhabited, it would display as a '@').  There are
+ also a large number of stars (*). The periods (.) are just empty
+ space&mdash;they are printed to help you get your bearings.  Sector 6
+ - 4 contains a black hole ( ).&lt;/para&gt;
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-15 21:14:45 UTC (rev 572)
++++ trunk/src/setup.c	2006-09-15 22:47:09 UTC (rev 573)
+@@ -479,12 +479,12 @@
+     }
+     if (isit(&quot;plain&quot;)) {
+ 	// Approximates the UT FORTRAN version.
+-	game.options &amp;=~ (OPTION_THOLIAN | OPTION_PLANETS | OPTION_THINGY | OPTION_PROBE | OPTION_RAMMING | OPTION_MVBADDY | OPTION_BLKHOLE | OPTION_BASE);
++	game.options &amp;=~ (OPTION_THOLIAN | OPTION_PLANETS | OPTION_THINGY | OPTION_PROBE | OPTION_RAMMING | OPTION_MVBADDY | OPTION_BLKHOLE | OPTION_BASE | OPTION_WORLDS);
+ 	game.options |= OPTION_PLAIN;
+     } 
+     else if (isit(&quot;almy&quot;)) {
+ 	// Approximates Tom Almy's version.
+-	game.options &amp;=~ (OPTION_THINGY | OPTION_BLKHOLE | OPTION_BASE);
++	game.options &amp;=~ (OPTION_THINGY | OPTION_BLKHOLE | OPTION_BASE | OPTION_WORLDS);
+ 	game.options |= OPTION_ALMY;
+     }
+     else if (isit(&quot;fancy&quot;))
+@@ -623,7 +623,10 @@
+     planhere = game.state.galaxy[game.quadx][game.quady].planet;
+     if (planhere) {
+ 	game.iplnet = planhere - game.state.plnets;
+-	dropin(IHP, &amp;game.plnetx, &amp;game.plnety);
++	if (planhere-&gt;inhabited == UNINHABITED)
++	    dropin(IHP, &amp;game.plnetx, &amp;game.plnety);
++	else
++	    dropin(IHW, &amp;game.plnetx, &amp;game.plnety);
+     }
+     // Check for game.condition
+     newcnd();
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-15 21:14:45 UTC (rev 572)
++++ trunk/src/sst.h	2006-09-15 22:47:09 UTC (rev 573)
+@@ -285,6 +285,7 @@
+ #define IHS 'S'
+ #define IHSTAR '*'
+ #define IHP 'P'
++#define IHW '@'
+ #define IHB 'B'
+ #define IHBLANK ' '
+ #define IHDOT '.'
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000039.html">[Sst-commit-watch] r572 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000050.html">[Sst-commit-watch] r574 - in trunk: po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#40">[ date ]</a>
+              <a href="thread.html#40">[ thread ]</a>
+              <a href="subject.html#40">[ subject ]</a>
+              <a href="author.html#40">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

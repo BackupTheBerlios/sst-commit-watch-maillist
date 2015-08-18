@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r678 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r678%20-%20trunk/src&In-Reply-To=%3C200610051232.k95CWSII027076%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000144.html">
+   <LINK REL="Next"  HREF="000146.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r678 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r678%20-%20trunk/src&In-Reply-To=%3C200610051232.k95CWSII027076%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r678 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct  5 14:32:28 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000144.html">[Sst-commit-watch] r677 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000146.html">[Sst-commit-watch] r679 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#145">[ date ]</a>
+              <a href="thread.html#145">[ thread ]</a>
+              <a href="subject.html#145">[ subject ]</a>
+              <a href="author.html#145">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-05 14:32:27 +0200 (Thu, 05 Oct 2006)
+New Revision: 678
+
+Modified:
+   trunk/src/sst.py
+Log:
+Various minor fixes to movement code, and avoidance of errors raised
+by indexing with a float.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-05 11:35:24 UTC (rev 677)
++++ trunk/src/sst.py	2006-10-05 12:32:27 UTC (rev 678)
+@@ -1260,7 +1260,7 @@
+     proutn(&quot;***&quot;)
+     crmshp()
+     prout(_(&quot; heavily damaged.&quot;))
+-    icas = 10.0+20.0*random.random()
++    icas = 10 + random.randrange(20)
+     prout(_(&quot;***Sickbay reports %d casualties&quot;), icas)
+     game.casual += icas
+     game.state.crew -= icas
+@@ -2479,7 +2479,7 @@
+             if game.state.remcom == 0:
+                 unschedule(FTBEAM)
+                 continue
+-            i = random.random()*game.state.remcom+1.0
++            i = random.randrange(game.state.remcom)
+             yank = square(game.state.kcmdr[i].x-game.quadrant.x) + square(game.state.kcmdr[i].y-game.quadrant.y)
+             if istract or game.condition == &quot;docked&quot; or yank == 0:
+                 # Drats! Have to reschedule 
+@@ -2922,7 +2922,7 @@
+ 		stars += game.state.galaxy[nq.x][nq.y].stars
+ 	if stars == 0:
+ 	    return # nothing to supernova exists 
+-	num = random.random()*stars + 1
++	num = random.randrange(stars) + 1
+ 	for nq.x in range(GALSIZE):
+ 	    for nq.y in range(GALSIZE):
+ 		num -= game.state.galaxy[nq.x][nq.y].stars
+@@ -2943,7 +2943,7 @@
+     else:
+ 	ns = coord()
+ 	# we are in the quadrant! 
+-	num = random.random()* game.state.galaxy[nq.x][nq.y].stars + 1
++	num = random.randrange(game.state.galaxy[nq.x][nq.y].stars) + 1
+ 	for ns.x in range(QUADSIZE):
+ 	    for ns.y in range(QUADSIZE):
+ 		if game.quad[ns.x][ns.y]==IHSTAR:
+@@ -3821,12 +3821,10 @@
+         newcnd()
+         drawmaps(0)
+         setwnd(message_window)
+-
+     w.x = w.y = 0
+     if game.inorbit:
+ 	prout(_(&quot;Helmsman Sulu- \&quot;Leaving standard orbit.\&quot;&quot;))
+ 	game.inorbit = False
+-
+     angle = ((15.0 - game.direc) * 0.5235988)
+     deltax = -math.sin(angle)
+     deltay = math.cos(angle)
+@@ -3834,10 +3832,8 @@
+ 	bigger = math.fabs(deltax)
+     else:
+ 	bigger = math.fabs(deltay)
+-		
+     deltay /= bigger
+     deltax /= bigger
+-
+     # If tractor beam is to occur, don't move full distance 
+     if game.state.date+game.optime &gt;= scheduled(FTBEAM):
+ 	trbeam = True
+@@ -3849,13 +3845,12 @@
+     x = game.sector.x
+     y = game.sector.y
+     n = int(10.0*game.dist*bigger+0.5)
+-
+     if n &gt; 0:
+ 	for m in range(1, n+1):
+             x += deltax
+             y += deltay
+-	    w.x = int(x + 0.5)
+-	    w.y = int(y + 0.5)
++	    w.x = int(round(x))
++	    w.y = int(round(y))
+ 	    if not VALID_SECTOR(w.x, w.y):
+ 		# Leaving quadrant -- allow final enemy attack 
+ 		# Don't do it if being pushed by Nova 
+@@ -3874,31 +3869,30 @@
+ 		    if game.alldone:
+ 			return
+ 		# compute final position -- new quadrant and sector 
+-		x = QUADSIZE*(game.quadrant.x-1)+game.sector.x
+-		y = QUADSIZE*(game.quadrant.y-1)+game.sector.y
+-		w.x = int(x+10.0*game.dist*bigger*deltax+0.5)
+-		w.y = int(y+10.0*game.dist*bigger*deltay+0.5)
++		x = (QUADSIZE*game.quadrant.x)+game.sector.x
++		y = (QUADSIZE*game.quadrant.y)+game.sector.y
++		w.x = int(round(x+10.0*game.dist*bigger*deltax))
++		w.y = int(round(y+10.0*game.dist*bigger*deltay))
+ 		# check for edge of galaxy 
+ 		kinks = 0
+                 while True:
+-		    kink = 0
+-		    if w.x &lt;= 0:
+-			w.x = -w.x + 1
+-			kink = 1
+-		    if w.y &lt;= 0:
+-			w.y = -w.y + 1
+-			kink = 1
+-		    if w.x &gt; GALSIZE*QUADSIZE:
+-			w.x = (GALSIZE*QUADSIZE*2)+1 - w.x
+-			kink = 1
+-		    if w.y &gt; GALSIZE*QUADSIZE:
+-			w.y = (GALSIZE*QUADSIZE*2)+1 - w.y
+-			kink = 1
++		    kink = False
++		    if w.x &lt; 0:
++			w.x = -w.x
++			kink = True
++		    if w.y &lt; 0:
++			w.y = -w.y
++			kink = True
++		    if w.x &gt;= GALSIZE*QUADSIZE:
++			w.x = (GALSIZE*QUADSIZE*2) - w.x
++			kink = True
++		    if w.y &gt;= GALSIZE*QUADSIZE:
++			w.y = (GALSIZE*QUADSIZE*2) - w.y
++			kink = True
+ 		    if kink:
+-			kinks = 1
+-		if not kink:
+-                    break
+-
++			kinks += 1
++                    else:
++                        break
+ 		if kinks:
+ 		    game.nkinks += 1
+ 		    if game.nkinks == 3:
+@@ -3928,7 +3922,7 @@
+ 		# object encountered in flight path 
+ 		stopegy = 50.0*game.dist/game.optime
+ 		game.dist = distance(game.sector, w) / (QUADSIZE * 1.0)
+-                if iquad in (IHT. IHK, OHC, IHS, IHR, IHQUEST):
++                if iquad in (IHT, IHK, OHC, IHS, IHR, IHQUEST):
+ 		    game.sector = w
+ 		    ram(False, iquad, game.sector)
+ 		    final = game.sector
+@@ -5138,7 +5132,6 @@
+ def deathray():
+     # use the big zapper 
+     r = random.random()
+-	
+     game.ididit = False
+     skip(1)
+     chew()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000144.html">[Sst-commit-watch] r677 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000146.html">[Sst-commit-watch] r679 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#145">[ date ]</a>
+              <a href="thread.html#145">[ thread ]</a>
+              <a href="subject.html#145">[ subject ]</a>
+              <a href="author.html#145">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

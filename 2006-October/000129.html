@@ -1,0 +1,433 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r662 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r662%20-%20trunk/src&In-Reply-To=%3C200610041454.k94EsGKN002008%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000128.html">
+   <LINK REL="Next"  HREF="000130.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r662 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r662%20-%20trunk/src&In-Reply-To=%3C200610041454.k94EsGKN002008%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r662 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Oct  4 16:54:16 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000128.html">[Sst-commit-watch] r661 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000130.html">[Sst-commit-watch] r663 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#129">[ date ]</a>
+              <a href="thread.html#129">[ thread ]</a>
+              <a href="subject.html#129">[ subject ]</a>
+              <a href="author.html#129">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-04 16:54:15 +0200 (Wed, 04 Oct 2006)
+New Revision: 662
+
+Modified:
+   trunk/src/sst.py
+Log:
+Incor[porated io.c code into Python translation.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-04 02:22:51 UTC (rev 661)
++++ trunk/src/sst.py	2006-10-04 14:54:15 UTC (rev 662)
+@@ -6,7 +6,7 @@
+ an a lot of parallel arrays where a more modern language would use structures
+ or objects.
+ &quot;&quot;&quot;
+-import os, sys, math, curses, time
++import os, sys, math, curses, time, atexit, readline
+ 
+ SSTDOC = &quot;/usr/share/doc/sst/sst.doc&quot;
+ 
+@@ -3310,3 +3310,347 @@
+     fp.write(_(&quot;                                                        Your score:  %d\n\n&quot; % iscore))
+     fp.write(_(&quot;                                                    Klingons per stardate:  %.2f\n&quot; % perdate))
+     fp.close()
++
++# Code from io.c begins here
++
++rows = linecount = 0	# for paging 
++stdscr = None
++fullscreen_window = None
++srscan_window     = None
++report_window     = None
++status_window     = None
++lrscan_window     = None
++message_window    = None
++prompt_window     = None
++
++def outro():
++    &quot;wrap up, either normally or due to signal&quot;
++    if game.options &amp; OPTION_CURSES:
++	#clear()
++	#curs_set(1)
++	#refresh()
++	#resetterm()
++	#echo()
++	curses.endwin()
++	stdout.write('\n')
++    if logfp:
++	logfp.close()
++
++def iostart():
++    global stdscr
++    #setlocale(LC_ALL, &quot;&quot;)
++    #bindtextdomain(PACKAGE, LOCALEDIR)
++    #textdomain(PACKAGE)
++    if atexit.register(outro):
++	sys.stderr.write(&quot;Unable to register outro(), exiting...\n&quot;)
++	os.exit(1)
++    if not (game.options &amp; OPTION_CURSES):
++	ln_env = os.getenv(&quot;LINES&quot;)
++        if ln_env:
++            rows = ln_env
++        else:
++            rows = 25
++    else:
++	stdscr = curses.initscr()
++	stdscr.keypad(True)
++	#saveterm()
++	curses.nonl()
++	curses.cbreak()
++        curses.start_color()
++        curses.init_pair(curses.COLOR_BLACK, curses.COLOR_BLACK, curses.COLOR_BLACK)
++        curses.init_pair(curses.COLOR_GREEN, curses.COLOR_GREEN, curses.COLOR_BLACK)
++        curses.init_pair(curses.COLOR_RED, curses.COLOR_RED, curses.COLOR_BLACK)
++        curses.init_pair(curses.COLOR_CYAN, curses.COLOR_CYAN, curses.COLOR_BLACK)
++        curses.init_pair(curses.COLOR_WHITE, curses.COLOR_WHITE, curses.COLOR_BLACK)
++        curses.init_pair(curses.COLOR_MAGENTA, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
++        curses.init_pair(curses.COLOR_BLUE, curses.COLOR_BLUE, curses.COLOR_BLACK)
++        curses.init_pair(curses.COLOR_YELLOW, curses.COLOR_YELLOW, curses.COLOR_BLACK)
++	#noecho()
++        global fullscreen_window, srscan_window, report_window, status_window
++        global lrscan_window, message_window, prompt_window
++	fullscreen_window = stdscr
++	srscan_window     = curses.newwin(12, 25, 0,       0)
++	report_window     = curses.newwin(11, 0,  1,       25)
++	status_window     = curses.newwin(10, 0,  1,       39)
++	lrscan_window     = curses.newwin(5,  0,  0,       64) 
++	message_window    = curses.newwin(0,  0,  12,      0)
++	prompt_window     = curses.newwin(1,  0,  rows-2,  0) 
++	message_window.scrollok(True)
++	setwnd(fullscreen_window)
++	textcolor(DEFAULT)
++
++
++def waitfor():
++    &quot;wait for user action -- OK to do nothing if on a TTY&quot;
++    if game.options &amp; OPTION_CURSES:
++	stsdcr.getch()
++
++def announce():
++    skip(1)
++    if game.skill &gt; SKILL_FAIR:
++	prouts(_(&quot;[ANOUNCEMENT ARRIVING...]&quot;))
++    else:
++	prouts(_(&quot;[IMPORTANT ANNOUNCEMENT ARRIVING -- PRESS ENTER TO CONTINUE]&quot;))
++    skip(1)
++
++def pause_game():
++    if game.skill &gt; SKILL_FAIR:
++        prompt = _(&quot;[CONTINUE?]&quot;)
++    else:
++        prompt = _(&quot;[PRESS ENTER TO CONTINUE]&quot;)
++
++    if game.options &amp; OPTION_CURSES:
++        drawmaps(0)
++        setwnd(prompt_window)
++        prompt_window.wclear()
++        prompt_window.addstr(prompt)
++        prompt_window.getstr()
++        prompt_window.clear()
++        prompt_window.refresh()
++        setwnd(message_window)
++    else:
++        global linecount
++        stdout.write('\n')
++        proutn(prompt)
++        raw_input()
++        for j in range(0, rows):
++            stdout.write('\n')
++        linecount = 0
++
++def skip(i):
++    &quot;Skip i lines.  Pause game if this would cause a scrolling event.&quot;
++    while dummy in range(i):
++	if game.options &amp; OPTION_CURSES:
++            (y, x) = curwnd.getyx()
++            (my, mx) = curwnd.getmaxyx()
++	    if curwnd == message_window and y &gt;= my - 3:
++		pause_game()
++		clrscr()
++	    else:
++		proutn(&quot;\n&quot;)
++	else:
++            global linecount
++	    linecount += 1
++	    if linecount &gt;= rows:
++		pause_game()
++	    else:
++		stdout.write('\n')
++
++def proutn(line):
++    &quot;Utter a line with no following line feed.&quot;
++    if game.options &amp; OPTION_CURSES:
++	curwnd.addstr(line)
++	curwnd.refresh()
++    else:
++	stdout.write(line)
++
++def prout(line):
++    proutn(line)
++    skip(1)
++
++def prouts(line):
++    &quot;print slowly!&quot; 
++    for c in line:
++	curses.delay_output(30)
++	proutn(c)
++	if game.options &amp; OPTION_CURSES:
++	    wrefresh(curwnd)
++	else:
++	    sys.stdout.flush()
++    curses.delay_output(300)
++
++def cgetline(line, max):
++    &quot;Get a line of input.&quot;
++    if game.options &amp; OPTION_CURSES:
++	line = curwnd.getstr() + &quot;\n&quot;
++	curwnd.refresh()
++    else:
++	if replayfp and not replayfp.closed:
++	    line = replayfp.readline()
++	else:
++	    sys.stdin.readline()
++    if logfp:
++	logfp.write(line)
++
++def setwnd(wnd):
++    &quot;Change windows -- OK for this to be a no-op in tty mode.&quot; 
++    if game.options &amp; OPTION_CURSES:
++        curwnd = wnd
++        curses.curs_set(wnd == fullscreen_window or wnd == message_window or wnd == prompt_window)
++
++def clreol():
++    &quot;Clear to end of line -- can be a no-op in tty mode&quot; 
++    if game.options &amp; OPTION_CURSES:
++        wclrtoeol(curwnd)
++        wrefresh(curwnd)
++
++def clrscr():
++    &quot;Clear screen -- can be a no-op in tty mode.&quot;
++    global linecount
++    if game.options &amp; OPTION_CURSES:
++       curwnd.clear()
++       curwnd.move(0, 0)
++       curwnd.refresh()
++    linecount = 0
++
++def textcolor(color):
++    &quot;Set the current text color&quot;
++    if game.options &amp; OPTION_CURSES:
++	if color == DEFAULT: 
++	    curwnd.attrset(0)
++	elif color == BLACK: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_BLACK))
++	elif color == BLUE: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_BLUE))
++	elif color == GREEN: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_GREEN))
++	elif color == CYAN: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_CYAN))
++	elif color == RED: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_RED))
++	elif color == MAGENTA: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_MAGENTA))
++	elif color == BROWN: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_YELLOW))
++	elif color == LIGHTGRAY: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_WHITE))
++	elif color == DARKGRAY: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_BLACK) | curses.A_BOLD)
++	elif color == LIGHTBLUE: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_BLUE) | curses.A_BOLD)
++	elif color == LIGHTGREEN: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_GREEN) | curses.A_BOLD)
++	elif color == LIGHTCYAN: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_CYAN) | curses.A_BOLD)
++	elif color == LIGHTRED: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_RED) | curses.A_BOLD)
++	elif color == LIGHTMAGENTA: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_MAGENTA) | curses.A_BOLD)
++	elif color == YELLOW: 
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_YELLOW) | curses.A_BOLD)
++	elif color == WHITE:
++	    curwnd.attron(curses.COLOR_PAIR(curses.COLOR_WHITE) | curses.A_BOLD)
++
++def highvideo():
++    &quot;Set highlight video, if this is reasonable.&quot;
++    if game.options &amp; OPTION_CURSES:
++	curwnd.attron(curses.A_REVERSE)
++ 
++def commandhook(cmd, before):
++    pass
++
++#
++# Things past this point have policy implications.
++# 
++
++def drawmaps(mode):
++    &quot;Hook to be called after moving to redraw maps.&quot;
++    if game.options &amp; OPTION_CURSES:
++	if mode == 1:
++	    sensor()
++        setwnd(srscan_window)
++        curwnd.move(0, 0)
++        srscan()
++	if mode != 2:
++	    setwnd(status_window)
++	    status_window.clear()
++	    status_window.move(0, 0)
++	    setwnd(report_window)
++	    report_window.clear()
++	    report_window.move(0, 0)
++	    status(0)
++	    setwnd(lrscan_window)
++	    lrscan_window.clear()
++	    lrscan_window.move(0, 0)
++	    lrscan()
++
++def put_srscan_sym(w, sym):
++    &quot;Emit symbol for short-range scan.&quot;
++    srscan_window.move(w.x+1, w.y*2+2)
++    srscan_window.addch(sym)
++    srscan_window.refresh()
++
++def boom(w):
++    &quot;Enemy fall down, go boom.&quot;  
++    if game.options &amp; OPTION_CURSES:
++	drawmaps(2)
++	setwnd(srscan_window)
++	srscan_window.attron(curses.A_REVERSE)
++	put_srscan_sym(w, game.quad[w.x][w.y])
++	#sound(500)
++	#delay(1000)
++	#nosound()
++	srscan_window.attroff(curses.A_REVERSE)
++	put_srscan_sym(w, game.quad[w.x][w.y])
++	curses.delay_output(500)
++	setwnd(message_window) 
++
++def warble():
++    &quot;Sound and visual effects for teleportation.&quot;
++    if game.options &amp; OPTION_CURSES:
++	drawmaps(2)
++	setwnd(message_window)
++	#sound(50)
++    prouts(&quot;     . . . . .     &quot;)
++    if game.options &amp; OPTION_CURSES:
++	#curses.delay_output(1000)
++	#nosound()
++        pass
++
++def tracktorpedo(w, l, i, n, iquad):
++    &quot;Torpedo-track animation.&quot; 
++    if not game.options &amp; OPTION_CURSES:
++	if l == 1:
++	    if n != 1:
++		skip(1)
++		proutn(_(&quot;Track for torpedo number %d-  &quot; % i))
++	    else:
++		skip(1)
++		proutn(_(&quot;Torpedo track- &quot;))
++	elif l==4 or l==9: 
++	    skip(1)
++	proutn(&quot;%d - %d   &quot; % (w.x, w.y))
++    else:
++	if not damaged(DSRSENS) or game.condition==&quot;docked&quot;:
++	    if i != 1 and l == 1:
++		drawmaps(2)
++		curses.delay_output(400)
++	    if (iquad==IHDOT) or (iquad==IHBLANK):
++		put_srscan_sym(w, '+')
++		#sound(l*10)
++		#curses.delay_output(100)
++		#nosound()
++		put_srscan_sym(w, iquad)
++	    else:
++		curwnd.attron(curses.A_REVERSE)
++		put_srscan_sym(w, iquad)
++		#sound(500)
++		#curses.delay_output(1000)
++		#nosound()
++		curwnd.attroff(curses.A_REVERSE)
++		put_srscan_sym(w, iquad)
++	else:
++	    proutn(&quot;%d - %d   &quot; % (w.x, w.y))
++
++def makechart():
++    &quot;Display the current galaxy chart.&quot;
++    if game.options &amp; OPTION_CURSES:
++	setwnd(message_window)
++	message_window.clear()
++    chart()
++    if game.options &amp; OPTION_TTY:
++	skip(1)
++
++NSYM	= 14
++
++def prstat(txt, data):
++    proutn(txt)
++    if game.options &amp; OPTION_CURSES:
++	skip(1)
++	setwnd(status_window)
++    else:
++        proutn(&quot; &quot; * NSYM - len(tx))
++    vproutn(data)
++    skip(1)
++    if game.options &amp; OPTION_CURSES:
++	setwnd(report_window)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000128.html">[Sst-commit-watch] r661 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000130.html">[Sst-commit-watch] r663 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#129">[ date ]</a>
+              <a href="thread.html#129">[ thread ]</a>
+              <a href="subject.html#129">[ subject ]</a>
+              <a href="author.html#129">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

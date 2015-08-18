@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r674 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r674%20-%20trunk/src&In-Reply-To=%3C200610050912.k959C6MJ003479%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000140.html">
+   <LINK REL="Next"  HREF="000142.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r674 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r674%20-%20trunk/src&In-Reply-To=%3C200610050912.k959C6MJ003479%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r674 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct  5 11:12:06 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000140.html">[Sst-commit-watch] r673 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000142.html">[Sst-commit-watch] r675 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#141">[ date ]</a>
+              <a href="thread.html#141">[ thread ]</a>
+              <a href="subject.html#141">[ subject ]</a>
+              <a href="author.html#141">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-05 11:12:06 +0200 (Thu, 05 Oct 2006)
+New Revision: 674
+
+Modified:
+   trunk/src/sst.py
+Log:
+status command is almost working.  Must resolve the mess with planet pointers.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-05 08:58:28 UTC (rev 673)
++++ trunk/src/sst.py	2006-10-05 09:12:06 UTC (rev 674)
+@@ -3731,7 +3731,7 @@
+ 	    setwnd(report_window)
+ 	    report_window.clear()
+ 	    report_window.move(0, 0)
+-	    status(0)
++	    status()
+ 	    setwnd(lrscan_window)
+ 	    lrscan_window.clear()
+ 	    lrscan_window.move(0, 0)
+@@ -3822,8 +3822,8 @@
+ 	skip(1)
+ 	setwnd(status_window)
+     else:
+-        proutn(&quot; &quot; * NSYM - len(tx))
+-    vproutn(data)
++        proutn(&quot; &quot; * (NSYM - len(txt)))
++    proutn(data)
+     skip(1)
+     if game.options &amp; OPTION_CURSES:
+ 	setwnd(report_window)
+@@ -5484,13 +5484,13 @@
+     else:
+ 	proutn(&quot;- &quot;)
+ 
+-def status(req):
++def status(req=0):
+     # print status report lines 
+ 
+     if not req or req == 1:
+ 	prstat(_(&quot;Stardate&quot;), _(&quot;%.1f, Time Left %.2f&quot;) \
+                % (game.state.date, game.state.remtime))
+-    elif not req or req == 2:
++    if not req or req == 2:
+ 	if game.condition != &quot;docked&quot;:
+ 	    newcnd()
+         dam = 0
+@@ -5498,40 +5498,40 @@
+ 	    if game.damage[t]&gt;0: 
+ 		dam += 1
+ 	prstat(_(&quot;Condition&quot;), _(&quot;%s, %i DAMAGES&quot;) % (game.condition.upper(), dam))
+-    elif not req or req == 3:
++    if not req or req == 3:
+ 	prstat(_(&quot;Position&quot;), &quot;%s , %s&quot; % (game.quadrant, game.sector))
+-    elif not req or req == 4:
++    if not req or req == 4:
+ 	if damaged(DLIFSUP):
+ 	    if game.condition == &quot;docked&quot;:
+-		sprintf(s, _(&quot;DAMAGED, Base provides&quot;))
++		s = _(&quot;DAMAGED, Base provides&quot;)
+ 	    else:
+-		sprintf(s, _(&quot;DAMAGED, reserves=%4.2f&quot;) % game.lsupres)
++		s = _(&quot;DAMAGED, reserves=%4.2f&quot;) % game.lsupres
+ 	else:
+-	    sprintf(s, _(&quot;ACTIVE&quot;))
++	    s = _(&quot;ACTIVE&quot;)
+ 	prstat(_(&quot;Life Support&quot;), s)
+-    elif not req or req == 5:
+-	prstat(_(&quot;Warp Factor&quot;), &quot;%.1f&quot; % (game.warpfac))
+-    elif not req or req == 6:
++    if not req or req == 5:
++	prstat(_(&quot;Warp Factor&quot;), &quot;%.1f&quot; % game.warpfac)
++    if not req or req == 6:
+         extra = &quot;&quot;
+         if game.icrystl and (game.options &amp; OPTION_SHOWME):
+             extra = _(&quot; (have crystals)&quot;)
+-	prstat(_(&quot;Energy&quot;), &quot;%.2f%s&quot; % game.energy, extra)
+-    elif not req or req == 7:
++	prstat(_(&quot;Energy&quot;), &quot;%.2f%s&quot; % (game.energy, extra))
++    if not req or req == 7:
+ 	prstat(_(&quot;Torpedoes&quot;), &quot;%d&quot; % (game.torps))
+-    elif not req or req == 8:
++    if not req or req == 8:
+ 	if damaged(DSHIELD):
+-	    strcpy(s, _(&quot;DAMAGED,&quot;))
++	    s = _(&quot;DAMAGED,&quot;)
+ 	elif game.shldup:
+-	    strcpy(s, _(&quot;UP,&quot;))
++	    s = _(&quot;UP,&quot;)
+ 	else:
+-	    strcpy(s, _(&quot;DOWN,&quot;))
++	    s = _(&quot;DOWN,&quot;)
+ 	data = _(&quot; %d%% %.1f units&quot;) \
+                % (int((100.0*game.shield)/game.inshld + 0.5), game.shield)
+-	prstat(_(&quot;Shields&quot;), s)
+-    elif not req or req == 9:
++	prstat(_(&quot;Shields&quot;), s+data)
++    if not req or req == 9:
+         prstat(_(&quot;Klingons Left&quot;), &quot;%d&quot; \
+                % (game.state.remkl + game.state.remcom + game.state.nscrem))
+-    elif not req or req == 10:
++    if not req or req == 10:
+ 	if game.options &amp; OPTION_WORLDS:
+ 	    plnet = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet
+ 	    if plnet != NOPLANET and game.state.planets[plnet].inhabited:
+@@ -6576,8 +6576,10 @@
+ 	    clrscr()
+ 	    setwnd(message_window)
+ 	    clrscr()
+-            cmd = citem.upper()
+-            if cmd in commands:
++            candidates = filter(lambda x: x.startswith(citem.upper()),
++                                commands)
++            if len(candidates) == 1:
++                cmd = candidates[0]
+                 break
+             else:
+                 listCommands()
+@@ -6585,7 +6587,7 @@
+ 	if cmd == &quot;SRSCAN&quot;:		# srscan
+ 	    srscan()
+ 	elif cmd == &quot;STATUS&quot;:		# status
+-	    status(0)
++	    status()
+ 	elif cmd == &quot;REQUEST&quot;:		# status request 
+ 	    request()
+ 	elif cmd == &quot;LRSCAN&quot;:		# long range scan
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000140.html">[Sst-commit-watch] r673 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000142.html">[Sst-commit-watch] r675 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#141">[ date ]</a>
+              <a href="thread.html#141">[ thread ]</a>
+              <a href="subject.html#141">[ subject ]</a>
+              <a href="author.html#141">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

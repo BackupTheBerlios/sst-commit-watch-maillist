@@ -1,0 +1,734 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r611 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r611%20-%20trunk/src&In-Reply-To=%3C200609200531.k8K5VM2P022078%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000077.html">
+   <LINK REL="Next"  HREF="000079.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r611 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r611%20-%20trunk/src&In-Reply-To=%3C200609200531.k8K5VM2P022078%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r611 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 07:31:22 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000077.html">[Sst-commit-watch] r610 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000079.html">[Sst-commit-watch] r612 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#78">[ date ]</a>
+              <a href="thread.html#78">[ thread ]</a>
+              <a href="subject.html#78">[ subject ]</a>
+              <a href="author.html#78">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 07:31:21 +0200 (Wed, 20 Sep 2006)
+New Revision: 611
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/io.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+Change the condition field from an uint with #defines to an enum.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-20 05:18:07 UTC (rev 610)
++++ trunk/src/ai.c	2006-09-20 05:31:21 UTC (rev 611)
+@@ -27,7 +27,7 @@
+     /* print escape message and move out of quadrant.
+        We know this if either short or long range sensors are working */
+     if (!damaged(DSRSENS) || !damaged(DLRSENS) ||
+-	game.condit == IHDOCKED) {
++	game.condition == docked) {
+ 	crmena(1, ienm, sector, game.ks[loccom]);
+ 	prout(_(&quot; escapes to %s (and regains strength).&quot;),
+ 	      cramlc(quadrant, iq));
+@@ -40,7 +40,7 @@
+     game.kdist[loccom] = game.kdist[game.nenhere];
+     game.klhere--;
+     game.nenhere--;
+-    if (game.condit != IHDOCKED) newcnd();
++    if (game.condition != docked) newcnd();
+     /* Handle global matters related to escape */
+     game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons--;
+     game.state.galaxy[iq.x][iq.y].klingons++;
+@@ -85,7 +85,7 @@
+ 
+     /* If SC, check with spy to see if should hi-tail it */
+     if (ienm==IHS &amp;&amp;
+-	(game.kpower[loccom] &lt;= 500.0 || (game.condit==IHDOCKED &amp;&amp; !damaged(DPHOTON)))) {
++	(game.kpower[loccom] &lt;= 500.0 || (game.condition==docked &amp;&amp; !damaged(DPHOTON)))) {
+ 	irun = true;
+ 	motion = -QUADSIZE;
+     }
+@@ -146,12 +146,12 @@
+ 	    forces += 1000.0;
+ 	}
+ 	motion = 0;
+-	if (forces &lt;= 1000.0 &amp;&amp; game.condit != IHDOCKED) /* Typical situation */
++	if (forces &lt;= 1000.0 &amp;&amp; game.condition != docked) /* Typical situation */
+ 	    motion = ((forces+200.0*Rand())/150.0) - 5.0;
+ 	else {
+ 	    if (forces &gt; 1000.0) /* Very strong -- move in for kill */
+ 		motion = (1.0-square(Rand()))*dist1 + 1.0;
+-	    if (game.condit==IHDOCKED &amp;&amp; (game.options &amp; OPTION_BASE)) /* protected by base -- back off ! */
++	    if (game.condition==docked &amp;&amp; (game.options &amp; OPTION_BASE)) /* protected by base -- back off ! */
+ 		motion -= game.skill*(2.0-square(Rand()));
+ 	}
+ 	if (idebug)
+@@ -239,7 +239,7 @@
+ 	/* it moved */
+ 	game.ks[loccom] = next;
+ 	game.kdist[loccom] = game.kavgd[loccom] = distance(game.sector, next);
+-	if (!damaged(DSRSENS) || game.condit == IHDOCKED) {
++	if (!damaged(DSRSENS) || game.condition == docked) {
+ 	    proutn(&quot;***&quot;);
+ 	    cramen(ienm);
+ 	    proutn(_(&quot; from %s&quot;), cramlc(2, com));
+@@ -324,7 +324,7 @@
+ 	game.kpower[i] = game.kpower[game.nenhere];
+ 	game.klhere--;
+ 	game.nenhere--;
+-	if (game.condit!=IHDOCKED) newcnd();
++	if (game.condition!=docked) newcnd();
+ 	sortkl();
+     }
+     /* check for a helpful planet */
+@@ -334,7 +334,7 @@
+ 	    /* destroy the planet */
+ 	    DESTROY(&amp;game.state.plnets[i]);
+ 	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET;
+-	    if (!damaged(DRADIO) || game.condit == IHDOCKED) {
++	    if (!damaged(DRADIO) || game.condition == docked) {
+ 		if (*ipage==0) pause_game(1);
+ 		*ipage = 1;
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;));
+@@ -487,7 +487,7 @@
+ 	    schedule(FSCDBAS, 1.0 +2.0*Rand());
+ 	    if (is_scheduled(FCDBAS)) 
+ 		postpone(FSCDBAS, scheduled(FCDBAS)-game.state.date);
+-	    if (damaged(DRADIO) &amp;&amp; game.condit != IHDOCKED)
++	    if (damaged(DRADIO) &amp;&amp; game.condition != docked)
+ 		return; /* no warning */
+ 	    game.iseenit = true;
+ 	    if (*ipage == 0)  pause_game(1);
+@@ -510,7 +510,7 @@
+     if (
+ 	!idebug &amp;&amp;
+ 	(Rand() &gt; 0.2 ||
+-	 (damaged(DRADIO) &amp;&amp; game.condit != IHDOCKED) ||
++	 (damaged(DRADIO) &amp;&amp; game.condition != docked) ||
+ 	 !game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].charted))
+ 	return;
+     if (*ipage==0) pause_game(1);
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-20 05:18:07 UTC (rev 610)
++++ trunk/src/battle.c	2006-09-20 05:31:21 UTC (rev 611)
+@@ -62,7 +62,7 @@
+ 	}
+ 	game.shldup = true;
+ 	game.shldchg = 1;
+-	if (game.condit != IHDOCKED) game.energy -= 50.0;
++	if (game.condition != docked) game.energy -= 50.0;
+ 	prout(_(&quot;Shields raised.&quot;));
+ 	if (game.energy &lt;= 0) {
+ 	    skip(1);
+@@ -196,7 +196,7 @@
+     if (fabs(deltay) &gt; bigger) bigger = fabs(deltay);
+     deltax /= bigger;
+     deltay /= bigger;
+-    if (!damaged(DSRSENS) || game.condit==IHDOCKED) 
++    if (!damaged(DSRSENS) || game.condition==docked) 
+ 	setwnd(srscan_window);
+     else 
+ 	setwnd(message_window);
+@@ -225,7 +225,7 @@
+ 	    *hit = fabs(*hit);
+ 	    newcnd(); /* we're blown out of dock */
+ 	    /* We may be displaced. */
+-	    if (game.landed==1 || game.condit==IHDOCKED) return; /* Cheat if on a planet */
++	    if (game.landed==1 || game.condition==docked) return; /* Cheat if on a planet */
+ 	    ang = angle + 2.5*(Rand()-0.5);
+ 	    temp = fabs(sin(ang));
+ 	    if (fabs(cos(ang)) &gt; temp) temp = fabs(cos(ang));
+@@ -500,7 +500,7 @@
+ 	/* compute hit strength and diminsh shield power */
+ 	r = Rand();
+ 	/* Increase chance of photon torpedos if docked or enemy energy low */
+-	if (game.condit == IHDOCKED) r *= 0.25;
++	if (game.condition == docked) r *= 0.25;
+ 	if (game.kpower[loop] &lt; 500) r *= 0.25; 
+ 	jay = game.ks[loop];
+ 	iquad = game.quad[jay.x][jay.y];
+@@ -512,7 +512,7 @@
+ 	    (iquad==IHQUEST &amp;&amp; r &gt; 0.05);
+ 	if (itflag) {
+ 	    /* Enemy uses phasers */
+-	    if (game.condit == IHDOCKED) continue; /* Don't waste the effort! */
++	    if (game.condition == docked) continue; /* Don't waste the effort! */
+ 	    attempt = true; /* Attempt to attack */
+ 	    dustfac = 0.8+0.05*Rand();
+ 	    hit = game.kpower[loop]*pow(dustfac,game.kavgd[loop]);
+@@ -537,9 +537,9 @@
+ 		return; /* Supernova or finished */
+ 	    if (hit == 0) continue;
+ 	}
+-	if (game.shldup || game.shldchg != 0 || game.condit==IHDOCKED) {
++	if (game.shldup || game.shldchg != 0 || game.condition==docked) {
+ 	    /* shields will take hits */
+-	    double absorb, hitsh, propor = pfac*game.shield*(game.condit==IHDOCKED ? 2.1 : 1.0);
++	    double absorb, hitsh, propor = pfac*game.shield*(game.condition==docked ? 2.1 : 1.0);
+ 	    if(propor &lt; 0.1) propor = 0.1;
+ 	    hitsh = propor*chgfac*hit+1.0;
+ 	    atackd = true;
+@@ -547,7 +547,7 @@
+ 	    if (absorb &gt; game.shield) absorb = game.shield;
+ 	    game.shield -= absorb;
+ 	    hit -= hitsh;
+-	    if (game.condit==IHDOCKED) dock(false);
++	    if (game.condition==docked) dock(false);
+ 	    if (propor &gt; 0.1 &amp;&amp; hit &lt; 0.005*game.energy) continue;
+ 	}
+ 	/* It's a hit -- print out hit size */
+@@ -570,7 +570,7 @@
+ 	hittot += hit;
+ 	fry(hit);
+ 	game.energy -= hit;
+-	if (game.condit==IHDOCKED) 
++	if (game.condition==docked) 
+ 	    dock(false);
+     }
+     if (game.energy &lt;= 0) {
+@@ -578,7 +578,7 @@
+ 	finish(FBATTLE);
+ 	return;
+     }
+-    if (!attempt &amp;&amp; game.condit == IHDOCKED)
++    if (!attempt &amp;&amp; game.condition == docked)
+ 	prout(_(&quot;***Enemies decide against attacking your ship.&quot;));
+     if (!atackd) return;
+     percent = 100.0*pfac*game.shield+0.5;
+@@ -674,7 +674,7 @@
+ 
+     game.state.remtime = game.state.remres/(game.state.remkl + 4*game.state.remcom);
+ 
+-    /* Remove enemy ship from arrays describing local game.conditions */
++    /* Remove enemy ship from arrays describing local conditions */
+     if (is_scheduled(FCDBAS) &amp;&amp; game.battle.x==game.quadrant.x &amp;&amp; game.battle.y==game.quadrant.y &amp;&amp; type==IHC)
+ 	unschedule(FCDBAS);
+     for_local_enemies(i)
+@@ -818,7 +818,7 @@
+     /* Loop for moving &lt;n&gt; torpedoes */
+     osuabor = false;
+     for (i = 1; i &lt;= n &amp;&amp; !osuabor; i++) {
+-	if (game.condit != IHDOCKED) game.torps--;
++	if (game.condition != docked) game.torps--;
+ 	r = (Rand()+Rand())*0.5 -0.5;
+ 	if (fabs(r) &gt;= 0.47) {
+ 	    /* misfire! */
+@@ -837,7 +837,7 @@
+ 		break;
+ 	    }
+ 	}
+-	if (game.shldup || game.condit == IHDOCKED) 
++	if (game.shldup || game.condition == docked) 
+ 	    r *= 1.0 + 0.0001*game.shield;
+ 	torpedo(course[i], r, game.sector, &amp;dummy, i, n);
+ 	if (game.alldone || game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+@@ -917,7 +917,7 @@
+     skip(1);
+     /* SR sensors and Computer */
+     if (damaged(DSRSENS) || damaged(DCOMPTR)) ipoop = false;
+-    if (game.condit == IHDOCKED) {
++    if (game.condition == docked) {
+ 	prout(_(&quot;Phasers can't be fired through base shields.&quot;));
+ 	chew();
+ 	return;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-20 05:18:07 UTC (rev 610)
++++ trunk/src/events.c	2006-09-20 05:31:21 UTC (rev 611)
+@@ -121,7 +121,7 @@
+ 	    return;
+ 	}
+ 	/* Is life support adequate? */
+-	if (damaged(DLIFSUP) &amp;&amp; game.condit != IHDOCKED) {
++	if (damaged(DLIFSUP) &amp;&amp; game.condition != docked) {
+ 	    if (game.lsupres &lt; xtime &amp;&amp; game.damage[DLIFSUP] &gt; game.lsupres) {
+ 		finish(FLIFESUP);
+ 		return;
+@@ -131,7 +131,7 @@
+ 	}
+ 	/* Fix devices */
+ 	repair = xtime;
+-	if (game.condit == IHDOCKED) repair /= game.docfac;
++	if (game.condition == docked) repair /= game.docfac;
+ 	/* Don't fix Deathray here */
+ 	for (l=0; l&lt;NDEVICES; l++)
+ 	    if (game.damage[l] &gt; 0.0 &amp;&amp; l != DDRAY)
+@@ -162,7 +162,7 @@
+ 	case FSPY: /* Check with spy to see if S.C. should tractor beam */
+ 	    if (game.state.nscrem == 0 ||
+ 		ictbeam || istract ||
+-		game.condit==IHDOCKED || game.isatb==1 || game.iscate==1) return;
++		game.condition==docked || game.isatb==1 || game.iscate==1) return;
+ 	    if (game.ientesc ||
+ 		(game.energy &lt; 2000 &amp;&amp; game.torps &lt; 4 &amp;&amp; game.shield &lt; 1250) ||
+ 		(damaged(DPHASER) &amp;&amp; (damaged(DPHOTON) || game.torps &lt; 4)) ||
+@@ -183,7 +183,7 @@
+ 		}
+ 		i = Rand()*game.state.remcom+1.0;
+ 		yank = square(game.state.kcmdr[i].x-game.quadrant.x) + square(game.state.kcmdr[i].y-game.quadrant.y);
+-		if (istract || game.condit == IHDOCKED || yank == 0) {
++		if (istract || game.condition == docked || yank == 0) {
+ 		    /* Drats! Have to reschedule */
+ 		    schedule(FTBEAM, 
+ 			     game.optime + expran(1.5*game.intime/game.state.remcom));
+@@ -284,7 +284,7 @@
+ 		postpone(FCDBAS, scheduled(FSCDBAS)-game.state.date);
+ 	    game.future[FBATTAK].date = game.future[FCDBAS].date + expran(0.3*game.intime);
+ 	    game.iseenit = false;
+-	    if (!damaged(DRADIO) &amp;&amp; game.condit != IHDOCKED) 
++	    if (!damaged(DRADIO) &amp;&amp; game.condition != docked) 
+ 		break; /* No warning :-( */
+ 	    game.iseenit = true;
+ 	    if (!ipage) pause_game(1);
+@@ -333,7 +333,7 @@
+ 		prout(_(&quot;Spock-  \&quot;Captain, I believe the starbase has been destroyed.\&quot;&quot;));
+ 	    }
+ 	    else if (game.state.rembase != 1 &amp;&amp;
+-		     (!damaged(DRADIO) || game.condit == IHDOCKED)) {
++		     (!damaged(DRADIO) || game.condition == docked)) {
+ 		/* Get word via subspace radio */
+ 		if (!ipage) pause_game(1);
+ 		ipage = true;
+@@ -380,7 +380,7 @@
+ 		if (!VALID_QUADRANT(i, j) ||
+ 		    game.state.galaxy[game.probec.x][game.probec.y].supernova) {
+ 		    // Left galaxy or ran into supernova
+-		    if (!damaged(DRADIO) || game.condit == IHDOCKED) {
++		    if (!damaged(DRADIO) || game.condition == docked) {
+ 			if (ipage==0) pause_game(1);
+ 			ipage = 1;
+ 			skip(1);
+@@ -394,7 +394,7 @@
+ 		    unschedule(FDSPROB);
+ 		    break;
+ 		}
+-		if (!damaged(DRADIO) || game.condit == IHDOCKED) {
++		if (!damaged(DRADIO) || game.condition == docked) {
+ 		    if (ipage==0) pause_game(1);
+ 		    ipage = 1;
+ 		    skip(1);
+@@ -406,7 +406,7 @@
+ 	    pdest = &amp;game.state.galaxy[game.probec.x][game.probec.y];
+ 	    /* Update star chart if Radio is working or have access to
+ 	       radio. */
+-	    if (!damaged(DRADIO) || game.condit == IHDOCKED) {
++	    if (!damaged(DRADIO) || game.condition == docked) {
+ 		struct page *chp = &amp;game.state.chart[game.probec.x][game.probec.y];
+ 
+ 		chp-&gt;klingons = pdest-&gt;klingons;
+@@ -450,7 +450,7 @@
+ 	    q-&gt;status = distressed;
+ 
+ 	    /* tell the captain about it if we can */
+-	    if (!damaged(DRADIO) || game.condit == IHDOCKED)
++	    if (!damaged(DRADIO) || game.condition == docked)
+ 	    {
+ 		prout(&quot;Uhura- Captain, %s in %s reports it is under attack&quot;,
+ 		      systemname(q-&gt;planet), cramlc(quadrant, w));
+@@ -474,7 +474,7 @@
+ 	    ev2-&gt;quadrant = ev-&gt;quadrant;
+ 
+ 	    /* report the disaster if we can */
+-	    if (!damaged(DRADIO) || game.condit == IHDOCKED)
++	    if (!damaged(DRADIO) || game.condition == docked)
+ 	    {
+ 		prout(&quot;Uhura- We've lost contact with starsystem %s&quot;,
+ 		      systemname(q-&gt;planet));
+@@ -527,7 +527,7 @@
+ 	    /* recompute time left */
+ 	    game.state.remtime = game.state.remres/(game.state.remkl+4*game.state.remcom);
+ 	    /* report the disaster if we can */
+-	    if (!damaged(DRADIO) || game.condit == IHDOCKED)
++	    if (!damaged(DRADIO) || game.condition == docked)
+ 	    {
+ 		if (same(game.quadrant, w)) {
+ 		    prout(&quot;Spock- sensors indicate the Klingons have&quot;);
+@@ -592,7 +592,7 @@
+ 	if (game.alldone) return;
+ 	delay -= temp;
+ 	/* Repair Deathray if long rest at starbase */
+-	if (origTime-delay &gt;= 9.99 &amp;&amp; game.condit == IHDOCKED)
++	if (origTime-delay &gt;= 9.99 &amp;&amp; game.condition == docked)
+ 	    game.damage[DDRAY] = 0.0;
+     } while 
+ 	// leave if quadrant supernovas
+@@ -819,7 +819,7 @@
+ 
+     if (!same(nq, game.quadrant) || game.justin) {
+ 	/* it isn't here, or we just entered (treat as enroute) */
+-	if (!damaged(DRADIO) || game.condit == IHDOCKED) {
++	if (!damaged(DRADIO) || game.condition == docked) {
+ 	    skip(1);
+ 	    prout(_(&quot;Message from Starfleet Command       Stardate %.2f&quot;), game.state.date);
+ 	    prout(_(&quot;     Supernova in %s; caution advised.&quot;),
+@@ -906,7 +906,7 @@
+ 	game.state.nplankl += npdead;
+     }
+     /* mark supernova in galaxy and in star chart */
+-    if (same(game.quadrant, nq) || !damaged(DRADIO) || game.condit == IHDOCKED)
++    if (same(game.quadrant, nq) || !damaged(DRADIO) || game.condition == docked)
+ 	game.state.galaxy[nq.x][nq.y].supernova = true;
+     /* If supernova destroys last Klingons give special message */
+     if (KLINGREM==0 &amp;&amp; !same(nq, game.quadrant)) {
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-20 05:18:07 UTC (rev 610)
++++ trunk/src/io.c	2006-09-20 05:31:21 UTC (rev 611)
+@@ -397,7 +397,7 @@
+ 	    skip(1);
+ 	proutn(&quot;%d - %d   &quot;, w.x, w.y);
+     } else {
+-	if (!damaged(DSRSENS) || game.condit==IHDOCKED) {
++	if (!damaged(DSRSENS) || game.condition==docked) {
+ 	    if (i != 1 &amp;&amp; l == 1) {
+ 		drawmaps(2);
+ 		delay(400);
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-20 05:18:07 UTC (rev 610)
++++ trunk/src/moving.c	2006-09-20 05:31:21 UTC (rev 611)
+@@ -33,7 +33,7 @@
+     /* If tractor beam is to occur, don't move full distance */
+     if (game.state.date+game.optime &gt;= scheduled(FTBEAM)) {
+ 	trbeam = true;
+-	game.condit = IHRED;
++	game.condition = red;
+ 	game.dist = game.dist*(scheduled(FTBEAM)-game.state.date)/game.optime + 0.1;
+ 	game.optime = scheduled(FTBEAM) - game.state.date + 1e-5;
+     }
+@@ -57,7 +57,7 @@
+ 			game.kavgd[m] = 0.5 * (finald + game.kdist[m]);
+ 		    }
+ 		    /*
+-		     * Stas Sergeev added the game.condition
++		     * Stas Sergeev added the condition
+ 		     * that attacks only happen if Klingons
+ 		     * are present and your skill is good.
+ 		     */
+@@ -211,7 +211,7 @@
+ /* dock our ship at a starbase */
+ {
+     chew();
+-    if (game.condit == IHDOCKED &amp;&amp; verbose) {
++    if (game.condition == docked &amp;&amp; verbose) {
+ 	prout(_(&quot;Already docked.&quot;));
+ 	return;
+     }
+@@ -224,7 +224,7 @@
+ 	prout(_(&quot; not adjacent to base.&quot;));
+ 	return;
+     }
+-    game.condit = IHDOCKED;
++    game.condition = docked;
+     if (verbose) prout(_(&quot;Docked.&quot;));
+     game.ididit = true;
+     if (game.energy &lt; game.inenrg) game.energy = game.inenrg;
+@@ -857,7 +857,7 @@
+     if (is_scheduled(FDSPROB)) {
+ 	chew();
+ 	skip(1);
+-	if (damaged(DRADIO) &amp;&amp; game.condit != IHDOCKED) {
++	if (damaged(DRADIO) &amp;&amp; game.condition != docked) {
+ 	    prout(_(&quot;Spock-  \&quot;Records show the previous probe has not yet&quot;));
+ 	    prout(_(&quot;   reached its destination.\&quot;&quot;));
+ 	}
+@@ -914,8 +914,8 @@
+     int line = 0, m, ix, iy;
+ 
+     chew();
+-    /* Test for game.conditions which prevent calling for help */
+-    if (game.condit == IHDOCKED) {
++    /* Test for conditions which prevent calling for help */
++    if (game.condition == docked) {
+ 	prout(_(&quot;Lt. Uhura-  \&quot;But Captain, we're already docked.\&quot;&quot;));
+ 	return;
+     }
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-20 05:18:07 UTC (rev 610)
++++ trunk/src/planets.c	2006-09-20 05:31:21 UTC (rev 611)
+@@ -235,7 +235,7 @@
+     }
+     if (game.energy &gt;= 1000) {
+ 	prout(_(&quot;Spock-  \&quot;Captain, Starfleet Regulations prohibit such an operation&quot;));
+-	prout(_(&quot;  except when condition Yellow exists.&quot;));
++	prout(_(&quot;  except when Condition Yellow exists.&quot;));
+ 	return;
+     }
+     prout(_(&quot;Spock- \&quot;Captain, I must warn you that loading&quot;));
+@@ -306,7 +306,7 @@
+ 	prout(_(&quot;You will have to beam down to retrieve the shuttle craft.&quot;));
+ 	return;
+     }
+-    if (game.shldup || game.condit == IHDOCKED) {
++    if (game.shldup || game.condition == docked) {
+ 	prout(_(&quot;Shuttle craft cannot pass through shields.&quot;));
+ 	return;
+     }
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-20 05:18:07 UTC (rev 610)
++++ trunk/src/reports.c	2006-09-20 05:31:21 UTC (rev 611)
+@@ -71,7 +71,7 @@
+ 	prout(_(&quot; destroyed, %d remaining.&quot;), game.state.rembase);
+     }
+     else prout(_(&quot;There are %d bases.&quot;), game.inbase);
+-    if (!damaged(DRADIO) || game.condit == IHDOCKED || game.iseenit) {
++    if (!damaged(DRADIO) || game.condition == docked || game.iseenit) {
+ 	/* Don't report this if not seen and
+ 	   either the radio is dead or not at base! */
+ 	attakreport(false);
+@@ -89,7 +89,7 @@
+ 	if (game.nprobes!=1) proutn(_(&quot;s&quot;));
+ 	prout(&quot;.&quot;);
+     }
+-    if ((!damaged(DRADIO) || game.condit == IHDOCKED)
++    if ((!damaged(DRADIO) || game.condition == docked)
+ 		&amp;&amp; is_scheduled(FDSPROB)) {
+ 	if (game.isarmed) 
+ 	    proutn(_(&quot;An armed deep space probe is in&quot;));
+@@ -122,7 +122,7 @@
+     chew();
+     if (damaged(DLRSENS)) {
+ 	/* Now allow base's sensors if docked */
+-	if (game.condit != IHDOCKED) {
++	if (game.condition != docked) {
+ 	    prout(_(&quot;LONG-RANGE SENSORS DAMAGED.&quot;));
+ 	    return;
+ 	}
+@@ -198,7 +198,7 @@
+     if (!damaged(DRADIO))
+ 	rechart();
+ 
+-    if (game.lastchart &lt; game.state.date &amp;&amp; game.condit == IHDOCKED) {
++    if (game.lastchart &lt; game.state.date &amp;&amp; game.condition == docked) {
+ 	prout(_(&quot;Spock-  \&quot;I revised the Star Chart from the starbase's records.\&quot;&quot;));
+ 	rechart();
+     }
+@@ -241,12 +241,12 @@
+ {
+     if (goodScan || (abs(i-game.sector.x)&lt;= 1 &amp;&amp; abs(j-game.sector.y) &lt;= 1)){
+ 	if ((game.quad[i][j]==IHMATER0)||(game.quad[i][j]==IHMATER1)||(game.quad[i][j]==IHMATER2)||(game.quad[i][j]==IHE)||(game.quad[i][j]==IHF)){
+-	    switch (game.condit) {
+-	    case IHRED: textcolor(RED); break;
+-	    case IHGREEN: textcolor(GREEN); break;
+-	    case IHYELLOW: textcolor(YELLOW); break;
+-	    case IHDOCKED: textcolor(CYAN); break;
+-	    case IHDEAD: textcolor(BROWN);
++	    switch (game.condition) {
++	    case red: textcolor(RED); break;
++	    case green: textcolor(GREEN); break;
++	    case yellow: textcolor(YELLOW); break;
++	    case docked: textcolor(CYAN); break;
++	    case dead: textcolor(BROWN);
+ 	    }
+ 	    if (game.quad[i][j] != game.ship) 
+ 		highvideo();
+@@ -268,13 +268,13 @@
+ 	proutn(_(&quot;Stardate      %.1f, Time Left %.2f&quot;), game.state.date, game.state.remtime);
+ 	break;
+     case 2:
+-	if (game.condit != IHDOCKED) newcnd();
+-	switch (game.condit) {
+-	case IHRED: cp = &quot;RED&quot;; break;
+-	case IHGREEN: cp = &quot;GREEN&quot;; break;
+-	case IHYELLOW: cp = &quot;YELLOW&quot;; break;
+-	case IHDOCKED: cp = &quot;DOCKED&quot;; break;
+-	case IHDEAD: cp=&quot;DEAD&quot;; break;
++	if (game.condition != docked) newcnd();
++	switch (game.condition) {
++	case red: cp = &quot;RED&quot;; break;
++	case green: cp = &quot;GREEN&quot;; break;
++	case yellow: cp = &quot;YELLOW&quot;; break;
++	case docked: cp = &quot;DOCKED&quot;; break;
++	case dead: cp=&quot;DEAD&quot;; break;
+ 	}
+ 	for (t=0;t&lt;NDEVICES;t++)
+ 	    if (game.damage[t]&gt;0) 
+@@ -288,7 +288,7 @@
+     case 4:
+ 	proutn(_(&quot;Life Support  &quot;));
+ 	if (damaged(DLIFSUP)) {
+-	    if (game.condit == IHDOCKED)
++	    if (game.condition == docked)
+ 		proutn(_(&quot;DAMAGED, Base provides&quot;));
+ 	    else
+ 		proutn(_(&quot;DAMAGED, reserves=%4.2f&quot;), game.lsupres);
+@@ -350,7 +350,7 @@
+     case SCAN_FULL: // SRSCAN
+ 	if (damaged(DSRSENS)) {
+ 	    /* Allow base's sensors if docked */
+-	    if (game.condit != IHDOCKED) {
++	    if (game.condition != docked) {
+ 		prout(_(&quot;   S.R. SENSORS DAMAGED!&quot;));
+ 		goodScan=false;
+ 	    }
+@@ -393,7 +393,7 @@
+ 	leftside=false;
+ 	break;
+     }
+-    if (game.condit != IHDOCKED) newcnd();
++    if (game.condition != docked) newcnd();
+     for (i = 1; i &lt;= max(QUADSIZE, sizeof(requests)/sizeof(requests[0])); i++) {
+ 	jj = (req!=0 ? req : i);
+ 	if (leftside &amp;&amp; i &lt;= QUADSIZE) {
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-20 05:18:07 UTC (rev 610)
++++ trunk/src/setup.c	2006-09-20 05:31:21 UTC (rev 611)
+@@ -121,7 +121,7 @@
+     struct quadrant *q;
+ 
+     chew();
+-    if (game.condit==IHDOCKED) {
++    if (game.condition==docked) {
+ 	if (game.ship!=IHE) {
+ 	    prout(&quot;You cannot abandon Ye Faerie Queene.&quot;);
+ 	    return;
+@@ -213,7 +213,7 @@
+     game.imine = false;
+     game.iscraft=0; /* Galileo disappears */
+     /* Resupply ship */
+-    game.condit=IHDOCKED;
++    game.condition=docked;
+     for (l = 0; l &lt; NDEVICES; l++) 
+ 	game.damage[l] = 0.0;
+     game.damage[DSHUTTL] = -1;
+@@ -579,11 +579,11 @@
+ void newcnd(void)
+ /* update our alert status */
+ {
+-    game.condit = IHGREEN;
+-    if (game.energy &lt; 1000.0) game.condit = IHYELLOW;
++    game.condition = green;
++    if (game.energy &lt; 1000.0) game.condition = yellow;
+     if (game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons || game.state.galaxy[game.quadrant.x][game.quadrant.y].romulans)
+-	game.condit = IHRED;
+-    if (!game.alive) game.condit=IHDEAD;
++	game.condition = red;
++    if (!game.alive) game.condition=dead;
+ }
+ 
+ coord newkling(int i)
+@@ -684,7 +684,7 @@
+ 	else
+ 	    game.plnet = dropin(IHW);
+     }
+-    // Check for game.condition
++    // Check for condition
+     newcnd();
+     // And finally the stars
+     for (i = 1; i &lt;= q-&gt;stars; i++) 
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-20 05:18:07 UTC (rev 610)
++++ trunk/src/sst.h	2006-09-20 05:31:21 UTC (rev 611)
+@@ -226,6 +226,13 @@
+ 	icrystl,	// dilithium crystals aboard
+ 	iseenit,	// seen base attack report
+ 	thawed;		// thawed game
++    enum {
++	green = 'G',
++	yellow = 'Y',
++	red = 'R',
++	docked = 'D',
++	dead = 'Z',
++    } condition;		// condition (red/yellow/green/docked)
+     int inkling,	// initial number of klingons
+ 	inbase,		// initial number of bases
+ 	incom,		// initial number of commanders
+@@ -233,7 +240,6 @@
+ 	inrom,		// initial number of commanders
+ 	instar,		// initial stars
+ 	intorps,	// initial/Max torpedoes
+-	condit,		// condition (red/yellow/green/docked)
+ 	torps,		// number of torpedoes
+ 	ship,		// ship type -- 'E' is Enterprise
+ 	abandoned,	// count of crew abandoned in space
+@@ -318,16 +324,10 @@
+ #define IHF 'F'
+ #define IHT 'T'
+ #define IHWEB '#'
+-#define IHGREEN 'G'
+-#define IHYELLOW 'Y'
+-#define IHRED 'R'
+-#define IHDOCKED 'D'
+-#define IHDEAD 'Z'
+ #define IHMATER0 '-'
+ #define IHMATER1 'o'
+ #define IHMATER2 '0'
+ 
+-
+ /* Function prototypes */
+ void prelim(void);
+ void attack(bool);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000077.html">[Sst-commit-watch] r610 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000079.html">[Sst-commit-watch] r612 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#78">[ date ]</a>
+              <a href="thread.html#78">[ thread ]</a>
+              <a href="subject.html#78">[ subject ]</a>
+              <a href="author.html#78">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

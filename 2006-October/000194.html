@@ -1,0 +1,644 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r727 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r727%20-%20trunk/src&In-Reply-To=%3C200610100209.k9A29Bt4032236%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000193.html">
+   <LINK REL="Next"  HREF="000195.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r727 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r727%20-%20trunk/src&In-Reply-To=%3C200610100209.k9A29Bt4032236%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r727 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 04:09:11 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000193.html">[Sst-commit-watch] r726 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000195.html">[Sst-commit-watch] r728 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#194">[ date ]</a>
+              <a href="thread.html#194">[ thread ]</a>
+              <a href="subject.html#194">[ subject ]</a>
+              <a href="author.html#194">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 04:09:10 +0200 (Tue, 10 Oct 2006)
+New Revision: 727
+
+Modified:
+   trunk/src/sst.py
+Log:
+Make some constants into strings for better debugging messages.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 01:56:31 UTC (rev 726)
++++ trunk/src/sst.py	2006-10-10 02:09:10 UTC (rev 727)
+@@ -227,10 +227,6 @@
+ IHMATER1 = 'o',
+ IHMATER2 = '0'
+ 
+-IHEOL = '\n'
+-IHREAL = 0.0
+-IHALPHA = &quot; &quot;
+-
+ class coord:
+     def __init__(self, x=None, y=None):
+         self.i = x
+@@ -1096,7 +1092,7 @@
+ 	action = &quot;SHUP&quot;
+     else:
+ 	key = scanner.next()
+-	if key == IHALPHA:
++	if key == &quot;IHALPHA&quot;:
+ 	    if scanner.sees(&quot;transfer&quot;):
+ 		action = &quot;NRG&quot;
+ 	    else:
+@@ -1155,7 +1151,7 @@
+ 	game.ididit = True
+ 	return
+     elif action == &quot;NRG&quot;:
+-	while scanner.next() != IHREAL:
++	while scanner.next() != &quot;IHREAL&quot;:
+ 	    scanner.chew()
+ 	    proutn(_(&quot;Energy to transfer to shields- &quot;))
+ 	scanner.chew()
+@@ -1759,15 +1755,15 @@
+     # First, get torpedo count
+     while True:
+         scanner.next()
+-	if scanner.token == IHALPHA:
++	if scanner.token == &quot;IHALPHA&quot;:
+ 	    huh()
+ 	    return
+-	elif scanner.token == IHEOL or not scanner.waiting():
++	elif scanner.token == &quot;IHEOL&quot; or not scanner.waiting():
+ 	    prout(_(&quot;%d torpedoes left.&quot;) % game.torps)
+             scanner.chew()
+ 	    proutn(_(&quot;Number of torpedoes to fire- &quot;))
+             continue	# Go back around to get a number
+-	else: # key == IHREAL
++	else: # key == &quot;IHREAL&quot;
+ 	    n = scanner.int()
+ 	    if n &lt;= 0: # abort command 
+ 		scanner.chew()
+@@ -1784,9 +1780,9 @@
+     target = []
+     for i in range(n):
+ 	key = scanner.next()
+-	if i==0 and key == IHEOL:
++	if i==0 and key == &quot;IHEOL&quot;:
+ 	    break;	# no coordinate waiting, we will try prompting 
+-	if i==1 and key == IHEOL:
++	if i==1 and key == &quot;IHEOL&quot;:
+ 	    # direct all torpedoes at one target 
+ 	    while i &lt; n:
+ 		target.append(targets[0])
+@@ -1965,12 +1961,12 @@
+     # (That was Tom Almy talking about the C code, I think -- ESR)
+     while automode==&quot;NOTSET&quot;:
+ 	key=scanner.next()
+-	if key == IHALPHA:
++	if key == &quot;IHALPHA&quot;:
+ 	    if scanner.sees(&quot;manual&quot;):
+ 		if len(game.enemies)==0:
+ 		    prout(_(&quot;There is no enemy present to select.&quot;))
+ 		    scanner.chew()
+-		    key = IHEOL
++		    key = &quot;IHEOL&quot;
+ 		    automode=&quot;AUTOMATIC&quot;
+ 		else:
+ 		    automode = &quot;MANUAL&quot;
+@@ -1988,7 +1984,7 @@
+ 	    else:
+ 		huh()
+ 		return
+-	elif key == IHREAL:
++	elif key == &quot;IHREAL&quot;:
+ 	    if len(game.enemies)==0:
+ 		prout(_(&quot;Energy will be expended into space.&quot;))
+ 		automode = &quot;AUTOMATIC&quot;
+@@ -1997,7 +1993,7 @@
+ 	    else:
+ 		automode = &quot;AUTOMATIC&quot;
+ 	else:
+-	    # IHEOL 
++	    # &quot;IHEOL&quot; 
+ 	    if len(game.enemies)==0:
+ 		prout(_(&quot;Energy will be expended into space.&quot;))
+ 		automode = &quot;AUTOMATIC&quot;
+@@ -2010,10 +2006,10 @@
+     if ifast:
+         avail -= 200.0
+     if automode == &quot;AUTOMATIC&quot;:
+-	if key == IHALPHA and scanner.sees(&quot;no&quot;):
++	if key == &quot;IHALPHA&quot; and scanner.sees(&quot;no&quot;):
+ 	    no = True
+ 	    key = scanner.next()
+-	if key != IHREAL and len(game.enemies) != 0:
++	if key != &quot;IHREAL&quot; and len(game.enemies) != 0:
+ 	    prout(_(&quot;Phasers locked on target. Energy available: %.2f&quot;)%avail)
+ 	irec=0
+         while True:
+@@ -2026,13 +2022,13 @@
+ 	    scanner.chew()
+ 	    proutn(_(&quot;Units to fire= &quot;))
+ 	    key = scanner.next()
+-	    if key!=IHREAL:
++	    if key!=&quot;IHREAL&quot;:
+ 		return
+ 	    rpow = scanner.real
+ 	    if rpow &gt; avail:
+ 		proutn(_(&quot;Energy available= %.2f&quot;) % avail)
+ 		skip(1)
+-		key = IHEOL
++		key = &quot;IHEOL&quot;
+             if not rpow &gt; avail:
+                 break
+ 	if rpow&lt;=0:
+@@ -2040,7 +2036,7 @@
+ 	    scanner.chew()
+ 	    return
+         key=scanner.next()
+-	if key == IHALPHA and scanner.sees(&quot;no&quot;):
++	if key == &quot;IHALPHA&quot; and scanner.sees(&quot;no&quot;):
+ 	    no = True
+ 	if ifast:
+ 	    game.energy -= 200; # Go and do it! 
+@@ -2079,7 +2075,7 @@
+ 		prout(_(&quot;%d expended on empty space.&quot;) % int(extra))
+     elif automode == &quot;FORCEMAN&quot;:
+ 	scanner.chew()
+-	key = IHEOL
++	key = &quot;IHEOL&quot;
+ 	if damaged(DCOMPTR):
+ 	    prout(_(&quot;Battle computer damaged, manual fire only.&quot;))
+ 	else:
+@@ -2104,11 +2100,11 @@
+                not game.sector.distance(aim)&lt;2**0.5 and ienm in (IHC, IHS):
+ 		prout(cramen(ienm) + _(&quot; can't be located without short range scan.&quot;))
+ 		scanner.chew()
+-		key = IHEOL
++		key = &quot;IHEOL&quot;
+ 		hits[k] = 0; # prevent overflow -- thanks to Alexei Voitenko 
+ 		k += 1
+ 		continue
+-	    if key == IHEOL:
++	    if key == &quot;IHEOL&quot;:
+ 		scanner.chew()
+ 		if itarg and k &gt; kz:
+ 		    irec=(abs(game.enemies[k].kpower)/(PHASEFAC*math.pow(0.9,game.enemies[k].kdist))) *	randreal(1.01, 1.06) + 1.0
+@@ -2121,14 +2117,14 @@
+ 		proutn(&quot;)  &quot;)
+ 		proutn(_(&quot;units to fire at %s-  &quot;) % crmena(False, ienm, &quot;sector&quot;, aim))		
+ 		key = scanner.next()
+-	    if key == IHALPHA and scanner.sees(&quot;no&quot;):
++	    if key == &quot;IHALPHA&quot; and scanner.sees(&quot;no&quot;):
+ 		no = True
+ 		key = scanner.next()
+ 		continue
+-	    if key == IHALPHA:
++	    if key == &quot;IHALPHA&quot;:
+ 		huh()
+ 		return
+-	    if key == IHEOL:
++	    if key == &quot;IHEOL&quot;:
+ 		if k==1: # Let me say I'm baffled by this 
+ 		    msgflag = True
+ 		continue
+@@ -2149,7 +2145,7 @@
+ 	    # zero energy -- abort 
+ 	    scanner.chew()
+ 	    return
+-	if key == IHALPHA and scanner.sees(&quot;no&quot;):
++	if key == &quot;IHALPHA&quot; and scanner.sees(&quot;no&quot;):
+ 	    no = True
+ 	game.energy -= rpow
+ 	scanner.chew()
+@@ -2624,11 +2620,11 @@
+     game.ididit = False
+     while True:
+ 	key = scanner.next()
+-	if key  != IHEOL:
++	if key  != &quot;IHEOL&quot;:
+ 	    break
+ 	proutn(_(&quot;How long? &quot;))
+     scanner.chew()
+-    if key != IHREAL:
++    if key != &quot;IHREAL&quot;:
+ 	huh()
+ 	return
+     origTime = delay = scanner.real
+@@ -3885,7 +3881,7 @@
+ 		prout(_(&quot;Computer damaged; manual movement only&quot;))
+ 	    scanner.chew()
+ 	    navmode = &quot;manual&quot;
+-	    key = IHEOL
++	    key = &quot;IHEOL&quot;
+ 	    break
+ 	if isprobe and akey != -1:
+ 	    # For probe launch, use pre-scanned value first time 
+@@ -3893,11 +3889,11 @@
+ 	    akey = -1
+ 	else: 
+ 	    key = scanner.next()
+-	if key == IHEOL:
++	if key == &quot;IHEOL&quot;:
+ 	    proutn(_(&quot;Manual or automatic- &quot;))
+ 	    iprompt = True
+ 	    scanner.chew()
+-	elif key == IHALPHA:
++	elif key == &quot;IHALPHA&quot;:
+             if scanner.sees(&quot;manual&quot;):
+ 		navmode = &quot;manual&quot;
+ 		key = scanner.next()
+@@ -3918,7 +3914,7 @@
+ 	    navmode = &quot;manual&quot;
+ 	    break
+     if navmode == &quot;automatic&quot;:
+-	while key == IHEOL:
++	while key == &quot;IHEOL&quot;:
+ 	    if isprobe:
+ 		proutn(_(&quot;Target quadrant or quadrant&amp;sector- &quot;))
+ 	    else:
+@@ -3926,21 +3922,21 @@
+ 	    scanner.chew()
+ 	    iprompt = True
+ 	    key = scanner.next()
+-	if key != IHREAL:
++	if key != &quot;IHREAL&quot;:
+ 	    huh()
+ 	    return False
+ 	xi = int(round(scanner.real))-1
+ 	key = scanner.next()
+-	if key != IHREAL:
++	if key != &quot;IHREAL&quot;:
+ 	    huh()
+ 	    return False
+ 	xj = int(round(scanner.real))-1
+ 	key = scanner.next()
+-	if key == IHREAL:
++	if key == &quot;IHREAL&quot;:
+ 	    # both quadrant and sector specified 
+ 	    xk = int(round(scanner.real))-1
+ 	    key = scanner.next()
+-	    if key != IHREAL:
++	    if key != &quot;IHREAL&quot;:
+ 		huh()
+ 		return False
+ 	    xl = int(round(scanner.real))-1
+@@ -3975,18 +3971,18 @@
+ 	delta.i = dquad.j-game.quadrant.j + 0.1*(dsect.j-game.sector.j)
+ 	delta.j = game.quadrant.i-dquad.i + 0.1*(game.sector.i-dsect.i)
+     else: # manual 
+-	while key == IHEOL:
++	while key == &quot;IHEOL&quot;:
+ 	    proutn(_(&quot;X and Y displacements- &quot;))
+ 	    scanner.chew()
+ 	    iprompt = True
+ 	    key = scanner.next()
+ 	itemp = &quot;verbose&quot;
+-	if key != IHREAL:
++	if key != &quot;IHREAL&quot;:
+ 	    huh()
+ 	    return False
+ 	delta.j = scanner.real
+ 	key = scanner.next()
+-	if key != IHREAL:
++	if key != &quot;IHREAL&quot;:
+ 	    huh()
+ 	    return False
+ 	delta.i = scanner.real
+@@ -4170,12 +4166,12 @@
+     &quot;Change the warp factor.&quot;
+     while True:
+         key=scanner.next()
+-        if key != IHEOL:
++        if key != &quot;IHEOL&quot;:
+             break
+ 	scanner.chew()
+ 	proutn(_(&quot;Warp factor- &quot;))
+     scanner.chew()
+-    if key != IHREAL:
++    if key != &quot;IHREAL&quot;:
+ 	huh()
+ 	return
+     if game.damage[DWARPEN] &gt; 10.0:
+@@ -4363,7 +4359,7 @@
+ 	    prout(_(&quot;Uhura- \&quot;The previous probe is still reporting data, Sir.\&quot;&quot;))
+ 	return
+     key = scanner.next()
+-    if key == IHEOL:
++    if key == &quot;IHEOL&quot;:
+ 	# slow mode, so let Kirk know how many probes there are left
+         if game.nprobes == 1:
+             prout(_(&quot;1 probe left.&quot;))
+@@ -4373,10 +4369,10 @@
+ 	if ja() == False:
+ 	    return
+     game.isarmed = False
+-    if key == IHALPHA and scanner.token == &quot;armed&quot;:
++    if key == &quot;IHALPHA&quot; and scanner.token == &quot;armed&quot;:
+ 	game.isarmed = True
+ 	key = scanner.next()
+-    elif key == IHEOL:
++    elif key == &quot;IHEOL&quot;:
+ 	proutn(_(&quot;Arm NOVAMAX warhead? &quot;))
+ 	game.isarmed = ja()
+     if not getcourse(isprobe=True, akey=key):
+@@ -5328,7 +5324,7 @@
+ def request():
+     &quot;Request specified status data, a historical relic from slow TTYs.&quot;
+     requests = (&quot;da&quot;,&quot;co&quot;,&quot;po&quot;,&quot;ls&quot;,&quot;wa&quot;,&quot;en&quot;,&quot;to&quot;,&quot;sh&quot;,&quot;kl&quot;,&quot;sy&quot;, &quot;ti&quot;)
+-    while scanner.next() == IHEOL:
++    while scanner.next() == &quot;IHEOL&quot;:
+ 	proutn(_(&quot;Information desired? &quot;))
+     scanner.chew()
+     if scanner.token in requests:
+@@ -5372,21 +5368,21 @@
+ 	prout(_(&quot;COMPUTER DAMAGED, USE A POCKET CALCULATOR.&quot;))
+ 	skip(1)
+ 	return
+-    if scanner.next() != IHREAL:
++    if scanner.next() != &quot;IHREAL&quot;:
+ 	prompt = True
+ 	scanner.chew()
+ 	proutn(_(&quot;Destination quadrant and/or sector? &quot;))
+-	if scanner.next()!=IHREAL:
++	if scanner.next()!=&quot;IHREAL&quot;:
+ 	    huh()
+ 	    return
+     w1.j = int(scanner.real-0.5)
+-    if scanner.next() != IHREAL:
++    if scanner.next() != &quot;IHREAL&quot;:
+ 	huh()
+ 	return
+     w1.i = int(scanner.real-0.5)
+-    if scanner.next() == IHREAL:
++    if scanner.next() == &quot;IHREAL&quot;:
+ 	w2.j = int(scanner.real-0.5)
+-	if scanner.next() != IHREAL:
++	if scanner.next() != &quot;IHREAL&quot;:
+ 	    huh()
+ 	    return
+ 	w2.i = int(scanner.real-0.5)
+@@ -5410,7 +5406,7 @@
+     while True:
+ 	scanner.chew()
+ 	proutn(_(&quot;Time or arrival date? &quot;))
+-	if scanner.next()==IHREAL:
++	if scanner.next()==&quot;IHREAL&quot;:
+ 	    ttime = scanner.real
+ 	    if ttime &gt; game.state.date:
+ 		ttime -= game.state.date # Actually a star date
+@@ -5424,7 +5420,7 @@
+ 	    break
+ 	scanner.chew()
+ 	proutn(_(&quot;Warp factor? &quot;))
+-	if scanner.next()== IHREAL:
++	if scanner.next()== &quot;IHREAL&quot;:
+ 	    wfl = True
+ 	    twarp = scanner.real
+ 	    if twarp&lt;1.0 or twarp &gt; 10.0:
+@@ -5442,7 +5438,7 @@
+ 		if not wfl:
+ 		    return
+ 		proutn(_(&quot;New warp factor to try? &quot;))
+-		if scanner.next() == IHREAL:
++		if scanner.next() == &quot;IHREAL&quot;:
+ 		    wfl = True
+ 		    twarp = scanner.real
+ 		    if twarp&lt;1.0 or twarp &gt; 10.0:
+@@ -5475,7 +5471,7 @@
+ 	    (scheduled(FCDBAS)&lt;ttime+game.state.date and game.battle == w1):
+ 	    prout(_(&quot;The starbase there will be destroyed by then.&quot;))
+ 	proutn(_(&quot;New warp factor to try? &quot;))
+-	if scanner.next() == IHREAL:
++	if scanner.next() == &quot;IHREAL&quot;:
+ 	    wfl = True
+ 	    twarp = scanner.real
+ 	    if twarp&lt;1.0 or twarp &gt; 10.0:
+@@ -5503,10 +5499,10 @@
+ 	scanner.token = &quot;emsave.trk&quot;
+     else:
+         key = scanner.next()
+-	if key == IHEOL:
++	if key == &quot;IHEOL&quot;:
+ 	    proutn(_(&quot;File name: &quot;))
+ 	    key = scanner.next()
+-	if key != IHALPHA:
++	if key != &quot;IHALPHA&quot;:
+ 	    huh()
+ 	    return
+ 	scanner.chew()
+@@ -5524,10 +5520,10 @@
+     &quot;Retrieve saved game.&quot; 
+     game.passwd[0] = '\0'
+     key = scanner.next()
+-    if key == IHEOL:
++    if key == &quot;IHEOL&quot;:
+ 	proutn(_(&quot;File name: &quot;))
+ 	key = scanner.next()
+-    if key != IHALPHA:
++    if key != &quot;IHALPHA&quot;:
+ 	huh()
+ 	return True
+     scanner.chew()
+@@ -5825,7 +5821,7 @@
+ 	if len(scanner.token)==0: # Try again
+ 	    continue
+         if scanner.sees(&quot;tournament&quot;):
+-	    while scanner.next() == IHEOL:
++	    while scanner.next() == &quot;IHEOL&quot;:
+ 		proutn(_(&quot;Type in tournament number-&quot;))
+ 	    if scanner.real == 0:
+ 		scanner.chew()
+@@ -5851,7 +5847,7 @@
+ 	proutn(_(&quot;What is \&quot;%s\&quot;?&quot;) % scanner.token)
+ 	scanner.chew()
+     while game.length==0 or game.skill==SKILL_NONE:
+-	if scanner.next() == IHALPHA:
++	if scanner.next() == &quot;IHALPHA&quot;:
+             if scanner.sees(&quot;short&quot;):
+ 		game.length = 1
+ 	    elif scanner.sees(&quot;medium&quot;):
+@@ -5879,7 +5875,7 @@
+ 	    elif game.skill == SKILL_NONE:
+ 		proutn(_(&quot;Are you a Novice, Fair, Good, Expert, or Emeritus player? &quot;))
+     # Choose game options -- added by ESR for SST2K
+-    if scanner.next() != IHALPHA:
++    if scanner.next() != &quot;IHALPHA&quot;:
+ 	scanner.chew()
+ 	proutn(_(&quot;Choose your game style (or just press enter): &quot;))
+ 	scanner.next()
+@@ -6128,18 +6124,18 @@
+     &quot;Browse on-line help.&quot;
+     key = scanner.next()
+     while True:
+-	if key == IHEOL:
++	if key == &quot;IHEOL&quot;:
+ 	    setwnd(prompt_window)
+ 	    proutn(_(&quot;Help on what command? &quot;))
+ 	    key = scanner.next()
+ 	setwnd(message_window)
+-	if key == IHEOL:
++	if key == &quot;IHEOL&quot;:
+ 	    return
+         if scanner.token in commands or scanner.token == &quot;ABBREV&quot;:
+ 	    break
+ 	skip(1)
+ 	listCommands()
+-	key = IHEOL
++	key = &quot;IHEOL&quot;
+ 	scanner.chew()
+ 	skip(1)
+     cmd = scanner.token.upper()
+@@ -6194,7 +6190,7 @@
+ 	    setwnd(prompt_window)
+ 	    clrscr()
+ 	    proutn(&quot;COMMAND&gt; &quot;)
+-	    if scanner.next() == IHEOL:
++	    if scanner.next() == &quot;IHEOL&quot;:
+ 		if game.options &amp; OPTION_CURSES:
+ 		    makechart()
+ 		continue
+@@ -6410,23 +6406,23 @@
+             if not line:
+                 continue
+             else:
+-                self.inqueue = line.lstrip().split() + [IHEOL] 
++                self.inqueue = line.lstrip().split() + [&quot;IHEOL&quot;] 
+         # From here on in it's all looking at the queue
+         self.token = self.inqueue.pop(0)
+-        if self.token == IHEOL:
+-            self.type = IHEOL
+-            return IHEOL
++        if self.token == &quot;IHEOL&quot;:
++            self.type = &quot;IHEOL&quot;
++            return &quot;IHEOL&quot;
+         try:
+             self.real = float(self.token)
+-            self.type = IHREAL
+-            return IHREAL
++            self.type = &quot;IHREAL&quot;
++            return &quot;IHREAL&quot;
+         except ValueError:
+             pass
+         # Treat as alpha
+         self.token = self.token.lower()
+-        self.type = IHALPHA
++        self.type = &quot;IHALPHA&quot;
+         self.real = None
+-        return IHALPHA
++        return &quot;IHALPHA&quot;
+     def push(self, tok):
+         self.inqueue.append(tok)
+     def waiting(self):
+@@ -6436,8 +6432,8 @@
+         self.inqueue = []
+         self.real = self.token = None
+     def chew2(self):
+-        # return IHEOL next time 
+-        self.inqueue = [IHEOL]
++        # return &quot;IHEOL&quot; next time 
++        self.inqueue = [&quot;IHEOL&quot;]
+         self.real = self.token = None
+     def sees(self, s):
+         # compares s to item and returns true if it matches to the length of s
+@@ -6448,16 +6444,18 @@
+     def getcoord(self):
+         s = coord()
+         scanner.next()
+-    	if scanner.type != IHREAL:
++    	if scanner.type != &quot;IHREAL&quot;:
+ 	    huh()
+ 	    return None
+ 	s.i = scanner.int()-1
+         scanner.next()
+-	if scanner.type != IHREAL:
++	if scanner.type != &quot;IHREAL&quot;:
+ 	    huh()
+ 	    return None
+ 	s.j = scanner.int()-1
+         return s
++    def __repr__(str):
++        return &quot;&lt;sstcanner: token=%s, type=%s, queue=%s&gt;&quot; % (scanner.token, scanner.type, scanner.inqueue)
+ 
+ def ja():
+     &quot;Yes-or-no confirmation.&quot;
+@@ -6504,7 +6502,7 @@
+ 	    proutn(&quot;Kill %s?&quot; % device[i])
+ 	    scanner.chew()
+ 	    key = scanner.next()
+-            if key == IHALPHA and scanner.sees(&quot;y&quot;):
++            if key == &quot;IHALPHA&quot; and scanner.sees(&quot;y&quot;):
+ 		game.damage[i] = 10.0
+     proutn(&quot;Examine/change events? &quot;)
+     if ja() == True:
+@@ -6538,21 +6536,21 @@
+ 	    if key == 'n':
+ 		unschedule(i)
+ 		scanner.chew()
+-	    elif key == IHREAL:
++	    elif key == &quot;IHREAL&quot;:
+ 		ev = schedule(i, scanner.real)
+ 		if i == FENSLV or i == FREPRO:
+ 		    scanner.chew()
+ 		    proutn(&quot;In quadrant- &quot;)
+ 		    key = scanner.next()
+-		    # IHEOL says to leave coordinates as they are 
+-		    if key != IHEOL:
+-			if key != IHREAL:
++		    # &quot;IHEOL&quot; says to leave coordinates as they are 
++		    if key != &quot;IHEOL&quot;:
++			if key != &quot;IHREAL&quot;:
+ 			    prout(&quot;Event %d canceled, no x coordinate.&quot; % (i))
+ 			    unschedule(i)
+ 			    continue
+ 			w.i = int(round(scanner.real))
+ 			key = scanner.next()
+-			if key != IHREAL:
++			if key != &quot;IHREAL&quot;:
+ 			    prout(&quot;Event %d canceled, no y coordinate.&quot; % (i))
+ 			    unschedule(i)
+ 			    continue
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000193.html">[Sst-commit-watch] r726 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000195.html">[Sst-commit-watch] r728 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#194">[ date ]</a>
+              <a href="thread.html#194">[ thread ]</a>
+              <a href="subject.html#194">[ subject ]</a>
+              <a href="author.html#194">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

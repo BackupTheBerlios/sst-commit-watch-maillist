@@ -1,0 +1,408 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r592 - in trunk: . doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r592%20-%20in%20trunk%3A%20.%20doc%20src&In-Reply-To=%3C200609190805.k8J85hI3009219%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000058.html">
+   <LINK REL="Next"  HREF="000060.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r592 - in trunk: . doc src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r592%20-%20in%20trunk%3A%20.%20doc%20src&In-Reply-To=%3C200609190805.k8J85hI3009219%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r592 - in trunk: . doc src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 19 10:05:43 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000058.html">[Sst-commit-watch] r591 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000060.html">[Sst-commit-watch] r593 - in trunk: . src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#59">[ date ]</a>
+              <a href="thread.html#59">[ thread ]</a>
+              <a href="subject.html#59">[ subject ]</a>
+              <a href="author.html#59">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-19 10:05:42 +0200 (Tue, 19 Sep 2006)
+New Revision: 592
+
+Modified:
+   trunk/TODO
+   trunk/doc/sst-doc.xml
+   trunk/doc/sst.xml
+   trunk/src/events.c
+   trunk/src/io.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+Improvements to the testing machinery, including the replay option.
+
+
+Modified: trunk/TODO
+===================================================================
+--- trunk/TODO	2006-09-19 08:01:27 UTC (rev 591)
++++ trunk/TODO	2006-09-19 08:05:42 UTC (rev 592)
+@@ -1,6 +1,73 @@
+ 		Super Star Trek TO-DO list
+ 
++Bugs:
+ 
++-----------------------------------------------------------------------------
++     Short-range scan
++    1 2 3 4 5 6 7 8 9 10
++ 1  E . . . . . . . . . Stardate      3800.9, Time Left 6.14
++ 2  . . . . . . . . . C Condition     RED, 0 DAMAGES
++ 3  . @ . * . . . . . . Position      1 - 3 , 1 - 1
++ 4  . . . . . . . . . . Life Support  ACTIVE
++ 5  . . . . . . . . . . Warp Factor   5.0
++ 6  . . . . . . . . . . Energy        3871.68
++ 7  . . . . * . . . . . Torpedoes     10
++ 8  . . . . . . . . . . Shields       UP, 92% 2294.3 units
++ 9  . . . . . . R . . . Klingons Left 8
++10  . . . . . . * . . . Major system  Capella IV (Kohath)
++
++
++COMMAND&gt; phot 2
++Target sector for torpedo number 1- 2 10
++Target sector for torpedo number 2- 2 10
++
++***Commander at Sector 2 - 10 damaged-- displaced by blast to Sector 3 - 10
++
++
++***Commander at Sector 2 - 10 destroyed.
++=== ATTACK!
++
++***TORPEDO INCOMING From Unknown?? at Sector 3 - 10
++
++Torpedo missed.
++-----------------------------------------------------------------------------
++
++Here's the log that reproduces it
++
++-----------------------------------------------------------------------------
++seed 1158606492
++sr
++phasers
++auto
++391
++sensors
++planets
++lr
++chart
++probe
++y
++n
++a
++1 8
++shields up
++sr
++m a 10 10
++
++chart
++m a 1 3 1 1
++
++n
++chart
++sr
++phot 2
++2 10
++2 10
++-----------------------------------------------------------------------------
++
++The bug is the 'Unknown??' in the incoming-torpedo message.  What
++happened here is that the Commander launched a torp just before being
++killed.  The torpedo knows its origin but not who fired it.
++
+ Short-term items:
+ 
+ * Adjust the sst.spec wrt the build system changes
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2006-09-19 08:01:27 UTC (rev 591)
++++ trunk/doc/sst-doc.xml	2006-09-19 08:05:42 UTC (rev 592)
+@@ -1440,6 +1440,11 @@
+ &lt;quote&gt;Super-Commander&lt;/quote&gt; is more powerful than an ordinary
+ commander, he can destroy a base more quickly.&lt;/para&gt;
+ 
++&lt;para&gt;Inhabited worlds can be attacked, enslaved, and forced to 
++build more Klingon starships.  They will send out a distress call
++by subspace radio when they are attacked, and you will lose contact
++with them when they are enslaved.&lt;/para&gt;
++
+ &lt;para&gt;The &lt;quote&gt;Super-Commander&lt;/quote&gt; travels around the galaxy at
+ a speed of about warp 6 or 7.  His movement is strictly time based;
+ the more time passes, the further he can go.&lt;/para&gt;
+@@ -1507,11 +1512,12 @@
+ &lt;para&gt;You lose&mdash;&lt;/para&gt;
+ 
+ &lt;orderedlist&gt;
++&lt;listitem&gt;&lt;para&gt;300 points for each inhabited world you destroy,&lt;/para&gt;&lt;/listitem&gt;
+ &lt;listitem&gt;&lt;para&gt;200 points if you get yourself killed,&lt;/para&gt;&lt;/listitem&gt;
+ &lt;listitem&gt;&lt;para&gt;100 points for each starbase you destroy,&lt;/para&gt;&lt;/listitem&gt;
+ &lt;listitem&gt;&lt;para&gt;100 points for each starship you lose,&lt;/para&gt;&lt;/listitem&gt;
+ &lt;listitem&gt;&lt;para&gt;45 points for each time you had to call for help,&lt;/para&gt;&lt;/listitem&gt;
+-&lt;listitem&gt;&lt;para&gt;10 points for each planet you destroyed,&lt;/para&gt;&lt;/listitem&gt;
++&lt;listitem&gt;&lt;para&gt;10 points for each uninhabited planet you destroyed,&lt;/para&gt;&lt;/listitem&gt;
+ &lt;listitem&gt;&lt;para&gt;5 points for each star you destroyed, and&lt;/para&gt;&lt;/listitem&gt;
+ &lt;listitem&gt;&lt;para&gt;1 point for each casualty you incurred.&lt;/para&gt;&lt;/listitem&gt;
+ &lt;/orderedlist&gt;
+
+Modified: trunk/doc/sst.xml
+===================================================================
+--- trunk/doc/sst.xml	2006-09-19 08:01:27 UTC (rev 591)
++++ trunk/doc/sst.xml	2006-09-19 08:05:42 UTC (rev 592)
+@@ -15,8 +15,10 @@
+ 
+ &lt;cmdsynopsis&gt;
+ &lt;command&gt;sst&lt;/command&gt;
+-&lt;arg choice='opt'&gt;-t &lt;/arg&gt; 
+-&lt;arg rep='repeat' &gt;&lt;replaceable&gt;command&lt;/replaceable&gt;&lt;/arg&gt;  
++      &lt;arg choice='opt'&gt;-r &lt;replaceable&gt;filename&lt;/replaceable&gt;&lt;/arg&gt; 
++      &lt;arg choice='opt'&gt;-t &lt;/arg&gt; 
++      &lt;arg choice='opt'&gt;-x &lt;/arg&gt; 
++      &lt;arg rep='repeat' &gt;&lt;replaceable&gt;command&lt;/replaceable&gt;&lt;/arg&gt;  
+ &lt;/cmdsynopsis&gt;
+ 
+ &lt;/refsynopsisdiv&gt;
+@@ -38,10 +40,17 @@
+ systems where &lt;filename&gt;/usr/share/doc/sst/&lt;/filename&gt; is a legal
+ filename, it will probably be installed there as well.&lt;/para&gt;
+ 
+-&lt;para&gt;There is one option -t, which forces the original pure-tty mode.
++&lt;para&gt;The option -t forces the original pure-tty mode.
+ Normally sst tries to come up in full-screen mode that assumes it is
+ running on a cursor-addressable terminal or terminal emulator.&lt;/para&gt;
+ 
++&lt;para&gt;The option -r sets up replay of a session logfile.  Commands
++in the logfile are executed, then additional commands are taken
++from stdin as normal.  The -r option forces -t mode.&lt;/para&gt;
++
++&lt;para&gt;The option -x enables some debugging features of interest
++probably only to sst2k developers.&lt;/para&gt;
++
+ &lt;para&gt;Input tokens for the setup prompts will be read from the
+ remainder of the command line before standard input.  Thus, for
+ example, you can invoke the program as&lt;/para&gt;
+@@ -54,11 +63,34 @@
+ mode (all features enabled).&lt;/para&gt;
+ &lt;/refsect1&gt;
+ 
++&lt;refsect1 id='files'&gt;&lt;title&gt;FILES&lt;/title&gt;
++&lt;variablelist&gt;
++&lt;varlistentry&gt;
++&lt;term&gt;/usr/share/doc/sst/sst.doc&lt;/term&gt;
++&lt;listitem&gt;
++&lt;para&gt;Documentation file.&lt;/para&gt;
++&lt;/listitem&gt;
++&lt;/varlistentry&gt;
++&lt;varlistentry&gt;
++&lt;term&gt;sst-input.log&lt;/term&gt;
++&lt;listitem&gt;
++&lt;para&gt;Where user input is saved to (send this with your bug reports).&lt;/para&gt;
++&lt;/listitem&gt;
++&lt;/varlistentry&gt;
++&lt;varlistentry&gt;
++&lt;term&gt;emsave.trk&lt;/term&gt;
++&lt;listitem&gt;
++&lt;para&gt;Save file produced by EMEXIT command.&lt;/para&gt;
++&lt;/listitem&gt;
++&lt;/varlistentry&gt;
++&lt;/variablelist&gt;
++&lt;/refsect1&gt;
++
+ &lt;refsect1 id='authors'&gt;&lt;title&gt;AUTHORS&lt;/title&gt; 
+ &lt;para&gt;Super Star Trek was designed and written by David Matuszek, Paul
+ Reynolds, and Don Smith in the 1970s.  It was resurrected by Tom Almy.
+ The screen-oriented interface is by Stas Sergeev. This version has
+-been cleaned up and documented by Eric S. Raymond
++been improved, cleaned up and documented by Eric S. Raymond
+ &lt;email&gt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">esr at snark.thyrsus.com</A>&lt;/email&gt;.  There is a &lt;ulink
+ url='<A HREF="https://developer.berlios.de/projects/sst/">https://developer.berlios.de/projects/sst/</A>'&gt;project
+ page&lt;/ulink&gt;.&lt;/para&gt;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-19 08:01:27 UTC (rev 591)
++++ trunk/src/events.c	2006-09-19 08:05:42 UTC (rev 592)
+@@ -410,7 +410,7 @@
+ 	    }
+ 	    break;
+ 	case FDISTR: /* inhabited system issues distress call */
+-	    schedule(FDISTR, expran(0.5*game.intime));
++	    unschedule(FDISTR);
+ 	    /* try a whole bunch of times to find something suitable */
+ 	    i = 100;
+ 	    do {
+@@ -434,8 +434,6 @@
+ 	    ev = schedule(FENSLV, expran(game.intime));
+ 	    ev-&gt;quadrant = w;
+ 	    q-&gt;status = distressed;
+-	    if (idebug)
+-		prout(&quot;=== Distress call set at %d, %d.&quot;, w.x, w.y);
+ 
+ 	    /* tell the captain about it if we can */
+ 	    if (game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED)
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-19 08:01:27 UTC (rev 591)
++++ trunk/src/io.c	2006-09-19 08:05:42 UTC (rev 592)
+@@ -203,7 +203,10 @@
+ 	strcat(line, &quot;\n&quot;);
+ 	wrefresh(curwnd);
+     } else {
+-	fgets(line, max, stdin);
++	if (replayfp &amp;&amp; !feof(replayfp))
++	    fgets(line, max, replayfp);
++	else
++	    fgets(line, max, stdin);
+     }
+     if (logfp)
+ 	fputs(line, logfp);
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-19 08:01:27 UTC (rev 591)
++++ trunk/src/sst.c	2006-09-19 08:05:42 UTC (rev 592)
+@@ -176,8 +176,7 @@
+ char citem[10];
+ int seed;		// the random-number seed
+ bool idebug;		// debug mode
+-bool randready;		// Has the random-number generator initialized?
+-FILE *logfp;
++FILE *logfp, *replayfp;
+ 
+ char *device[NDEVICES] = {
+ 	&quot;S. R. Sensors&quot;,
+@@ -595,8 +594,20 @@
+     else
+ 	game.options |= OPTION_TTY;
+ 
+-    while ((option = getopt(argc, argv, &quot;tx&quot;)) != -1) {
++    seed = (int)time(NULL);
++    while ((option = getopt(argc, argv, &quot;r:tx&quot;)) != -1) {
+ 	switch (option) {
++	case 'r':
++	    replayfp = fopen(optarg, &quot;r&quot;);
++	    if (replayfp == NULL) {
++		fprintf(stderr, &quot;sst: can't open replay file %s\n&quot;, optarg);
++		exit(1);	
++	    }
++	    if (fscanf(replayfp, &quot;seed %d\n&quot;, &amp;seed) != 1) {
++		fprintf(stderr, &quot;sst: replay file %s is ill-formed\n&quot;, optarg);
++		exit(1);	
++	    }
++	    /* FALL THROUGH */
+ 	case 't':
+ 	    game.options |= OPTION_TTY;
+ 	    game.options &amp;=~ OPTION_CURSES;
+@@ -612,8 +623,10 @@
+     /* where to save the input in case of bugs */
+     logfp = fopen(&quot;sst-input.log&quot;, &quot;w&quot;);
+     setlinebuf(logfp);
++    fprintf(logfp, &quot;seed %d\n&quot;, seed);
++    srand(seed);
+ 
+-    randomize();
++    srand(seed);
+     iostart();
+ 
+     line[0] = '\0';
+@@ -715,14 +728,6 @@
+ 
+ double Rand(void) 
+ {
+-    if (!randready) {
+-	if (seed == 0)
+-	    seed = (unsigned)time(NULL);
+-	if (logfp)
+-	    fprintf(logfp, &quot;seed %d\n&quot;, seed);
+-	srand(seed);
+-	randready = true;
+-    }
+     return rand()/(1.0 + (double)RAND_MAX);
+ }
+ 
+@@ -884,12 +889,16 @@
+ 	    case FENSLV:  proutn(&quot;Enlavement      &quot;); break;
+ 	    case FREPRO:  proutn(&quot;Klingon Build   &quot;); break;
+ 	    }
+-	    if (is_scheduled(i))
++	    if (is_scheduled(i)) {
+ 		proutn(&quot;%.2f&quot;, scheduled(i)-game.state.date);
+-	    else
++		if (i == FENSLV || i == FREPRO) {
++		    ev = findevent(i);
++		    proutn(&quot; in %d-%d&quot;, ev-&gt;quadrant.x,ev-&gt;quadrant.y);
++		}
++	    } else
+ 		proutn(&quot;never&quot;);
++	    proutn(&quot;? &quot;);
+ 	    chew();
+-	    proutn(&quot;? &quot;);
+ 	    key = scan();
+ 	    if (key == 'n') {
+ 		unschedule(i);
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-19 08:01:27 UTC (rev 591)
++++ trunk/src/sst.h	2006-09-19 08:05:42 UTC (rev 592)
+@@ -178,6 +178,7 @@
+ extern event *schedule(int, double);
+ extern void postpone(int, double);
+ extern double scheduled(int);
++#define findevent(evtype)	&amp;game.future[evtype]
+ 
+ #define SSTMAGIC	&quot;SST2.0\n&quot;
+ 
+@@ -281,9 +282,8 @@
+ extern double aaitem;
+ extern char citem[10];
+ extern int seed;
+-extern bool randready;
+ extern bool idebug;
+-extern FILE *logfp;
++extern FILE *logfp, *replayfp;
+ 
+ /* the Space Thingy's global state should *not* be saved! */
+ extern coord thing;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000058.html">[Sst-commit-watch] r591 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000060.html">[Sst-commit-watch] r593 - in trunk: . src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#59">[ date ]</a>
+              <a href="thread.html#59">[ thread ]</a>
+              <a href="subject.html#59">[ subject ]</a>
+              <a href="author.html#59">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

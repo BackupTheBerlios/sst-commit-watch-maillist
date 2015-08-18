@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r566 - in trunk: doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r566%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C200609150743.k8F7hiWI027354%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000032.html">
+   <LINK REL="Next"  HREF="000034.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r566 - in trunk: doc src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r566%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C200609150743.k8F7hiWI027354%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r566 - in trunk: doc src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 15 09:43:44 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000032.html">[Sst-commit-watch] r565 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000034.html">[Sst-commit-watch] r567 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#33">[ date ]</a>
+              <a href="thread.html#33">[ thread ]</a>
+              <a href="subject.html#33">[ subject ]</a>
+              <a href="author.html#33">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-15 09:43:44 +0200 (Fri, 15 Sep 2006)
+New Revision: 566
+
+Modified:
+   trunk/doc/sst-doc.xml
+   trunk/src/setup.c
+Log:
+More typo fixes.
+
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2006-09-15 01:55:24 UTC (rev 565)
++++ trunk/doc/sst-doc.xml	2006-09-15 07:43:44 UTC (rev 566)
+@@ -95,7 +95,7 @@
+ 			  Curses Interface By
+                               Stas Sergeev 
+ 
+-		SST 2K polishing and historical research by
++		SST2K polishing and historical research by
+ 			     Eric S. Raymond
+ &lt;/literallayout&gt;
+ &lt;/dedication&gt;
+@@ -221,7 +221,7 @@
+ a lot more meaningful to you.&lt;/para&gt;
+ 
+ &lt;para&gt;You have weapons: phasers and photon torpedoes. You have a defense:
+-deflector shields.  You can look at things: long-range scaners,
++deflector shields.  You can look at things: long-range scanners,
+ short-range scanners, and a star chart.  You can move about, under
+ warp drive or impulse power.  You can also dock at a starbase, rest
+ while repairs are being made, abandon ship, self destruct, or give up
+@@ -605,7 +605,7 @@
+ &lt;/literallayout&gt;
+ 
+ &lt;para&gt;As you proceed in the game, you learn more and more about what things
+-are where in the galaxy. When ever you first do a scan in a quadrant,
++are where in the galaxy. Whenever you first do a scan in a quadrant,
+ telemetry sensors are ejected which will report any changes in the
+ quadrant(s) back to your ship, providing the sub-space radio is
+ working. Spock will enter this information in the chart. If the radio
+@@ -1523,11 +1523,11 @@
+ promotion available if you go beyond the &lt;quote&gt;Expert&lt;/quote&gt; range.
+ You can also have a certificate of merit printed with your name, date,
+ and Klingon kill rate, provided you are promoted from either the
+-&lt;quote&gt;Expert&lt;/quote&gt; or &lt;quote&gt;Emeritus&lt;/quote&gt; levels. This
+-&lt;quote&gt;plaque&lt;/quote&gt; requires a 132 column printer. You may need
++&lt;quote&gt;Expert&lt;/quote&gt; or &lt;quote&gt;Emeritus&lt;/quote&gt; levels. You may need
+ print the certificate to a file, import it into your word processor,
+ selecting Courier 8pt font, and then print in &lt;quote&gt;landscape
+ orientation&lt;/quote&gt;.&lt;/para&gt;
++&lt;!-- The plaque used to require an 132 column printer. Stas changed that. --&gt;
+ 
+ &lt;/chapter&gt;
+ &lt;chapter&gt;&lt;title&gt;Handy Reference Page&lt;/title&gt;
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-15 01:55:24 UTC (rev 565)
++++ trunk/src/setup.c	2006-09-15 07:43:44 UTC (rev 566)
+@@ -110,7 +110,7 @@
+ 	    return;
+ 	}
+ 	if (game.damage[DSHUTTL]&lt;0) {
+-	    prout(&quot;Shuttle craft now serving Big Mac's.&quot;);
++	    prout(&quot;Shuttle craft now serving Big Macs.&quot;);
+ 	    return;
+ 	}
+ 	if (game.damage[DSHUTTL]&gt;0) {
+@@ -135,7 +135,7 @@
+ 	prout(&quot;Remainder of ship's complement beam down&quot;);
+ 	prout(&quot;to nearest habitable planet.&quot;);
+ 	if (game.state.rembase==0) {
+-	    /* Ops! no place to go... */
++	    /* Oops! no place to go... */
+ 	    finish(FABANDN);
+ 	    return;
+ 	}
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000032.html">[Sst-commit-watch] r565 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000034.html">[Sst-commit-watch] r567 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#33">[ date ]</a>
+              <a href="thread.html#33">[ thread ]</a>
+              <a href="subject.html#33">[ subject ]</a>
+              <a href="author.html#33">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

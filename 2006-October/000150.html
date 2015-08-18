@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r683 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r683%20-%20trunk/src&In-Reply-To=%3C200610060325.k963PPGA015466%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000149.html">
+   <LINK REL="Next"  HREF="000151.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r683 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r683%20-%20trunk/src&In-Reply-To=%3C200610060325.k963PPGA015466%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r683 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct  6 05:25:25 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000149.html">[Sst-commit-watch] r682 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000151.html">[Sst-commit-watch] r684 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#150">[ date ]</a>
+              <a href="thread.html#150">[ thread ]</a>
+              <a href="subject.html#150">[ subject ]</a>
+              <a href="author.html#150">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-06 05:25:24 +0200 (Fri, 06 Oct 2006)
+New Revision: 683
+
+Modified:
+   trunk/src/sst.py
+Log:
+Drop out the BSD visual-scan code.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-06 02:16:43 UTC (rev 682)
++++ trunk/src/sst.py	2006-10-06 03:25:24 UTC (rev 683)
+@@ -5660,69 +5660,6 @@
+ 	    return
+ 			
+ 
+-#ifdef BSD_BUG_FOR_BUG
+-# A visual scan is made in a particular direction of three sectors
+-# in the general direction specified.  This takes time, and
+-# Klingons can attack you, so it should be done only when sensors
+-# are out.  Code swiped from BSD-Trek.  Not presently used, as we
+-# automatically display all adjacent sectors on the short-range
+-# scan even when short-range sensors are out.
+-
+-# This struct[] has the delta x, delta y for particular directions
+-
+-visdelta = (
+-    (-1,-1),
+-    (-1, 0),
+-    (-1, 1),
+-    (0,	 1),
+-    (1,	 1),
+-    (1,	 0),
+-    (1,	-1),
+-    (0,	-1),
+-    (-1,-1),
+-    (-1, 0),
+-    (-1, 1),
+-)
+-
+-def visual():
+-    v = coord()
+-    if scan() != IHREAL:
+-	chew()
+-	proutn(_(&quot;Direction? &quot;))
+-	if scan()!=IHREAL:
+-	    huh()
+-	    return
+-    if aaitem &lt; 0.0 or aaitem &gt; 360.0:
+-	return
+-    co = (aaitem + 22) / 45
+-    v = visdelta[co]
+-    ix = game.sector.x + v.x
+-    iy = game.sector.y + v.y
+-    if ix &lt; 0 or ix &gt;= QUADSIZE or iy &lt; 0 or iy &gt;= QUADSIZE:
+-	co = '?'
+-    else:
+-	co = game.quad[ix][iy]
+-    printf(&quot;%d,%d %c &quot; % (ix+1, iy+1, co))
+-    v += 1
+-    ix = game.sector.x + v.x
+-    iy = game.sector.y + v.y
+-    if ix &lt; 0 or ix &gt;= QUADSIZE or iy &lt; 0 or iy &gt;= QUADSIZE:
+-	co = '?'
+-    else:
+-	co = game.quad[ix][iy]
+-    printf(&quot;%c &quot; % (co))
+-    v += 1
+-    ix = game.sector.x + v.x
+-    iy = game.sector.y + v.y
+-    if ix &lt; 0 or ix &gt;= QUADSIZE or iy &lt; 0 or iy &gt;= QUADSIZE:
+-	co = '?'
+-    else:
+-	co = game.quad[ix][iy]
+-    prout(&quot;%c %d,%d\n&quot; % (co, ix+1, iy+1))
+-    game.optime = 0.5
+-    game.ididit = True
+-#endif
+-
+ # Code from setup.c begins here
+ 
+ def prelim():
+@@ -5730,10 +5667,9 @@
+     skip(2)
+     prout(_(&quot;-SUPER- STAR TREK&quot;))
+     skip(1)
+-#ifdef __HISTORICAL__
++# From the FORTRAN original
+ #    prout(_(&quot;Latest update-21 Sept 78&quot;))
+ #    skip(1)
+-#endif __HISTORICAL__ 
+ 
+ def freeze(boss):
+     # save game 
+@@ -6626,10 +6562,6 @@
+ 	    game.alldone = True		# quit the game
+ 	elif cmd == &quot;HELP&quot;:
+ 	    helpme()			# get help
+-#ifdef BSD_BUG_FOR_BUG
+-#	elif cmd == &quot;VISUAL&quot;:
+-#	    visual()			# perform visual scan
+-#endif
+ 	while True:
+ 	    if game.alldone:
+ 		break		# Game has ended
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000149.html">[Sst-commit-watch] r682 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000151.html">[Sst-commit-watch] r684 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#150">[ date ]</a>
+              <a href="thread.html#150">[ thread ]</a>
+              <a href="subject.html#150">[ subject ]</a>
+              <a href="author.html#150">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

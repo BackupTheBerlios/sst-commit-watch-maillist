@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r735 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r735%20-%20trunk/src&In-Reply-To=%3C200610100838.k9A8cYtR007365%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000201.html">
+   <LINK REL="Next"  HREF="000203.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r735 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r735%20-%20trunk/src&In-Reply-To=%3C200610100838.k9A8cYtR007365%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r735 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 10:38:34 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000201.html">[Sst-commit-watch] r734 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000203.html">[Sst-commit-watch] r736 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#202">[ date ]</a>
+              <a href="thread.html#202">[ thread ]</a>
+              <a href="subject.html#202">[ subject ]</a>
+              <a href="author.html#202">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 10:38:33 +0200 (Tue, 10 Oct 2006)
+New Revision: 735
+
+Modified:
+   trunk/src/sst.py
+Log:
+Unscramble some of the trig-formula mess.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 08:20:59 UTC (rev 734)
++++ trunk/src/sst.py	2006-10-10 08:38:33 UTC (rev 735)
+@@ -256,7 +256,7 @@
+         return math.sqrt((self.i - other.i)**2 + (self.j - other.j)**2)
+     def bearing(self, other=None):
+         if not other: other = coord(0, 0)
+-        return 1.90985*math.atan2(self.i-other.i, self.j-other.j)
++        return 1.90985*math.atan2(self.j-other.j, self.i-other.i)
+     def sgn(self):
+         s = coord()
+         if self.i == 0:
+@@ -1330,7 +1330,7 @@
+ 	    shoved = True
+ 	elif iquad in (IHC, IHS, IHR, IHK): # Hit a regular enemy 
+ 	    # find the enemy 
+-	    if withprob(0.05):
++	    if iquad in (IHC, IHS) and withprob(0.05):
+ 		prout(crmena(True, iquad, &quot;sector&quot;, w) + _(&quot; uses anti-photon device;&quot;))
+ 		prout(_(&quot;   torpedo neutralized.&quot;))
+ 		return None
+@@ -1725,7 +1725,7 @@
+ 	prout(_(&quot;  the Captain's psychological profile.\&quot;&quot;))
+ 	scanner.chew()
+ 	return None
+-    return 1.90985932*math.atan2(delta.j, delta.i)
++    return delta.bearing()
+ 
+ def photon():
+     &quot;Launch photon torpedo.&quot;
+@@ -3926,8 +3926,8 @@
+ 		prout(_(&quot;Ensign Chekov- \&quot;Course laid in, Captain.\&quot;&quot;))
+         # the actual deltas get computed here
+         delta = coord()
+-	delta.i = dquad.j-game.quadrant.j + 0.1*(dsect.j-game.sector.j)
+-	delta.j = game.quadrant.i-dquad.i + 0.1*(game.sector.i-dsect.i)
++	delta.j = dquad.j-game.quadrant.j + 0.1*(dsect.j-game.sector.j)
++	delta.i = game.quadrant.i-dquad.i + 0.1*(game.sector.i-dsect.i)
+     else: # manual 
+ 	while key == &quot;IHEOL&quot;:
+ 	    proutn(_(&quot;X and Y displacements- &quot;))
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000201.html">[Sst-commit-watch] r734 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000203.html">[Sst-commit-watch] r736 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#202">[ date ]</a>
+              <a href="thread.html#202">[ thread ]</a>
+              <a href="subject.html#202">[ subject ]</a>
+              <a href="author.html#202">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

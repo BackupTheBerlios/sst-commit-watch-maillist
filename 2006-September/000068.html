@@ -1,0 +1,348 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r601 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r601%20-%20trunk/src&In-Reply-To=%3C200609191935.k8JJZOMD004637%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000067.html">
+   <LINK REL="Next"  HREF="000069.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r601 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r601%20-%20trunk/src&In-Reply-To=%3C200609191935.k8JJZOMD004637%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r601 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 19 21:35:24 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000067.html">[Sst-commit-watch] r600 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000069.html">[Sst-commit-watch] r602 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#68">[ date ]</a>
+              <a href="thread.html#68">[ thread ]</a>
+              <a href="subject.html#68">[ subject ]</a>
+              <a href="author.html#68">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-19 21:35:24 +0200 (Tue, 19 Sep 2006)
+New Revision: 601
+
+Modified:
+   trunk/src/events.c
+   trunk/src/io.c
+   trunk/src/moving.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+More boolean cleanups.
+
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-19 19:20:43 UTC (rev 600)
++++ trunk/src/events.c	2006-09-19 19:35:24 UTC (rev 601)
+@@ -139,7 +139,7 @@
+ 	    prout(_(&quot;   surveillance reports are coming in.&quot;));
+ 	    skip(1);
+ 	    if (game.iseenit==0) {
+-		attakreport(0);
++		attakreport(false);
+ 		game.iseenit = 1;
+ 	    }
+ 	    rechart();
+@@ -198,7 +198,7 @@
+ 	    crmshp();
+ 	    prout(_(&quot; caught in long range tractor beam--&quot;));
+ 	    /* If Kirk &amp; Co. screwing around on planet, handle */
+-	    atover(1); /* atover(1) is Grab */
++	    atover(true); /* atover(true) is Grab */
+ 	    if (game.alldone) return;
+ 	    if (game.icraft == 1) { /* Caught in Galileo? */
+ 		finish(FSTRACTOR);
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-19 19:20:43 UTC (rev 600)
++++ trunk/src/io.c	2006-09-19 19:35:24 UTC (rev 601)
+@@ -316,17 +316,17 @@
+  * Things past this point have policy implications.
+  */
+ 
+-void drawmaps(short l)
++void drawmaps(int mode)
+ /* hook to be called after moving to redraw maps */
+ {
+     if (game.options &amp; OPTION_CURSES) {
+-	if (l == 1)
++	if (mode == 1)
+ 	    sensor();
+         setwnd(srscan_window);
+         wmove(curwnd, 0, 0);
+         enqueue(&quot;no&quot;);
+         srscan(SCAN_FULL);
+-	if (l != 2) {
++	if (mode != 2) {
+ 	    setwnd(report_window);
+ 	    wclear(report_window);
+ 	    wmove(report_window, 0, 0);
+@@ -429,6 +429,6 @@
+     if (game.options &amp; OPTION_CURSES) {
+ 	setwnd(message_window);
+ 	wclear(message_window);
+-	chart(0);
++	chart(false);
+     }
+ }
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-19 19:20:43 UTC (rev 600)
++++ trunk/src/moving.c	2006-09-19 19:35:24 UTC (rev 601)
+@@ -242,7 +242,7 @@
+ 	(is_scheduled(FCDBAS) || game.isatb == 1) &amp;&amp; game.iseenit == 0) {
+ 	/* get attack report from base */
+ 	prout(_(&quot;Lt. Uhura- \&quot;Captain, an important message from the starbase:\&quot;&quot;));
+-	attakreport(0);
++	attakreport(false);
+ 	game.iseenit = 1;
+     }
+ }
+@@ -675,7 +675,7 @@
+     return;
+ }
+ 
+-void atover(int igrab) 
++void atover(bool igrab) 
+ {
+     double power, distreq;
+ 
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-19 19:20:43 UTC (rev 600)
++++ trunk/src/reports.c	2006-09-19 19:35:24 UTC (rev 601)
+@@ -3,7 +3,7 @@
+ #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+ 
+-void attakreport(int curt) 
++void attakreport(bool curt) 
+ {
+     if (!curt) {
+ 	if (is_scheduled(FCDBAS)) {
+@@ -72,7 +72,7 @@
+     if (!damaged(DRADIO) || game.condit == IHDOCKED || game.iseenit) {
+ 	/* Don't report this if not seen and
+ 	   either the radio is dead or not at base! */
+-	attakreport(0);
++	attakreport(false);
+ 	game.iseenit = 1;
+     }
+     if (game.casual) prout(_(&quot;%d casualt%s suffered so far.&quot;),
+@@ -185,7 +185,7 @@
+ 	    }
+ }
+ 
+-void chart(int nn) 
++void chart(bool title) 
+ {
+     int i,j;
+     chew();
+@@ -198,7 +198,7 @@
+ 	rechart();
+     }
+ 
+-    if (nn == 0) prout(_(&quot;       STAR CHART FOR THE KNOWN GALAXY&quot;));
++    if (!title) prout(_(&quot;       STAR CHART FOR THE KNOWN GALAXY&quot;));
+     if (game.state.date &gt; game.lastchart)
+ 	prout(_(&quot;(Last surveillance update %d stardates ago).&quot;),
+ 	      (int)(game.state.date-game.lastchart));
+@@ -325,7 +325,7 @@
+ 
+ 	break;
+     case 11:
+-	attakreport(1);
++	attakreport(true);
+ 	break;
+     }
+ }
+@@ -337,7 +337,7 @@
+ 	{&quot;&quot;,&quot;da&quot;,&quot;co&quot;,&quot;po&quot;,&quot;ls&quot;,&quot;wa&quot;,&quot;en&quot;,&quot;to&quot;,&quot;sh&quot;,&quot;kl&quot;,&quot;sy&quot;, &quot;ti&quot;};
+     
+     int i, j, jj, req=0;
+-    int goodScan=true, leftside=true, rightside=true, nn=false; 
++    int goodScan=true, leftside=true, rightside=true, title=false; 
+     switch (l) {
+     case SCAN_FULL: // SRSCAN
+ 	if (damaged(DSRSENS)) {
+@@ -357,7 +357,7 @@
+ 	    game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = true;
+ 	}
+ 	scan();
+-	if (isit(&quot;chart&quot;)) nn = true;
++	if (isit(&quot;chart&quot;)) title = true;
+ 	if (isit(&quot;no&quot;)) rightside = false;
+ 	chew();
+ 	prout(&quot;    1 2 3 4 5 6 7 8 9 10&quot;);
+@@ -400,7 +400,7 @@
+ 	if (req!=0) return(goodScan);
+     }
+     prout(&quot;&quot;);
+-    if (nn) chart(1);
++    if (title) chart(true);
+     return(goodScan);
+ }
+ 			
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-19 19:20:43 UTC (rev 600)
++++ trunk/src/setup.c	2006-09-19 19:35:24 UTC (rev 601)
+@@ -225,14 +225,14 @@
+     return;
+ }
+ 	
+-void setup(int needprompt) 
++void setup(bool needprompt) 
+ {
+     int i,j, krem, klumper;
+     int ix, iy;
+     //  Decide how many of everything
+     if (choose(needprompt)) return; // frozen game
+     // Prepare the Enterprise
+-    game.alldone = game.gamewon = 0;
++    game.alldone = game.gamewon = false;
+     game.ship = IHE;
+     game.state.crew = FULLCREW;
+     game.energy = game.inenrg = 5000.0;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-19 19:20:43 UTC (rev 600)
++++ trunk/src/sst.c	2006-09-19 19:35:24 UTC (rev 601)
+@@ -469,7 +469,7 @@
+ 	    dreprt();
+ 	    break;
+ 	case CHART:			// chart
+-	    chart(0);
++	    chart(false);
+ 	    break;
+ 	case IMPULSE:			// impulse
+ 	    impuls();
+@@ -570,14 +570,14 @@
+ 		if (game.alldone) break;	// Events did us in
+ 	    }
+ 	    if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova) { // Galaxy went Nova!
+-		atover(0);
++		atover(false);
+ 		continue;
+ 	    }
+-	    if (hitme &amp;&amp; game.justin==0) {
++	    if (hitme &amp;&amp; !game.justin) {
+ 		attack(2);
+ 		if (game.alldone) break;
+ 		if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova) {	// went NOVA! 
+-		    atover(0);
++		    atover(false);
+ 		    hitme = true;
+ 		    continue;
+ 		}
+@@ -940,6 +940,6 @@
+     proutn(&quot;Induce supernova here? &quot;);
+     if (ja()) {
+ 	game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova = true;
+-	atover(1);
++	atover(true);
+     }
+ }
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-19 19:20:43 UTC (rev 600)
++++ trunk/src/sst.h	2006-09-19 19:35:24 UTC (rev 601)
+@@ -330,9 +330,9 @@
+ void prelim(void);
+ void attack(int);
+ bool choose(bool);
+-void setup(int);
++void setup(bool);
+ void score(void);
+-void atover(int);
++void atover(bool);
+ int srscan(int);
+ void lrscan(void);
+ void phasers(void);
+@@ -341,7 +341,7 @@
+ void doshield(int);
+ void dock(bool);
+ void dreprt(void);
+-void chart(int);
++void chart(bool);
+ void rechart(void);
+ void impuls(void);
+ void wait(void);
+@@ -397,21 +397,21 @@
+ void preport(void);
+ void orbit(void);
+ void sensor(void);
+-void drawmaps(short);
++void drawmaps(int);
+ void beam(void);
+ void mine(void);
+ void usecrystals(void);
+ void shuttle(void);
+ void deathray(void);
+ void debugme(void);
+-void attakreport(int);
++void attakreport(bool);
+ void movetho(void);
+ void probe(void);
+ void iostart(void);
+ void setwnd(WINDOW *);
+ void warble(void);
+-void boom(int ii, int jj);
+-void tracktorpedo(int ix, int iy, int l, int i, int n, int iquad);
++void boom(int, int);
++void tracktorpedo(int, int, int, int, int, int);
+ void cgetline(char *, int);
+ void waitfor(void);
+ void setpassword(void);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000067.html">[Sst-commit-watch] r600 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000069.html">[Sst-commit-watch] r602 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#68">[ date ]</a>
+              <a href="thread.html#68">[ thread ]</a>
+              <a href="subject.html#68">[ subject ]</a>
+              <a href="author.html#68">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

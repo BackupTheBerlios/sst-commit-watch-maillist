@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r768 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r768%20-%20trunk/src&In-Reply-To=%3C200610161341.k9GDflCq015959%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000234.html">
+   <LINK REL="Next"  HREF="000236.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r768 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r768%20-%20trunk/src&In-Reply-To=%3C200610161341.k9GDflCq015959%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r768 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Oct 16 15:41:47 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000234.html">[Sst-commit-watch] r767 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000236.html">[Sst-commit-watch] r769 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#235">[ date ]</a>
+              <a href="thread.html#235">[ thread ]</a>
+              <a href="subject.html#235">[ subject ]</a>
+              <a href="author.html#235">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-16 15:41:47 +0200 (Mon, 16 Oct 2006)
+New Revision: 768
+
+Modified:
+   trunk/src/sst.py
+Log:
+More trig refactoring.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-16 12:39:48 UTC (rev 767)
++++ trunk/src/sst.py	2006-10-16 13:41:47 UTC (rev 768)
+@@ -1295,14 +1295,11 @@
+ 	    newcnd(); # we're blown out of dock 
+ 	    if game.landed or game.condition==&quot;docked&quot;:
+ 		return hit # Cheat if on a planet 
+-	    ang = track.angle + 2.5*(randreal()-0.5)
+-	    temp = math.fabs(math.sin(ang))
+-	    if math.fabs(math.cos(ang)) &gt; temp:
+-		temp = math.fabs(math.cos(ang))
+-	    xx = -math.sin(ang)/temp
+-	    yy = math.cos(ang)/temp
+-	    bumpto.i = int(w.i+xx+0.5)
+-	    bumpto.j = int(w.j+yy+0.5)
++            # In the C/FORTRAN version, dispersion was 2.5 radians, which
++            # is 143 degrees, which is almost exactly 4.8 clockface units
++            displacement = course(track.bearing+randreal(-2.4,2.4), distance=2**0.5)
++            displacement.next()
++            bumpto = displacement.sector()
+ 	    if not bumpto.valid_sector():
+ 		return hit
+ 	    if game.quad[bumpto.i][bumpto.j]==IHBLANK:
+@@ -1343,15 +1340,9 @@
+ 		deadkl(w, iquad, w)
+ 		return None
+ 	    proutn(crmena(True, iquad, &quot;sector&quot;, w))
+-	    # If enemy damaged but not destroyed, try to displace 
+-	    ang = track.angle + 2.5*(randreal()-0.5)
+-	    temp = math.fabs(math.sin(ang))
+-	    if math.fabs(math.cos(ang)) &gt; temp:
+-		temp = math.fabs(math.cos(ang))
+-	    xx = -math.sin(ang)/temp
+-	    yy = math.cos(ang)/temp
+-	    bumpto.i = int(w.i+xx+0.5)
+-	    bumpto.j = int(w.j+yy+0.5)
++            displacement = course(track.bearing+randreal(-2.4,2.4), distance=2**0.5)
++            displacement.next()
++            bumpto = displacement.sector()
+             if not bumpto.valid_sector():
+ 		prout(_(&quot; damaged but not destroyed.&quot;))
+ 		return
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000234.html">[Sst-commit-watch] r767 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000236.html">[Sst-commit-watch] r769 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#235">[ date ]</a>
+              <a href="thread.html#235">[ thread ]</a>
+              <a href="subject.html#235">[ subject ]</a>
+              <a href="author.html#235">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

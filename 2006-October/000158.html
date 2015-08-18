@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r691 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r691%20-%20trunk/src&In-Reply-To=%3C200610061407.k96E7faJ016709%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000157.html">
+   <LINK REL="Next"  HREF="000159.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r691 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r691%20-%20trunk/src&In-Reply-To=%3C200610061407.k96E7faJ016709%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r691 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct  6 16:07:41 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000157.html">[Sst-commit-watch] r690 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000159.html">[Sst-commit-watch] r692 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#158">[ date ]</a>
+              <a href="thread.html#158">[ thread ]</a>
+              <a href="subject.html#158">[ subject ]</a>
+              <a href="author.html#158">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-06 16:07:40 +0200 (Fri, 06 Oct 2006)
+New Revision: 691
+
+Modified:
+   trunk/src/sst.py
+Log:
+Fixed bug in Python version's reporting of critical hits.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-06 13:47:54 UTC (rev 690)
++++ trunk/src/sst.py	2006-10-06 14:07:40 UTC (rev 691)
+@@ -1568,8 +1568,6 @@
+ 
+ def fry(hit):
+     # critical-hit resolution 
+-    ktr=1
+-    # a critical hit occured 
+     if hit &lt; (275.0-25.0*game.skill)*randreal(1.0, 1.5):
+ 	return
+     ncrit = int(1.0 + hit/(500.0+randreal(100)))
+@@ -1585,17 +1583,14 @@
+ 	cdam.append(j)
+ 	extradm = (hit*game.damfac)/(ncrit*randreal(75, 100))
+ 	game.damage[j] += extradm
+-	if loop1 &gt; 0:
+-            for loop2 in range(loop1):
+-                if j == cdam[loop2]:
+-                    break
+-	    if loop2 &lt; loop1:
+-		continue
+-	    ktr += 1
+-	    if ktr==3:
+-		skip(1)
+-	    proutn(_(&quot; and &quot;))
++    skipcount = 0
++    for (i, j) in enumerate(cdam):
+ 	proutn(device[j])
++        if skipcount % 3 == 2 and i &lt; len(cdam)-1:
++            skip()
++        skipcount += 1
++        if i &lt; len(cdam)-1:
++            proutn(_(&quot; and &quot;))
+     prout(_(&quot; damaged.&quot;))
+     if damaged(DSHIELD) and game.shldup:
+ 	prout(_(&quot;***Shields knocked down.&quot;))
+@@ -2568,10 +2563,9 @@
+ 	    game.iseenit = True
+ 	    announce()
+ 	    skip(1)
+-	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in Quadrant %s&quot;) % game.battle)
++	    prout(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in Quadrant %s&quot;) % game.battle)
+ 	    prout(_(&quot;   reports that it is under attack and that it can&quot;))
+-	    proutn(_(&quot;   hold out only until stardate %d&quot;) % (int(scheduled(FCDBAS))))
+-            prout(&quot;.\&quot;&quot;)
++	    prout(_(&quot;   hold out only until stardate %d.\&quot;&quot;) % (int(scheduled(FCDBAS))))
+ 	    if cancelrest():
+                 return
+ 	elif evcode == FSCDBAS: # Supercommander destroys base 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000157.html">[Sst-commit-watch] r690 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000159.html">[Sst-commit-watch] r692 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#158">[ date ]</a>
+              <a href="thread.html#158">[ thread ]</a>
+              <a href="subject.html#158">[ subject ]</a>
+              <a href="author.html#158">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

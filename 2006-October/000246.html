@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r779 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r779%20-%20trunk/src&In-Reply-To=%3C200610221313.k9MDDl55027141%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000245.html">
+   <LINK REL="Next"  HREF="000247.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r779 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r779%20-%20trunk/src&In-Reply-To=%3C200610221313.k9MDDl55027141%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r779 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Sun Oct 22 15:13:47 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000245.html">[Sst-commit-watch] r778 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000247.html">[Sst-commit-watch] r780 - trunk/po
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#246">[ date ]</a>
+              <a href="thread.html#246">[ thread ]</a>
+              <a href="subject.html#246">[ subject ]</a>
+              <a href="author.html#246">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-22 15:13:46 +0200 (Sun, 22 Oct 2006)
+New Revision: 779
+
+Modified:
+   trunk/src/sst.py
+Log:
+Clean up and document constants.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-21 19:49:34 UTC (rev 778)
++++ trunk/src/sst.py	2006-10-22 13:13:46 UTC (rev 779)
+@@ -18,20 +18,20 @@
+ 
+ def _(str): return gettext.gettext(str)
+ 
+-PHASEFAC	= 2.0
+-GALSIZE 	= 8
+-NINHAB  	= (GALSIZE * GALSIZE / 2)
+-MAXUNINHAB	= 10
+-PLNETMAX	= (NINHAB + MAXUNINHAB)
+-QUADSIZE	= 10
+-BASEMIN		= 2
+-BASEMAX 	= (GALSIZE * GALSIZE / 12)
+-MAXKLGAME	= 127
+-MAXKLQUAD	= 9
+-FULLCREW	= 428	# BSD Trek was 387, that's wrong 
+-FOREVER 	= 1e30
+-MAXBURST	= 3
+-MINCMDR 	= 10
++GALSIZE 	= 8		# Galaxy size in quadrants
++NINHAB  	= (GALSIZE * GALSIZE / 2)	# Number of inhabited worlds
++MAXUNINHAB	= 10		# Maximum uninhabited worlds
++QUADSIZE	= 10		# Quadrant size in sectors
++BASEMIN		= 2				# Minimum starbases
++BASEMAX 	= (GALSIZE * GALSIZE / 12)	# Maximum starbases
++MAXKLGAME	= 127		# Maximum Klingons per game
++MAXKLQUAD	= 9		# Maximum Klingons per quadrant
++FULLCREW	= 428		# Crew size. BSD Trek was 387, that's wrong 
++FOREVER 	= 1e30		# Time for the indefinite future
++MAXBURST	= 3		# Max # of torps you can launch in one turn
++MINCMDR 	= 10		# Minimum number of Klingon commanders
++DOCKFAC		= 0.25		# Repair faster when docked
++PHASEFAC	= 2.0		# Unclear what this is, it was in the C version
+ 
+ class TrekError:
+     pass
+@@ -331,10 +331,8 @@
+         self.energy = 0.0	# energy level
+         self.shield = 0.0	# shield level
+         self.warpfac = 0.0	# warp speed
+-        self.wfacsq = 0.0	# squared warp factor
+         self.lsupres = 0.0	# life support reserves
+         self.optime = 0.0	# time taken by current operation
+-        self.docfac = 0.0	# repair factor when docking (constant?)
+         self.damfac = 0.0	# damage factor
+         self.lastchart = 0.0	# time star chart was last updated
+         self.cryprob = 0.0	# probability that crystal will work
+@@ -2079,7 +2077,7 @@
+ 	# Fix devices 
+ 	repair = xtime
+ 	if game.condition == &quot;docked&quot;:
+-	    repair /= game.docfac
++	    repair /= DOCKFAC
+ 	# Don't fix Deathray here 
+ 	for l in range(NDEVICES):
+ 	    if game.damage[l] &gt; 0.0 and l != DDRAY:
+@@ -4816,7 +4814,7 @@
+ 		jdam = True
+ 	    prout(&quot;  %-26s\t%8.2f\t\t%8.2f&quot; % (device[i],
+                                                game.damage[i]+0.05,
+-                                               game.docfac*game.damage[i]+0.005))
++                                               DOCKFAC*game.damage[i]+0.005))
+     if not jdam:
+ 	prout(_(&quot;All devices functional.&quot;))
+ 
+@@ -5246,7 +5244,6 @@
+     game.iscraft = &quot;onship&quot;
+     game.landed = False
+     game.alive = True
+-    game.docfac = 0.25
+     # Starchart is functional but we've never seen it
+     game.lastchart = FOREVER
+     # Put stars in the galaxy
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000245.html">[Sst-commit-watch] r778 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000247.html">[Sst-commit-watch] r780 - trunk/po
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#246">[ date ]</a>
+              <a href="thread.html#246">[ thread ]</a>
+              <a href="subject.html#246">[ subject ]</a>
+              <a href="author.html#246">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r767 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r767%20-%20trunk/src&In-Reply-To=%3C200610161239.k9GCdnd2009548%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000233.html">
+   <LINK REL="Next"  HREF="000235.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r767 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r767%20-%20trunk/src&In-Reply-To=%3C200610161239.k9GCdnd2009548%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r767 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Oct 16 14:39:49 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000233.html">[Sst-commit-watch] r766 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000235.html">[Sst-commit-watch] r768 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#234">[ date ]</a>
+              <a href="thread.html#234">[ thread ]</a>
+              <a href="subject.html#234">[ subject ]</a>
+              <a href="author.html#234">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-16 14:39:48 +0200 (Mon, 16 Oct 2006)
+New Revision: 767
+
+Modified:
+   trunk/src/sst.py
+Log:
+Prevent torpedo wraparound.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-16 02:19:40 UTC (rev 766)
++++ trunk/src/sst.py	2006-10-16 12:39:48 UTC (rev 767)
+@@ -1276,7 +1276,7 @@
+     # Loop to move a single torpedo 
+     setwnd(message_window)
+     for step in range(1, QUADSIZE*2):
+-	track.next()
++        if not track.next(): break
+         w = track.sector()
+ 	if not w.valid_sector():
+ 	    break
+@@ -2449,7 +2449,7 @@
+ 		supercommander()
+ 	elif evcode == FDSPROB: # Move deep space probe 
+ 	    schedule(FDSPROB, 0.01)
+-            if game.probe.next(grain=QUADSIZE):
++            if not game.probe.next():
+ 		if not game.probe.quadrant().valid_quadrant() or \
+ 		    game.state.galaxy[game.probe.quadrant().i][game.probe.quadrant().j].supernova:
+ 		    # Left galaxy or ran into supernova
+@@ -3927,17 +3927,13 @@
+         self.step = 0
+     def arrived(self):
+         return self.location.roundtogrid() == self.final
+-    def next(self, grain=1):
++    def next(self):
+         &quot;Next step on course.&quot;
+         self.step += 1
+         self.nextlocation = self.location + self.increment
+-        oldloc = (self.location/grain).roundtogrid()
+-        newloc = (self.nextlocation/grain).roundtogrid()
++        samequad = (self.location.quadrant() == self.nextlocation.quadrant())
+         self.location = self.nextlocation
+-        if newloc != oldloc:
+-            return True
+-        else:
+-            return False
++        return samequad
+     def quadrant(self):
+         return self.location.quadrant()
+     def sector(self):
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000233.html">[Sst-commit-watch] r766 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000235.html">[Sst-commit-watch] r768 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#234">[ date ]</a>
+              <a href="thread.html#234">[ thread ]</a>
+              <a href="subject.html#234">[ subject ]</a>
+              <a href="author.html#234">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

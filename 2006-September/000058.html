@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r591 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r591%20-%20trunk/src&In-Reply-To=%3C200609190801.k8J81RP0008864%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000057.html">
+   <LINK REL="Next"  HREF="000059.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r591 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r591%20-%20trunk/src&In-Reply-To=%3C200609190801.k8J81RP0008864%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r591 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 19 10:01:27 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000057.html">[Sst-commit-watch] r590 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000059.html">[Sst-commit-watch] r592 - in trunk: . doc src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#58">[ date ]</a>
+              <a href="thread.html#58">[ thread ]</a>
+              <a href="subject.html#58">[ subject ]</a>
+              <a href="author.html#58">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-19 10:01:27 +0200 (Tue, 19 Sep 2006)
+New Revision: 591
+
+Modified:
+   trunk/src/planets.c
+Log:
+Improve the world list.
+
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-19 06:27:07 UTC (rev 590)
++++ trunk/src/planets.c	2006-09-19 08:01:27 UTC (rev 591)
+@@ -514,73 +514,60 @@
+     static char	*names[NINHAB] =
+     {
+ 	/*
+-	 * This started out life as the BSD Trek inhabited-planets list,
+-	 * but I used &lt;<A HREF="http://www.memory-alpha.org">http://www.memory-alpha.org</A>&gt; to weed out planets
+-	 * with no references in ST:TOS and to fill it out again to the
+-	 * required length from &quot;The Worlds of The Federation&quot; list,
+-	 * &lt;<A HREF="http://memory-alpha.org/en/wiki/The_Worlds_of_the_Federation">http://memory-alpha.org/en/wiki/The_Worlds_of_the_Federation</A>&gt;.
+-	 * Some misspellings have been silently corrected.  (To be
+-	 * fair, there was no Web when Eric Allman did his list.)
+-	 *
++	 * I used &lt;<A HREF="http://www.memory-alpha.org">http://www.memory-alpha.org</A>&gt; to find planets
++	 * with references in ST:TOS.  Eath and the Alpha Centauri
++	 * Colony have been omitted.
++ 	 *
+ 	 * Some planets marked Class G and P here will be displayed as class M
+ 	 * because of the way planets are generated. This is a known bug.
+ 	 */
+ 	&quot;ERROR&quot;,
+-	// Added Federation Worlds
+-	&quot;Deneva&quot;,		/* TOS: &quot;Operation -- Annihilate!&quot; */
+-	&quot;Eminiar VII&quot;,		/* TOS: &quot;A Taste of Armageddon&quot; */
+-	&quot;Hansen's Planet&quot;,	/* TOS: &quot;The Galileo Seven&quot; */
+-	&quot;Taurus IV&quot;,		/* TOS: &quot;The Galileo Seven&quot; (class G) */
+-	&quot;Aldebaran III&quot;,	/* TOS: &quot;The Deadly Years&quot; */
+-	&quot;Vulcan (T'Khasi)&quot;,	/* many episodes */
+-	&quot;Tellar Prime (Miracht)&quot;,	/* TOS: &quot;Journey to Babel&quot; */
++	// Federation Worlds
+ 	&quot;Andoria (Fesoan)&quot;,	/* several episodes */
+-	&quot;Antos IV (Doraphane)&quot;,	/* TOS: &quot;Whom Gods Destroy&quot;, &quot;Who Mourns for Adonais?&quot; */
+-	&quot;Catulla (Cendo-Prae)&quot;,	/* TOS: &quot;The Way to Eden&quot; */
+-	&quot;Izar&quot;,			/* TOS: &quot;Whom Gods Destroy&quot; */
+-	&quot;Tiburon&quot;,		/* TOS: &quot;The Way to Eden&quot; */
+-	&quot;Merak II&quot;,		/* TOS: &quot;The Cloud Minders&quot; */
+-	&quot;Argelius II (Nelphia)&quot;,	/* TOS: &quot;Wolf in the Fold&quot; (&quot;IV&quot; in BSD) */
+-	&quot;Daran V&quot;,		/* TOS: &quot;For the World is Hollow and I Have Touched the Sky&quot; */
++	&quot;Tellar Prime (Miracht)&quot;,	/* TOS: &quot;Journey to Babel&quot; */
++	&quot;Vulcan (T'Khasi)&quot;,	/* many episodes */
+ 	&quot;Medusa&quot;,		/* TOS: &quot;Is There in Truth No Beauty?&quot; */
+-	&quot;Coridan (Desotriana)&quot;,	/* TOS: &quot;Journey to Babel&quot; */
+-	&quot;Berengaria IV&quot;,	/* TOS: &quot;This Side of Paradise&quot; */
+-	&quot;Capella IV (Kohath)&quot;,	/* TOS: &quot;Friday's Child&quot; (Class G) */
++	&quot;Argelius II (Nelphia)&quot;,/* TOS: &quot;Wolf in the Fold&quot; (&quot;IV&quot; in BSD) */
++	&quot;Ardana&quot;,		/* TOS: &quot;The Cloud Minders&quot; */
++	&quot;Catulla (Cendo-Prae)&quot;,	/* TOS: &quot;The Way to Eden&quot; */
+ 	&quot;Gideon&quot;,		/* TOS: &quot;The Mark of Gideon&quot; */
+-	&quot;Iotia&quot;,		/* TOS: &quot;A Piece of the Action&quot; */
++	&quot;Aldebaran III&quot;,	/* TOS: &quot;The Deadly Years&quot; */
++	&quot;Alpha Majoris I&quot;,	/* TOS: &quot;Wolf in the Fold&quot; */
++	&quot;Altair IV&quot;,		/* TOS: &quot;Amok Time */
++	&quot;Ariannus&quot;,		/* TOS: &quot;Let That Be Your Last Battlefield&quot; */
++	&quot;Benecia&quot;		/* TOS: &quot;The Conscience of the King&quot; */
++	&quot;Beta Niobe I (Sarpeidon)&quot;,	/* TOS: &quot;All Our Yesterdays&quot; */
++	&quot;Alpha Carinae II&quot;,	/* TOS: &quot;The Ultimate Computer&quot; */
++	&quot;Capella IV (Kohath)&quot;,	/* TOS: &quot;Friday's Child&quot; (Class G) */
++	&quot;Daran V&quot;,		/* TOS: &quot;For the World is Hollow and I Have Touched the Sky&quot; */
++	&quot;Deneb II&quot;,		/* TOS: &quot;Wolf in the Fold&quot; (&quot;IV&quot; in BSD) */
++	&quot;Eminiar VII&quot;,		/* TOS: &quot;A Taste of Armageddon&quot; */
++	&quot;Gamma Canaris IV&quot;,	/* TOS: &quot;Metamorphosis&quot; */
++	&quot;Gamma Tranguli VI (Vaalel)&quot;,	/* TOS: &quot;The Apple&quot; */
++	&quot;Ingraham B&quot;,		/* TOS: &quot;Operation: Annihilate&quot; */
++	&quot;Janus IV&quot;,		/* TOS: &quot;The Devil in the Dark&quot; */
++	&quot;Makus III&quot;,		/* TOS: &quot;The Galileo Seven&quot; */
++	&quot;Marcos XII&quot;,		/* TOS: &quot;And the Children Shall Lead&quot;, */
++	&quot;Omega IV&quot;,		/* TOS: &quot;The Omega Glory&quot; */
++	&quot;Regulus V&quot;,		/* TOS: &quot;Amok Time */
++	&quot;Deeva&quot;,		/* TOS: &quot;Operation -- Annihilate!&quot; */
+ 	/* Worlds from BSD Trek */
+-	//&quot;Talos IV&quot;,		/* TOS: &quot;The Cage&quot; (interdicted world) */
+ 	&quot;Rigel II&quot;,		/* TOS: &quot;Shore Leave&quot; (&quot;III&quot; in BSD) */
+-	&quot;Deneb II&quot;,		/* TOS: &quot;Wolf in the Fold&quot; (&quot;IV&quot; in BSD) */
+-	//&quot;Canopus V&quot;,		/* noncanonical */
+-	//&quot;Icarus I&quot;,		/* noncanonical */
+-	//&quot;Prometheus II&quot;,	/* noncanonical */
+-	//&quot;Omega VII&quot;,		/* noncanonical */
+-	//&quot;Elysium I&quot;,		/* noncanonical */
+-	&quot;Scalos IV&quot;,		/* TOS: &quot;Wink of an Eye&quot; */
+-	//&quot;Procyon IV&quot;,		/* noncanonical */
+-	//&quot;Arachnid I&quot;,		/* noncanonical */
+-	//&quot;Argo VIII&quot;,		/* noncanonical */
+-	//&quot;Triad III&quot;,		/* noncanonical */
+-	//&quot;Echo IV&quot;,		/* noncanonical */
+-	//&quot;Nimrod III&quot;,		/* noncanonical */
+-	//&quot;Nemisis IV&quot;,		/* noncanonical */
+-	//&quot;Centarurus I&quot;,	/* noncanonical */
+-	//&quot;Kronos III&quot;,		/* noncanonical */
+-	//&quot;Spectros V&quot;,		/* noncanonical */
+ 	&quot;Beta III&quot;,		/* TOS: &quot;The Return of the Archons&quot; */
+-	&quot;Gamma Tranguli VI (Vaalel)&quot;,	/* TOS: &quot;The Apple&quot; */
+-	&quot;Pyris VII&quot;,		/* TOS: &quot;Catspaw&quot; (&quot;III&quot; in BSD) */
+ 	&quot;Triacus&quot;,		/* TOS: &quot;And the Children Shall Lead&quot;, */
+-	&quot;Marcos XII&quot;,		/* TOS: &quot;And the Children Shall Lead&quot;, */
+-	//&quot;Kaland&quot;,		/* noncanonical */
+-	&quot;Ardana&quot;,		/* TOS: &quot;The Cloud Minders&quot; */
+-	//&quot;Stratos&quot;,		/* noncanonical */
+-	//&quot;Eden&quot;,		/* TOS: &quot;The Way to Eden&quot; (in Romulan space) */
+-	//&quot;Arrikis&quot;,		/* noncanonical */
+-	//&quot;Epsilon Eridani IV&quot;,	/* noncanonical */
+ 	&quot;Exo III&quot;,		/* TOS: &quot;What Are Little Girls Made Of?&quot; (Class P) */
+-    };
++#if 0
++	// Others
++	&quot;Hansen's Planet&quot;,	/* TOS: &quot;The Galileo Seven&quot; */
++	&quot;Taurus IV&quot;,		/* TOS: &quot;The Galileo Seven&quot; (class G) */
++	&quot;Antos IV (Doraphane)&quot;,	/* TOS: &quot;Whom Gods Destroy&quot;, &quot;Who Mourns for Adonais?&quot; */
++	&quot;Izar&quot;,			/* TOS: &quot;Whom Gods Destroy&quot; */
++	&quot;Tiburon&quot;,		/* TOS: &quot;The Way to Eden&quot; */
++	&quot;Merak II&quot;,		/* TOS: &quot;The Cloud Minders&quot; */ 
++	&quot;Coridan (Desotriana)&quot;,	/* TOS: &quot;Journey to Babel&quot; */
++	&quot;Iotia&quot;,		/* TOS: &quot;A Piece of the Action&quot; */
++#endif
++   };
+ 
+     return names[pindx];
+ }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000057.html">[Sst-commit-watch] r590 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000059.html">[Sst-commit-watch] r592 - in trunk: . doc src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#58">[ date ]</a>
+              <a href="thread.html#58">[ thread ]</a>
+              <a href="subject.html#58">[ subject ]</a>
+              <a href="author.html#58">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

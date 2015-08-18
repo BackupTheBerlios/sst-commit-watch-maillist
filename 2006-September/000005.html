@@ -1,0 +1,350 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r538 - in branches/at-work: . doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r538%20-%20in%20branches/at-work%3A%20.%20doc%20src&In-Reply-To=%3C200609131650.k8DGo3Pb016574%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000004.html">
+   <LINK REL="Next"  HREF="000006.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r538 - in branches/at-work: . doc src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r538%20-%20in%20branches/at-work%3A%20.%20doc%20src&In-Reply-To=%3C200609131650.k8DGo3Pb016574%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r538 - in branches/at-work: . doc src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 13 18:50:03 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000004.html">[Sst-commit-watch] r537 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000006.html">[Sst-commit-watch] r539 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#5">[ date ]</a>
+              <a href="thread.html#5">[ thread ]</a>
+              <a href="subject.html#5">[ subject ]</a>
+              <a href="author.html#5">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2006-09-13 18:50:00 +0200 (Wed, 13 Sep 2006)
+New Revision: 538
+
+Modified:
+   branches/at-work/TODO
+   branches/at-work/doc/sst-doc.xml
+   branches/at-work/doc/sst.xml
+   branches/at-work/src/planets.c
+   branches/at-work/src/setup.c
+   branches/at-work/src/sst.c
+   branches/at-work/src/sst.h
+Log:
+merge trunk
+
+Modified: branches/at-work/TODO
+===================================================================
+--- branches/at-work/TODO	2006-09-13 16:36:24 UTC (rev 537)
++++ branches/at-work/TODO	2006-09-13 16:50:00 UTC (rev 538)
+@@ -19,6 +19,3 @@
+ * Russian translation
+ 
+ * Wrap a GUI around it.
+-
+-* Find out what the deathray behavior was before Tom Almy changed it,
+-  and reverse the change when the game type is 'plain'.
+
+Modified: branches/at-work/doc/sst-doc.xml
+===================================================================
+--- branches/at-work/doc/sst-doc.xml	2006-09-13 16:36:24 UTC (rev 537)
++++ branches/at-work/doc/sst-doc.xml	2006-09-13 16:50:00 UTC (rev 538)
+@@ -251,13 +251,14 @@
+ The Emeritus game is strictly for masochists.&lt;/para&gt;
+ 
+ &lt;para&gt;The fourth question, new in SST2K, sets your game options.  A
+-blank answer enables all SST2K features.  The option 'plain' disables
+-a number of features (Tholians, planets &amp; dilithium, Thingies
+-shooting back, deep-space-probes, Klingon ramming and movement,
+-time-warping through black holes), approximating the original CDC 6600
+-FORTRAN game from UT Austin.  The option 'almy' approximates Tom
+-Almy's C translation from 1979, disabling Thingies shooting back and
+-time-warping through black holes.&lt;/para&gt;
++blank answer or 'fancy' enables all SST2K features.  The option
++'plain' disables a number of features (Tholians, planets &amp;
++dilithium, Thingies shooting back, deep-space-probes, Klingon ramming
++and movement, time-warping through black holes, death-ray upgrade),
++approximating the original CDC 6600 FORTRAN game from UT Austin.  The
++option 'almy' approximates Tom Almy's C translation from 1979,
++disabling Thingies shooting back, base shields, and time-warping
++through black holes.&lt;/para&gt;
+ 
+ &lt;/chapter&gt;
+ &lt;chapter&gt;&lt;title&gt;How To Issue Commands&lt;/title&gt;
+@@ -1622,7 +1623,7 @@
+ were distributed under the name SPACWR.&lt;/para&gt;
+ 
+ &lt;para&gt;Many different versions radiated from Mayfield's original; most
+-og the ones in BASIC are descended from a SPACWR version that David
++of the ones in BASIC are descended from a SPACWR version that David
+ Ahl published in &lt;citetitle&gt;101 BASIC Computer Games&lt;/citetitle&gt;,
+ July 1973. This was a port of Mayfield's version obtained from the HP
+ Contributed Programs library.  &lt;/para&gt;
+
+Modified: branches/at-work/doc/sst.xml
+===================================================================
+--- branches/at-work/doc/sst.xml	2006-09-13 16:36:24 UTC (rev 537)
++++ branches/at-work/doc/sst.xml	2006-09-13 16:50:00 UTC (rev 538)
+@@ -47,17 +47,17 @@
+ example, you can invoke the program as&lt;/para&gt;
+ 
+ &lt;programlisting&gt;
+-sst regular medium good plain
++sst regular medium good fancy
+ &lt;/programlisting&gt;
+ 
+-&lt;para&gt;to start a regular medium game as a good player in 'plain'
+-mode (with only the features from the FOTRAN original enabled).&lt;/para&gt;
++&lt;para&gt;to start a regular medium game as a good player in 'fancy'
++mode (all features enabled).&lt;/para&gt;
+ &lt;/refsect1&gt;
+ 
+ &lt;refsect1 id='authors'&gt;&lt;title&gt;AUTHORS&lt;/title&gt; 
+ &lt;para&gt;Super Star Trek was designed and written by David Matuszek, Paul
+ Reynolds, and Don Smith in the 1970s.  It was resurrected by Tom Almy.
+-The screen-oriented interface is by Stas Seergeev. This version has
++The screen-oriented interface is by Stas Sergeev. This version has
+ been cleaned up and documented by Eric S. Raymond
+ &lt;email&gt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">esr at snark.thyrsus.com</A>&lt;/email&gt;.  There is a &lt;ulink
+ url='<A HREF="https://developer.berlios.de/projects/sst/">https://developer.berlios.de/projects/sst/</A>'&gt;project
+
+Modified: branches/at-work/src/planets.c
+===================================================================
+--- branches/at-work/src/planets.c	2006-09-13 16:36:24 UTC (rev 537)
++++ branches/at-work/src/planets.c	2006-09-13 16:50:00 UTC (rev 538)
+@@ -395,7 +395,7 @@
+ 
+ void deathray(void) 
+ {
+-    double r = Rand();
++    double dprob, r = Rand();
+ 	
+     ididit = 0;
+     skip(1);
+@@ -430,21 +430,26 @@
+     skip(1);
+     prouts(&quot;WHIRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR&quot;);
+     skip(1);
+-    if (r &gt; .30) {
++    dprob = .30;
++    if (game.options &amp; OPTION_PLAIN)
++	dprob = .5;
++    if (r &gt; dprob) {
+ 	prouts(&quot;Sulu- \&quot;Captain!  It's working!\&quot;&quot;);
+ 	skip(2);
+ 	while (nenhere &gt; 0)
+ 	    deadkl(game.kx[1],game.ky[1],game.quad[game.kx[1]][game.ky[1]],game.kx[1],game.ky[1]);
+ 	prout(&quot;Ensign Chekov-  \&quot;Congratulations, Captain!\&quot;&quot;);
+ 	if (KLINGREM == 0) finish(FWON);
+-	prout(&quot;Spock-  \&quot;Captain, I believe the `Experimental Death Ray'&quot;);
+-	if (Rand() &lt;= 0.05) {
+-	    prout(&quot;   is still operational.\&quot;&quot;);
++	if ((game.options &amp; OPTION_PLAIN) == 0) {
++	    prout(&quot;Spock-  \&quot;Captain, I believe the `Experimental Death Ray'&quot;);
++	    if (Rand() &lt;= 0.05) {
++		prout(&quot;   is still operational.\&quot;&quot;);
++	    }
++	    else {
++		prout(&quot;   has been rendered nonfunctional.\&quot;&quot;);
++		game.damage[DDRAY] = 39.95;
++	    }
+ 	}
+-	else {
+-	    prout(&quot;   has been rendered nonfunctional.\&quot;&quot;);
+-	    game.damage[DDRAY] = 39.95;
+-	}
+ 	return;
+     }
+     r = Rand();	// Pick failure method 
+
+Modified: branches/at-work/src/setup.c
+===================================================================
+--- branches/at-work/src/setup.c	2006-09-13 16:36:24 UTC (rev 537)
++++ branches/at-work/src/setup.c	2006-09-13 16:50:00 UTC (rev 538)
+@@ -468,12 +468,18 @@
+ 	proutn(&quot;Choose your game options: &quot;);
+ 	scan();
+     }
+-    if (isit(&quot;plain&quot;))
++    if (isit(&quot;plain&quot;)) {
+ 	// Approximates the UT FORTRAN version.
+ 	game.options &amp;=~ (OPTION_THOLIAN | OPTION_PLANETS | OPTION_THINGY | OPTION_PROBE | OPTION_RAMMING | OPTION_MVBADDY | OPTION_BLKHOLE | OPTION_BASE);
+-    if (isit(&quot;almy&quot;))
++	game.options |= OPTION_PLAIN;
++    } 
++    else if (isit(&quot;almy&quot;)) {
+ 	// Approximates Tom Almy's version.
+ 	game.options &amp;=~ (OPTION_THINGY | OPTION_BLKHOLE | OPTION_BASE);
++	game.options |= OPTION_ALMY;
++    }
++    else if (isit(&quot;fancy&quot;))
++	/* do nothing */;
+     else if (strlen(citem)) {
+ 	    proutn(&quot;What is \&quot;&quot;);
+ 	    proutn(citem);
+
+Modified: branches/at-work/src/sst.c
+===================================================================
+--- branches/at-work/src/sst.c	2006-09-13 16:36:24 UTC (rev 537)
++++ branches/at-work/src/sst.c	2006-09-13 16:50:00 UTC (rev 538)
+@@ -39,44 +39,58 @@
+ 
+ Here are Tom Almy's changes:
+ 
+-   Compared to original version, I've changed the &quot;help&quot; command to
+-   &quot;call&quot; and the &quot;terminate&quot; command to &quot;quit&quot; to better match
+-   user expectations. The DECUS version apparently made those changes
+-   as well as changing &quot;freeze&quot; to &quot;save&quot;. However I like &quot;freeze&quot;.
+-   (Both &quot;freeze&quot; and &quot;save&quot; work in SST2K.)
++   In early 1997, I got the bright idea to look for references to
++   &quot;Super Star Trek&quot; on the World Wide Web. There weren't many hits,
++   but there was one that came up with 1979 Fortran sources! This
++   version had a few additional features that mine didn't have,
++   however mine had some feature it didn't have. So I merged its
++   features that I liked. I also took a peek at the DECUS version (a
++   port, less sources, to the PDP-10), and some other variations.
+ 
+-   When I got a later version of Super Star Trek that I was converting
+-   from, I added the emexit command.
++   1, Compared to the original UT version, I've changed the &quot;help&quot; command to
++      &quot;call&quot; and the &quot;terminate&quot; command to &quot;quit&quot; to better match
++      user expectations. The DECUS version apparently made those changes
++      as well as changing &quot;freeze&quot; to &quot;save&quot;. However I like &quot;freeze&quot;.
++      (Both &quot;freeze&quot; and &quot;save&quot; work in SST2K.)
+ 
+-   That later version also mentions srscan and lrscan working when
+-   docked (using the starbase's scanners), so I made some changes here
+-   to do this (and indicating that fact to the player), and then realized
+-   the base would have a subspace radio as well -- doing a Chart when docked
+-   updates the star chart, and all radio reports will be heard. The Dock
+-   command will also give a report if a base is under attack.
++   2. The experimental deathray originally had only a 5% chance of
++      success, but could be used repeatedly. I guess after a couple
++      years of use, it was less &quot;experimental&quot; because the 1979
++      version had a 70% success rate. However it was prone to breaking
++      after use. I upgraded the deathray, but kept the original set of
++      failure modes (great humor!).  (Now controlled by OPTION_DEATHRAY
++      and turned off if game type is &quot;plain&quot;.)
+ 
+-   Klingon commander movements are no longer reported if long-range 
+-   sensors are damaged.
++   3. The 1979 version also mentions srscan and lrscan working when
++      docked (using the starbase's scanners), so I made some changes here
++      to do this (and indicating that fact to the player), and then realized
++      the base would have a subspace radio as well -- doing a Chart when docked
++      updates the star chart, and all radio reports will be heard. The Dock
++      command will also give a report if a base is under attack.
+ 
+-   Also added:
++   4. Tholian Web from the 1979 version.  (Now controlled by
++      OPTION_THOLIAN and turned off if game type is &quot;plain&quot;.)
+ 
+-   1. Better base positioning at startup.
+-
+-   2. Deathray improvement (but keeping original failure alternatives).
+-
+-   3. Tholian Web.  (Now controlled by OPTION_THOLIAN and turned off 
+-      if game type is &quot;plain&quot;.)
+-
+-   4. Enemies can ram the Enterprise. (Now controlled by OPTION_RAMMING
++   5. Enemies can ram the Enterprise. (Now controlled by OPTION_RAMMING
+       and turned off if game type is &quot;plain&quot;.)
+ 
+-   5. Regular Klingons and Romulans can move in Expert and Emeritus games. 
++   6. Regular Klingons and Romulans can move in Expert and Emeritus games. 
+       This code could use improvement. (Now controlled by OPTION_MVBADDY
+       and turned off if game type is &quot;plain&quot;.)
+ 
+-   6. The deep-space probe feature from the DECUS version.  (Now controlled
++   7. The deep-space probe feature from the DECUS version.  (Now controlled
+       by OPTION_PROBE and turned off if game type is &quot;plain&quot;).
+ 
++   8. 'emexit' command from the 1979 version.
++
++   9. Bugfix: Klingon commander movements are no longer reported if long-range 
++      sensors are damaged.
++
++   10. Bugfix: Better base positioning at startup (more spread out).
++      That made sense to add because most people abort games with 
++      bad base placement.
++
++   In June 2002, I fixed two known bugs and a documentation typo.
+    In June 2004 I fixed a number of bugs involving: 1) parsing invalid
+    numbers, 2) manual phasers when SR scan is damaged and commander is
+    present, 3) time warping into the future, 4) hang when moving
+@@ -100,8 +114,8 @@
+ 
+    4. The Tholian can be hit with phasers.
+ 
+-   5. SCom can't escape from you if no more enemies remain (without this, 
+-      chasing SCom can take an eternity).
++   5. SCom can't escape from you if no more enemies remain 
++      (without this, chasing SCom can take an eternity).
+ 
+    6. Probe target you enter is now the destination quadrant. Before I don't 
+       remember what it was, but it was something I had difficulty using.
+@@ -559,7 +573,7 @@
+ {
+     int i, option;
+ 
+-    game.options = OPTION_ALL &amp;~ (OPTION_IOMODES | OPTION_SHOWME);
++    game.options = OPTION_ALL &amp;~ (OPTION_IOMODES | OPTION_SHOWME | OPTION_PLAIN | OPTION_ALMY);
+     if (getenv(&quot;TERM&quot;))
+ 	game.options |= OPTION_CURSES | OPTION_SHOWME;
+     else
+
+Modified: branches/at-work/src/sst.h
+===================================================================
+--- branches/at-work/src/sst.h	2006-09-13 16:36:24 UTC (rev 537)
++++ branches/at-work/src/sst.h	2006-09-13 16:50:00 UTC (rev 538)
+@@ -108,6 +108,8 @@
+ #define OPTION_MVBADDY	0x00000100	/* more enemies can move */
+ #define OPTION_BLKHOLE	0x00000200	/* black hole may timewarp you */
+ #define OPTION_BASE	0x00000400	/* bases have good shields */
++#define OPTION_PLAIN	0x01000000	/* user chose plain game */
++#define OPTION_ALMY	0x02000000	/* user chose Almy variant */
+ 
+ /* Define devices */
+ #define DSRSENS 0
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000004.html">[Sst-commit-watch] r537 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000006.html">[Sst-commit-watch] r539 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#5">[ date ]</a>
+              <a href="thread.html#5">[ thread ]</a>
+              <a href="subject.html#5">[ subject ]</a>
+              <a href="author.html#5">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

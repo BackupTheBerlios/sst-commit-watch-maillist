@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r642 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r642%20-%20trunk/src&In-Reply-To=%3C200609281018.k8SAIqqZ025926%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000108.html">
+   <LINK REL="Next"  HREF="000110.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r642 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r642%20-%20trunk/src&In-Reply-To=%3C200609281018.k8SAIqqZ025926%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r642 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 28 12:18:52 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000108.html">[Sst-commit-watch] r641 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000110.html">[Sst-commit-watch] r643 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#109">[ date ]</a>
+              <a href="thread.html#109">[ thread ]</a>
+              <a href="subject.html#109">[ subject ]</a>
+              <a href="author.html#109">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-28 12:18:52 +0200 (Thu, 28 Sep 2006)
+New Revision: 642
+
+Modified:
+   trunk/src/sst.h
+Log:
+More cleanup towards automated Python translation.
+
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-28 09:48:31 UTC (rev 641)
++++ trunk/src/sst.h	2006-09-28 10:18:52 UTC (rev 642)
+@@ -20,13 +20,15 @@
+ #define min(x, y)	((x)&lt;(y)?(x):(y))
+ #define max(x, y)	((x)&gt;(y)?(x):(y))
+ 
+-#define PHASEFAC (2.0)
+-#define GALSIZE	(8)
+-#define NINHAB (GALSIZE * GALSIZE / 2)
+-#define MAXUNINHAB (10)
+-#define PLNETMAX (NINHAB + MAXUNINHAB)
+-#define QUADSIZE (10)
+-#define BASEMAX	(5)
++#define PHASEFAC	2.0
++#define GALSIZE		8
++#define NINHAB		(GALSIZE * GALSIZE / 2)
++#define MAXUNINHAB	10
++#define PLNETMAX	(NINHAB + MAXUNINHAB)
++#define QUADSIZE	10
++#define BASEMAX		(GALSIZE * GALSIZE / 12)
++#define MAXKLGAME	127
++#define MAXKLQUAD	9
+ 
+ /*
+  * These macros hide the difference between 0-origin and 1-origin addressing.
+@@ -118,9 +120,6 @@
+     } chart[GALSIZE+1][GALSIZE+1]; 	// the starchart (subscript 0 not used)
+ } snapshot;				// Data that is snapshot
+ 
+-#define MAXKLGAME	127
+-#define MAXKLQUAD	9
+-
+ #define NKILLK (game.inkling - game.state.remkl)
+ #define NKILLC (game.incom - game.state.remcom)
+ #define NKILLSC (game.inscom - game.state.nscrem)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000108.html">[Sst-commit-watch] r641 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000110.html">[Sst-commit-watch] r643 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#109">[ date ]</a>
+              <a href="thread.html#109">[ thread ]</a>
+              <a href="subject.html#109">[ subject ]</a>
+              <a href="author.html#109">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,294 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r618 - in trunk: po src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r618%20-%20in%20trunk%3A%20po%20src&In-Reply-To=%3C200609201651.k8KGpJTd024341%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000084.html">
+   <LINK REL="Next"  HREF="000086.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r618 - in trunk: po src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r618%20-%20in%20trunk%3A%20po%20src&In-Reply-To=%3C200609201651.k8KGpJTd024341%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r618 - in trunk: po src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 18:51:19 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000084.html">[Sst-commit-watch] r617 - in trunk: . po src
+</A></li>
+        <LI>Next message: <A HREF="000086.html">[Sst-commit-watch] r619 - trunk/po
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#85">[ date ]</a>
+              <a href="thread.html#85">[ thread ]</a>
+              <a href="subject.html#85">[ subject ]</a>
+              <a href="author.html#85">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2006-09-20 18:51:13 +0200 (Wed, 20 Sep 2006)
+New Revision: 618
+
+Modified:
+   trunk/po/ru.po
+   trunk/src/setup.c
+Log:
+this gettextized by mistake
+
+Modified: trunk/po/ru.po
+===================================================================
+--- trunk/po/ru.po	2006-09-20 16:42:35 UTC (rev 617)
++++ trunk/po/ru.po	2006-09-20 16:51:13 UTC (rev 618)
+@@ -11,7 +11,7 @@
+ msgstr &quot;&quot;
+ &quot;Project-Id-Version: sst 2.0\n&quot;
+ &quot;Report-Msgid-Bugs-To: stsp\n&quot;
+-&quot;POT-Creation-Date: 2006-09-20 20:41+0400\n&quot;
++&quot;POT-Creation-Date: 2006-09-20 20:51+0400\n&quot;
+ &quot;PO-Revision-Date: 2006-09-15 11:01+0400\n&quot;
+ &quot;Last-Translator: Stas Sergeev &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">stsp at aknet.ru</A>&gt;\n&quot;
+ &quot;Language-Team: Russian &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">ru at li.org</A>&gt;\n&quot;
+@@ -2803,6 +2803,10 @@
+ msgid &quot;The starbase there will be destroyed by then.&quot;
+ msgstr &quot;&#1041;&#1072;&#1079;&#1072; &#1082; &#1090;&#1086;&#1084;&#1091; &#1084;&#1086;&#1084;&#1077;&#1085;&#1090;&#1091; &#1091;&#1078;&#1077; &#1073;&#1091;&#1076;&#1077;&#1090; &#1091;&#1085;&#1080;&#1095;&#1090;&#1086;&#1078;&#1077;&#1085;&#1072;.&quot;
+ 
++#: src/reports.c:594
++msgid &quot;Direction? &quot;
++msgstr &quot;&quot;
++
+ #: src/setup.c:15
+ msgid &quot;-SUPER- STAR TREK&quot;
+ msgstr &quot;-&#1057;&#1059;&#1055;&#1045;&#1056;- &#1047;&#1042;&#1025;&#1047;&#1044;&#1053;&#1067;&#1049; &#1055;&#1059;&#1058;&#1068;&quot;
+@@ -3051,16 +3055,6 @@
+ msgid &quot;D. S. Probe&quot;
+ msgstr &quot;&#1044;. &#1050;. &#1056;&#1072;&#1082;&#1077;&#1090;&#1072;&quot;
+ 
+-#: src/setup.c:277
+-#, c-format
+-msgid &quot;=== Abandoning base #%d at %d-%d&quot;
+-msgstr &quot;&quot;
+-
+-#: src/setup.c:282
+-#, c-format
+-msgid &quot;=== Saving base #%d, close to #%d&quot;
+-msgstr &quot;&quot;
+-
+ #: src/setup.c:374
+ #, c-format
+ msgid &quot;It is stardate %d. The Federation is being attacked by&quot;
+@@ -3190,129 +3184,126 @@
+ msgid &quot;Please type in a secret password-&quot;
+ msgstr &quot;&#1055;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072; &#1085;&#1072;&#1073;&#1077;&#1088;&#1080;&#1090;&#1077; &#1087;&#1072;&#1088;&#1086;&#1083;&#1100;-&quot;
+ 
+-#: src/sst.c:288
++#: src/sst.c:292
+ msgid &quot;LEGAL COMMANDS ARE:&quot;
+ msgstr &quot;&#1042;&#1054;&#1047;&#1052;&#1054;&#1046;&#1053;&#1067;&#1045; &#1050;&#1054;&#1052;&#1040;&#1053;&#1044;&#1067;:&quot;
+ 
+-#: src/sst.c:313
++#: src/sst.c:317
+ msgid &quot;Help on what command? &quot;
+ msgstr &quot;&#1057;&#1087;&#1088;&#1072;&#1074;&#1082;&#1072; &#1085;&#1072; &#1082;&#1072;&#1082;&#1091;&#1102; &#1082;&#1086;&#1084;&#1072;&#1085;&#1076;&#1091;? &quot;
+ 
+-#: src/sst.c:343
++#: src/sst.c:347
+ msgid &quot;Spock-  \&quot;Captain, that information is missing from the&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1090;&#1072;&#1082;&#1086;&#1081; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1080; &#1085;&#1077;&#1090; &#1074;&quot;
+ 
+-#: src/sst.c:344
++#: src/sst.c:348
+ msgid &quot;   computer. You need to find &quot;
+ msgstr &quot;   &#1082;&#1086;&#1084;&#1087;&#1100;&#1102;&#1090;&#1077;&#1088;&#1077;. &#1042;&#1072;&#1084; &#1085;&#1072;&#1076;&#1086; &#1085;&#1072;&#1081;&#1090;&#1080; &quot;
+ 
+-#: src/sst.c:346
++#: src/sst.c:350
+ msgid &quot; and put it in the&quot;
+ msgstr &quot;&#1080; &#1087;&#1086;&#1084;&#1077;&#1089;&#1090;&#1080;&#1090;&#1100; &#1077;&#1075;&#1086; &#1074;&quot;
+ 
+-#: src/sst.c:347
++#: src/sst.c:351
+ msgid &quot;   current directory or to &quot;
+ msgstr &quot;   &#1090;&#1077;&#1082;&#1091;&#1097;&#1080;&#1081; &#1082;&#1072;&#1090;&#1072;&#1083;&#1086;&#1075; &#1080;&#1083;&#1080; &#1074; &quot;
+ 
+-#: src/sst.c:358
++#: src/sst.c:362
+ msgid &quot;Spock- \&quot;Captain, there is no information on that command.\&quot;&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1085;&#1072; &#1101;&#1090;&#1091; &#1082;&#1086;&#1084;&#1072;&#1085;&#1076;&#1091; &#1085;&#1077;&#1090; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1080;.\&quot;&quot;
+ 
+-#: src/sst.c:372
++#: src/sst.c:376
+ msgid &quot;Spock- \&quot;Captain, I've found the following information:\&quot;&quot;
+ msgstr &quot;&#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1103; &#1085;&#1072;&#1096;&#1105;&#1083; &#1082;&#1086;&#1077;-&#1082;&#1072;&#1082;&#1091;&#1102; &#1080;&#1085;&#1092;&#1086;&#1088;&#1084;&#1072;&#1094;&#1080;&#1102;:\&quot;&quot;
+ 
+-#: src/sst.c:543
++#: src/sst.c:547
+ msgid &quot;WARNING--Saved games produce no plaques!&quot;
+ msgstr &quot;&#1055;&#1056;&#1045;&#1044;&#1059;&#1055;&#1056;&#1045;&#1046;&#1044;&#1045;&#1053;&#1048;&#1045;--&#1057;&#1086;&#1093;&#1088;&#1072;&#1085;&#1105;&#1085;&#1085;&#1099;&#1077; &#1080;&#1075;&#1088;&#1099; &#1085;&#1077; &#1076;&#1072;&#1102;&#1090; &#1075;&#1088;&#1072;&#1084;&#1086;&#1090;&#1099;!&quot;
+ 
+-#: src/sst.c:661
++#: src/sst.c:670
+ msgid &quot;Do you want your score recorded?&quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1079;&#1072;&#1087;&#1080;&#1089;&#1072;&#1090;&#1100; &#1089;&#1074;&#1086;&#1081; &#1089;&#1095;&#1105;&#1090;? &quot;
+ 
+-#: src/sst.c:667
++#: src/sst.c:676
+ msgid &quot;Do you want to play again? &quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1089;&#1099;&#1075;&#1088;&#1072;&#1090;&#1100; &#1089;&#1085;&#1086;&#1074;&#1072;? &quot;
+ 
+-#: src/sst.c:671
++#: src/sst.c:680
+ msgid &quot;May the Great Bird of the Galaxy roost upon your home planet.&quot;
+ msgstr &quot;&#1048; &#1087;&#1091;&#1089;&#1090;&#1100; &#1042;&#1077;&#1083;&#1080;&#1082;&#1072;&#1103; &#1055;&#1090;&#1080;&#1094;&#1072; &#1043;&#1072;&#1083;&#1072;&#1082;&#1090;&#1080;&#1082;&#1080; &#1085;&#1072;&#1075;&#1072;&#1076;&#1080;&#1090; &#1085;&#1072; &#1090;&#1074;&#1086;&#1102; &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1091;.&quot;
+ 
+-#: src/sst.c:683
++#: src/sst.c:692
+ msgid &quot;Romulan&quot;
+ msgstr &quot;&#1056;&#1086;&#1084;&#1091;&#1083;&#1072;&#1085;&quot;
+ 
+-#: src/sst.c:684
++#: src/sst.c:693
+ msgid &quot;Klingon&quot;
+ msgstr &quot;&#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&quot;
+ 
+-#: src/sst.c:685
++#: src/sst.c:694
+ msgid &quot;Commander&quot;
+ msgstr &quot;&#1050;&#1086;&#1084;&#1072;&#1085;&#1076;&#1080;&#1088;&quot;
+ 
+-#: src/sst.c:686
++#: src/sst.c:695
+ msgid &quot;Super-commander&quot;
+ msgstr &quot;&#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084;&quot;
+ 
+-#: src/sst.c:687
++#: src/sst.c:696
+ msgid &quot;Star&quot;
+ msgstr &quot;&#1047;&#1074;&#1077;&#1079;&#1076;&#1072;&quot;
+ 
+-#: src/sst.c:688
++#: src/sst.c:697
+ msgid &quot;Planet&quot;
+ msgstr &quot;&#1055;&#1083;&#1072;&#1085;&#1077;&#1090;&#1072;&quot;
+ 
+-#: src/sst.c:689
++#: src/sst.c:698
+ msgid &quot;Starbase&quot;
+ msgstr &quot;&#1041;&#1072;&#1079;&#1072;&quot;
+ 
+-#: src/sst.c:690
++#: src/sst.c:699
+ msgid &quot;Black hole&quot;
+ msgstr &quot;&#1063;&#1105;&#1088;&#1085;&#1072;&#1103; &#1076;&#1099;&#1088;&#1072;&quot;
+ 
+-#: src/sst.c:691
++#: src/sst.c:700
+ msgid &quot;Tholian&quot;
+ msgstr &quot;&#1058;&#1086;&#1083;&#1080;&#1072;&#1085;&quot;
+ 
+-#: src/sst.c:692
++#: src/sst.c:701
+ msgid &quot;Tholian web&quot;
+ msgstr &quot;&#1058;&#1086;&#1083;&#1080;&#1072;&#1085;&#1089;&#1082;&#1072;&#1103; &#1089;&#1077;&#1090;&#1100;&quot;
+ 
+-#: src/sst.c:693
++#: src/sst.c:702
+ msgid &quot;Stranger&quot;
+ msgstr &quot;&#1057;&#1090;&#1088;&#1072;&#1085;&#1085;&#1080;&#1082;&quot;
+ 
+-#: src/sst.c:694
++#: src/sst.c:703
+ msgid &quot;Inhabited World&quot;
+ msgstr &quot;&#1054;&#1073;&#1080;&#1090;&#1072;&#1077;&#1084;&#1099;&#1081; &#1052;&#1080;&#1088;&quot;
+ 
+-#: src/sst.c:705
++#: src/sst.c:714
+ msgid &quot;Quadrant &quot;
+ msgstr &quot;&#1050;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090; &quot;
+ 
+-#: src/sst.c:706
++#: src/sst.c:715
+ msgid &quot;Sector &quot;
+ msgstr &quot;&#1057;&#1077;&#1082;&#1090;&#1086;&#1088; &quot;
+ 
+-#: src/sst.c:716
++#: src/sst.c:725
+ msgid &quot; at &quot;
+ msgstr &quot; &#1074; &quot;
+ 
+-#: src/sst.c:725
++#: src/sst.c:734
+ msgid &quot;Enterprise&quot;
+ msgstr &quot;&#1069;&#1085;&#1090;&#1077;&#1088;&#1087;&#1088;&#1072;&#1081;&#1079;&quot;
+ 
+-#: src/sst.c:726
++#: src/sst.c:735
+ msgid &quot;Faerie Queene&quot;
+ msgstr &quot;&#1042;&#1086;&#1083;&#1096;&#1077;&#1073;&#1085;&#1072;&#1103; &#1050;&#1086;&#1088;&#1086;&#1083;&#1077;&#1074;&#1072;&quot;
+ 
+-#: src/sst.c:835
++#: src/sst.c:844
+ msgid &quot;Please answer with \&quot;y\&quot; or \&quot;n\&quot;: &quot;
+ msgstr &quot;&#1055;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072; &#1086;&#1090;&#1074;&#1077;&#1095;&#1072;&#1081;&#1090;&#1077; &#1044;&#1072; (\&quot;y\&quot;) &#1080;&#1083;&#1080; &#1053;&#1077;&#1090; (\&quot;n\&quot;): &quot;
+ 
+-#: src/sst.c:844
++#: src/sst.c:853
+ msgid &quot;Beg your pardon, Captain?&quot;
+ msgstr &quot;&#1055;&#1088;&#1086;&#1096;&#1091; &#1087;&#1088;&#1086;&#1097;&#1077;&#1085;&#1080;&#1103;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;?&quot;
+-
+-#~ msgid &quot;You must be aboard the ship.&quot;
+-#~ msgstr &quot;&#1042;&#1099; &#1076;&#1086;&#1083;&#1078;&#1085;&#1099; &#1073;&#1099;&#1090;&#1100; &#1085;&#1072; &#1073;&#1086;&#1088;&#1090;&#1091; &#1082;&#1072;&#1088;&#1072;&#1073;&#1083;&#1103;.&quot;
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-20 16:42:35 UTC (rev 617)
++++ trunk/src/setup.c	2006-09-20 16:51:13 UTC (rev 618)
+@@ -274,12 +274,12 @@
+ 		if (distq &lt; 6.0*(BASEMAX+1-game.inbase) &amp;&amp; Rand() &lt; 0.75) {
+ 		    contflag = true;
+ 		    if (idebug)
+-			prout(_(&quot;=== Abandoning base #%d at %d-%d&quot;), i, w.x, w.y);
++			prout(&quot;=== Abandoning base #%d at %d-%d&quot;, i, w.x, w.y);
+ 		    break;
+ 		}
+ 		else if (distq &lt; 6.0 * (BASEMAX+1-game.inbase)) {
+ 		    if (idebug)
+-			prout(_(&quot;=== Saving base #%d, close to #%d&quot;), i, j);
++			prout(&quot;=== Saving base #%d, close to #%d&quot;, i, j);
+ 		}
+ 	    }
+ 	} while (contflag);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000084.html">[Sst-commit-watch] r617 - in trunk: . po src
+</A></li>
+	<LI>Next message: <A HREF="000086.html">[Sst-commit-watch] r619 - trunk/po
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#85">[ date ]</a>
+              <a href="thread.html#85">[ thread ]</a>
+              <a href="subject.html#85">[ subject ]</a>
+              <a href="author.html#85">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

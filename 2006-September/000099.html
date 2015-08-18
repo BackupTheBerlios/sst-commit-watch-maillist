@@ -1,0 +1,347 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r632 - in trunk: po src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r632%20-%20in%20trunk%3A%20po%20src&In-Reply-To=%3C200609251653.k8PGrCgl001302%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000098.html">
+   <LINK REL="Next"  HREF="000100.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r632 - in trunk: po src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r632%20-%20in%20trunk%3A%20po%20src&In-Reply-To=%3C200609251653.k8PGrCgl001302%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r632 - in trunk: po src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep 25 18:53:12 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000098.html">[Sst-commit-watch] r631 - trunk/doc
+</A></li>
+        <LI>Next message: <A HREF="000100.html">[Sst-commit-watch] r633 - in trunk: po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#99">[ date ]</a>
+              <a href="thread.html#99">[ thread ]</a>
+              <a href="subject.html#99">[ subject ]</a>
+              <a href="author.html#99">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2006-09-25 18:53:11 +0200 (Mon, 25 Sep 2006)
+New Revision: 632
+
+Modified:
+   trunk/po/ru.po
+   trunk/src/io.c
+   trunk/src/reports.c
+   trunk/src/sst.c
+   trunk/src/sst.py
+   trunk/src/sstlinux.h
+Log:
+few assorted adjustments and a fix for #8883
+
+Modified: trunk/po/ru.po
+===================================================================
+--- trunk/po/ru.po	2006-09-24 14:20:15 UTC (rev 631)
++++ trunk/po/ru.po	2006-09-25 16:53:11 UTC (rev 632)
+@@ -11,7 +11,7 @@
+ msgstr &quot;&quot;
+ &quot;Project-Id-Version: sst 2.0\n&quot;
+ &quot;Report-Msgid-Bugs-To: stsp\n&quot;
+-&quot;POT-Creation-Date: 2006-09-22 20:54+0400\n&quot;
++&quot;POT-Creation-Date: 2006-09-25 10:36+0400\n&quot;
+ &quot;PO-Revision-Date: 2006-09-15 11:01+0400\n&quot;
+ &quot;Last-Translator: Stas Sergeev &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">stsp at aknet.ru</A>&gt;\n&quot;
+ &quot;Language-Team: Russian &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">ru at li.org</A>&gt;\n&quot;
+@@ -567,13 +567,12 @@
+ msgstr &quot;&#1054;&#1095;&#1077;&#1085;&#1100; &#1089;&#1083;&#1072;&#1073;&#1099;&#1081; &#1091;&#1076;&#1072;&#1088; &#1087;&#1086; &quot;
+ 
+ #: src/battle.c:1329
+-#, fuzzy, c-format
+ msgid &quot;***Mr. Spock-  \&quot;Captain, the vessel at %s&quot;
+-msgstr &quot;***&#1052;&#1080;&#1089;&#1090;&#1077;&#1088; &#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1082;&#1086;&#1088;&#1072;&#1073;&#1083;&#1100; &#1085;&#1072; &quot;
++msgstr &quot;***&#1052;&#1080;&#1089;&#1090;&#1077;&#1088; &#1057;&#1087;&#1086;&#1082;- \&quot;&#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;, &#1087;&#1086;&#1089;&#1091;&#1076;&#1080;&#1085;&#1072; &#1074; %s &quot;
+ 
+ #: src/battle.c:1331
+ msgid &quot;   has just lost its firepower.\&quot;&quot;
+-msgstr &quot;   &#1087;&#1086;&#1090;&#1077;&#1088;&#1103;&#1083; &#1073;&#1086;&#1077;&#1089;&#1087;&#1086;&#1089;&#1086;&#1073;&#1085;&#1086;&#1089;&#1090;&#1100;.\&quot;&quot;
++msgstr &quot;   &#1087;&#1086;&#1090;&#1077;&#1088;&#1103;&#1083;&#1072; &#1073;&#1086;&#1077;&#1089;&#1087;&#1086;&#1089;&#1086;&#1073;&#1085;&#1086;&#1089;&#1090;&#1100;.\&quot;&quot;
+ 
+ #: src/events.c:141
+ msgid &quot;Lt. Uhura- \&quot;Captain, the sub-space radio is working and&quot;
+@@ -716,9 +715,9 @@
+ msgstr &quot;     &#1042;&#1079;&#1088;&#1099;&#1074; &#1089;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1074;&#1086;&#1081; &#1074; %s; &#1089;&#1086;&#1073;&#1083;&#1102;&#1076;&#1072;&#1081;&#1090;&#1077; &#1086;&#1089;&#1090;&#1086;&#1088;&#1086;&#1078;&#1085;&#1086;&#1089;&#1090;&#1100;.&quot;
+ 
+ #: src/events.c:853
+-#, fuzzy, c-format
++#, c-format
+ msgid &quot;***Incipient supernova detected at %s&quot;
+-msgstr &quot;***&#1047;&#1072;&#1088;&#1077;&#1075;&#1080;&#1089;&#1090;&#1088;&#1080;&#1088;&#1086;&#1074;&#1072;&#1085;&#1086; &#1087;&#1086;&#1103;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1089;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1074;&#1086;&#1081; &#1074; &quot;
++msgstr &quot;***&#1047;&#1072;&#1088;&#1077;&#1075;&#1080;&#1089;&#1090;&#1088;&#1080;&#1088;&#1086;&#1074;&#1072;&#1085; &#1074;&#1079;&#1088;&#1099;&#1074; &#1089;&#1074;&#1077;&#1088;&#1093;&#1085;&#1086;&#1074;&#1086;&#1081; &#1074; %s&quot;
+ 
+ #: src/events.c:855
+ msgid &quot;Emergency override attempts t&quot;
+@@ -2588,7 +2587,7 @@
+ 
+ #: src/reports.c:207
+ msgid &quot;       STAR CHART FOR THE KNOWN GALAXY&quot;
+-msgstr &quot;       &#1047;&#1042;&#1025;&#1047;&#1044;&#1053;&#1040;&#1071; &#1050;&#1040;&#1056;&#1058;&#1040; &#1048;&#1057;&#1057;&#1051;&#1045;&#1044;&#1054;&#1042;&#1040;&#1053;&#1053;&#1067;&#1061; &#1059;&#1063;&#1040;&#1057;&#1058;&#1050;&#1054;&#1042;&quot;
++msgstr &quot;     &#1047;&#1042;&#1025;&#1047;&#1044;&#1053;&#1040;&#1071; &#1050;&#1040;&#1056;&#1058;&#1040; &#1048;&#1057;&#1057;&#1051;&#1045;&#1044;&#1054;&#1042;&#1040;&#1053;&#1053;&#1067;&#1061; &#1059;&#1063;&#1040;&#1057;&#1058;&#1050;&#1054;&#1042;&quot;
+ 
+ #: src/reports.c:209
+ #, c-format
+@@ -2723,11 +2722,11 @@
+ 
+ #: src/reports.c:386
+ msgid &quot;     Short-range scan&quot;
+-msgstr &quot;     &#1041;&#1083;&#1080;&#1078;&#1085;&#1080;&#1081; &#1086;&#1073;&#1079;&#1086;&#1088;&quot;
++msgstr &quot;       &#1041;&#1083;&#1080;&#1078;&#1085;&#1080;&#1081; &#1086;&#1073;&#1079;&#1086;&#1088;&quot;
+ 
+ #: src/reports.c:412
+ msgid &quot;COMPUTER DAMAGED, USE A POCKET CALCULATOR.&quot;
+-msgstr &quot;&#1050;&#1054;&#1052;&#1055;&#1068;&#1068;&#1070;&#1058;&#1045;&#1056; &#1057;&#1051;&#1054;&#1052;&#1040;&#1053;, &#1042;&#1054;&#1057;&#1055;&#1054;&#1051;&#1068;&#1047;&#1059;&#1049;&#1058;&#1045;&#1057;&#1068; &#1050;&#1040;&#1051;&#1068;&#1050;&#1059;&#1051;&#1071;&#1058;&#1054;&#1056;&#1054;&#1052;.&quot;
++msgstr &quot;&#1050;&#1054;&#1052;&#1055;&#1068;&#1070;&#1058;&#1045;&#1056; &#1057;&#1051;&#1054;&#1052;&#1040;&#1053;, &#1042;&#1054;&#1057;&#1055;&#1054;&#1051;&#1068;&#1047;&#1059;&#1049;&#1058;&#1045;&#1057;&#1068; &#1050;&#1040;&#1051;&#1068;&#1050;&#1059;&#1051;&#1071;&#1058;&#1054;&#1056;&#1054;&#1052;.&quot;
+ 
+ #: src/reports.c:419
+ msgid &quot;Destination quadrant and/or sector? &quot;
+@@ -3218,90 +3217,90 @@
+ msgid &quot;WARNING--Saved games produce no plaques!&quot;
+ msgstr &quot;&#1055;&#1056;&#1045;&#1044;&#1059;&#1055;&#1056;&#1045;&#1046;&#1044;&#1045;&#1053;&#1048;&#1045;--&#1057;&#1086;&#1093;&#1088;&#1072;&#1085;&#1105;&#1085;&#1085;&#1099;&#1077; &#1080;&#1075;&#1088;&#1099; &#1085;&#1077; &#1076;&#1072;&#1102;&#1090; &#1075;&#1088;&#1072;&#1084;&#1086;&#1090;&#1099;!&quot;
+ 
+-#: src/sst.c:664
++#: src/sst.c:666
+ msgid &quot;Do you want your score recorded?&quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1079;&#1072;&#1087;&#1080;&#1089;&#1072;&#1090;&#1100; &#1089;&#1074;&#1086;&#1081; &#1089;&#1095;&#1105;&#1090;? &quot;
+ 
+-#: src/sst.c:670
++#: src/sst.c:672
+ msgid &quot;Do you want to play again? &quot;
+ msgstr &quot;&#1061;&#1086;&#1090;&#1080;&#1090;&#1077; &#1089;&#1099;&#1075;&#1088;&#1072;&#1090;&#1100; &#1089;&#1085;&#1086;&#1074;&#1072;? &quot;
+ 
+-#: src/sst.c:674
++#: src/sst.c:676
+ msgid &quot;May the Great Bird of the Galaxy roost upon your home planet.&quot;
+ msgstr &quot;&#1048; &#1087;&#1091;&#1089;&#1090;&#1100; &#1042;&#1077;&#1083;&#1080;&#1082;&#1072;&#1103; &#1055;&#1090;&#1080;&#1094;&#1072; &#1043;&#1072;&#1083;&#1072;&#1082;&#1090;&#1080;&#1082;&#1080; &#1085;&#1072;&#1075;&#1072;&#1076;&#1080;&#1090; &#1085;&#1072; &#1090;&#1074;&#1086;&#1102; &#1087;&#1083;&#1072;&#1085;&#1077;&#1090;&#1091;.&quot;
+ 
+-#: src/sst.c:686
++#: src/sst.c:688
+ msgid &quot;Romulan&quot;
+ msgstr &quot;&#1056;&#1086;&#1084;&#1091;&#1083;&#1072;&#1085;&quot;
+ 
+-#: src/sst.c:687
++#: src/sst.c:689
+ msgid &quot;Klingon&quot;
+ msgstr &quot;&#1050;&#1083;&#1080;&#1085;&#1075;&#1086;&#1085;&quot;
+ 
+-#: src/sst.c:688
++#: src/sst.c:690
+ msgid &quot;Commander&quot;
+ msgstr &quot;&#1050;&#1086;&#1084;&#1072;&#1085;&#1076;&#1080;&#1088;&quot;
+ 
+-#: src/sst.c:689
++#: src/sst.c:691
+ msgid &quot;Super-commander&quot;
+ msgstr &quot;&#1043;&#1083;&#1072;&#1074;-&#1082;&#1086;&#1084;&quot;
+ 
+-#: src/sst.c:690
++#: src/sst.c:692
+ msgid &quot;Star&quot;
+ msgstr &quot;&#1047;&#1074;&#1077;&#1079;&#1076;&#1072;&quot;
+ 
+-#: src/sst.c:691
++#: src/sst.c:693
+ msgid &quot;Planet&quot;
+ msgstr &quot;&#1055;&#1083;&#1072;&#1085;&#1077;&#1090;&#1072;&quot;
+ 
+-#: src/sst.c:692
++#: src/sst.c:694
+ msgid &quot;Starbase&quot;
+ msgstr &quot;&#1041;&#1072;&#1079;&#1072;&quot;
+ 
+-#: src/sst.c:693
++#: src/sst.c:695
+ msgid &quot;Black hole&quot;
+ msgstr &quot;&#1063;&#1105;&#1088;&#1085;&#1072;&#1103; &#1076;&#1099;&#1088;&#1072;&quot;
+ 
+-#: src/sst.c:694
++#: src/sst.c:696
+ msgid &quot;Tholian&quot;
+ msgstr &quot;&#1058;&#1086;&#1083;&#1080;&#1072;&#1085;&quot;
+ 
+-#: src/sst.c:695
++#: src/sst.c:697
+ msgid &quot;Tholian web&quot;
+ msgstr &quot;&#1058;&#1086;&#1083;&#1080;&#1072;&#1085;&#1089;&#1082;&#1072;&#1103; &#1089;&#1077;&#1090;&#1100;&quot;
+ 
+-#: src/sst.c:696
++#: src/sst.c:698
+ msgid &quot;Stranger&quot;
+ msgstr &quot;&#1057;&#1090;&#1088;&#1072;&#1085;&#1085;&#1080;&#1082;&quot;
+ 
+-#: src/sst.c:697
++#: src/sst.c:699
+ msgid &quot;Inhabited World&quot;
+ msgstr &quot;&#1054;&#1073;&#1080;&#1090;&#1072;&#1077;&#1084;&#1099;&#1081; &#1052;&#1080;&#1088;&quot;
+ 
+-#: src/sst.c:708
++#: src/sst.c:710
+ msgid &quot;Quadrant &quot;
+ msgstr &quot;&#1050;&#1074;&#1072;&#1076;&#1088;&#1072;&#1085;&#1090; &quot;
+ 
+-#: src/sst.c:709
++#: src/sst.c:711
+ msgid &quot;Sector &quot;
+ msgstr &quot;&#1057;&#1077;&#1082;&#1090;&#1086;&#1088; &quot;
+ 
+-#: src/sst.c:719
++#: src/sst.c:721
+ msgid &quot; at &quot;
+ msgstr &quot; &#1074; &quot;
+ 
+-#: src/sst.c:728
++#: src/sst.c:730
+ msgid &quot;Enterprise&quot;
+ msgstr &quot;&#1069;&#1085;&#1090;&#1077;&#1088;&#1087;&#1088;&#1072;&#1081;&#1079;&quot;
+ 
+-#: src/sst.c:729
++#: src/sst.c:731
+ msgid &quot;Faerie Queene&quot;
+ msgstr &quot;&#1042;&#1086;&#1083;&#1096;&#1077;&#1073;&#1085;&#1072;&#1103; &#1050;&#1086;&#1088;&#1086;&#1083;&#1077;&#1074;&#1072;&quot;
+ 
+-#: src/sst.c:838
++#: src/sst.c:840
+ msgid &quot;Please answer with \&quot;y\&quot; or \&quot;n\&quot;: &quot;
+ msgstr &quot;&#1055;&#1086;&#1078;&#1072;&#1083;&#1091;&#1081;&#1089;&#1090;&#1072; &#1086;&#1090;&#1074;&#1077;&#1095;&#1072;&#1081;&#1090;&#1077; &#1044;&#1072; (\&quot;y\&quot;) &#1080;&#1083;&#1080; &#1053;&#1077;&#1090; (\&quot;n\&quot;): &quot;
+ 
+-#: src/sst.c:847
++#: src/sst.c:849
+ msgid &quot;Beg your pardon, Captain?&quot;
+ msgstr &quot;&#1055;&#1088;&#1086;&#1096;&#1091; &#1087;&#1088;&#1086;&#1097;&#1077;&#1085;&#1080;&#1103;, &#1050;&#1072;&#1087;&#1080;&#1090;&#1072;&#1085;?&quot;
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-24 14:20:15 UTC (rev 631)
++++ trunk/src/io.c	2006-09-25 16:53:11 UTC (rev 632)
+@@ -47,13 +47,13 @@
+ 	char *ln_env = getenv(&quot;LINES&quot;);
+ 	rows = ln_env ? atoi(ln_env) : 25;
+     } else {
+-	(void)initscr();
++	initscr();
+ #ifdef KEY_MIN
+ 	keypad(stdscr, TRUE);
+ #endif /* KEY_MIN */
+-	(void)saveterm();
+-	(void)nonl();
+-	(void)cbreak();
++	saveterm();
++	nonl();
++	cbreak();
+ #ifdef A_COLOR
+ 	{
+ 	    start_color();
+@@ -67,7 +67,7 @@
+ 	    init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+ 	}
+ #endif /* A_COLOR */
+-	//(void)noecho();
++	//noecho();
+ 	fullscreen_window = stdscr;
+ 	srscan_window     = newwin(12, 25, 0,       0);
+ 	report_window     = newwin(11, 0,  1,       25);
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-24 14:20:15 UTC (rev 631)
++++ trunk/src/reports.c	2006-09-25 16:53:11 UTC (rev 632)
+@@ -26,8 +26,8 @@
+ 	    proutn(_(&quot;Base in %i - %i attacked by C. Alive until %.1f&quot;), game.battle.x, game.battle.y, scheduled(FCDBAS));
+         if (game.isatb)
+ 	    proutn(_(&quot;Base in %i - %i attacked by S. Alive until %.1f&quot;), game.state.kscmdr.x, game.state.kscmdr.y, scheduled(FSCDBAS));
++	clreol();
+     }
+-    clreol();
+ }
+ 	
+ 
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-24 14:20:15 UTC (rev 631)
++++ trunk/src/sst.c	2006-09-25 16:53:11 UTC (rev 632)
+@@ -634,11 +634,12 @@
+     }
+     /* where to save the input in case of bugs */
+     logfp = fopen(&quot;/usr/tmp/sst-input.log&quot;, &quot;w&quot;);
+-    setlinebuf(logfp);
+-    fprintf(logfp, &quot;seed %d\n&quot;, seed);
++    if (logfp) {
++	setlinebuf(logfp);
++	fprintf(logfp, &quot;seed %d\n&quot;, seed);
++    }
+     srand(seed);
+ 
+-    srand(seed);
+     iostart();
+ 
+     line[0] = '\0';
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-09-24 14:20:15 UTC (rev 631)
++++ trunk/src/sst.py	2006-09-25 16:53:11 UTC (rev 632)
+@@ -503,7 +503,7 @@
+             if ship.distance() &lt; dist1:
+                 prout(&quot; advances to sector %s&quot; % ship.location)
+             else:
+-                proutn(&quot; retreats to sector %s&quot; % ship.location)
++                prout(&quot; retreats to sector %s&quot; % ship.location)
+         ship.sectormove(next)
+ 
+ def movcom(): 
+
+Modified: trunk/src/sstlinux.h
+===================================================================
+--- trunk/src/sstlinux.h	2006-09-24 14:20:15 UTC (rev 631)
++++ trunk/src/sstlinux.h	2006-09-25 16:53:11 UTC (rev 632)
+@@ -5,6 +5,5 @@
+ void nosound(void);
+ 
+ #define delay(x) usleep(x*1000)
+-#define randomize() srand((unsigned)time(NULL))
+ 
+ #endif
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000098.html">[Sst-commit-watch] r631 - trunk/doc
+</A></li>
+	<LI>Next message: <A HREF="000100.html">[Sst-commit-watch] r633 - in trunk: po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#99">[ date ]</a>
+              <a href="thread.html#99">[ thread ]</a>
+              <a href="subject.html#99">[ subject ]</a>
+              <a href="author.html#99">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

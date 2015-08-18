@@ -1,0 +1,220 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r600 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r600%20-%20trunk/src&In-Reply-To=%3C200609191920.k8JJKhUn003652%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000066.html">
+   <LINK REL="Next"  HREF="000068.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r600 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r600%20-%20trunk/src&In-Reply-To=%3C200609191920.k8JJKhUn003652%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r600 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 19 21:20:43 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000066.html">[Sst-commit-watch] r599 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000068.html">[Sst-commit-watch] r601 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#67">[ date ]</a>
+              <a href="thread.html#67">[ thread ]</a>
+              <a href="subject.html#67">[ subject ]</a>
+              <a href="author.html#67">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-19 21:20:43 +0200 (Tue, 19 Sep 2006)
+New Revision: 600
+
+Modified:
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+Avoid a nassty bug in planet-name display, and fix another boolean.
+
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-19 19:04:35 UTC (rev 599)
++++ trunk/src/events.c	2006-09-19 19:20:43 UTC (rev 600)
+@@ -238,7 +238,7 @@
+ 		}
+ 		else prout(_(&quot;(Shields not currently useable.)&quot;));
+ 	    }
+-	    newqad(0);
++	    newqad(false);
+ 	    /* Adjust finish time to time of tractor beaming */
+ 	    fintim = game.state.date+game.optime;
+ 	    attack(0);
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-19 19:04:35 UTC (rev 599)
++++ trunk/src/moving.c	2006-09-19 19:20:43 UTC (rev 600)
+@@ -113,7 +113,7 @@
+ 		skip(1);
+ 		prout(_(&quot;Entering %s.&quot;), cramlc(quadrant, game.quadrant));
+ 		game.quad[game.sector.x][game.sector.y] = game.ship;
+-		newqad(0);
++		newqad(false);
+ 		if (game.skill&gt;SKILL_NOVICE) attack(0);
+ 		return;
+ 	    }
+@@ -824,7 +824,7 @@
+ 	postpone(FTBEAM, game.optime);
+ 	game.damage[DRADIO] += game.optime;
+     }
+-    newqad(0);
++    newqad(false);
+     events();	/* Stas Sergeev added this -- do pending events */
+ }
+ 
+@@ -943,7 +943,7 @@
+ 	}
+ 	/* Since starbase not in quadrant, set up new quadrant */
+ 	game.quadrant = game.state.baseq[line];
+-	newqad(1);
++	newqad(true);
+     }
+     /* dematerialize starship */
+     game.quad[game.sector.x][game.sector.y]=IHDOT;
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-19 19:04:35 UTC (rev 599)
++++ trunk/src/planets.c	2006-09-19 19:20:43 UTC (rev 600)
+@@ -512,9 +512,10 @@
+ 
+ char *systemname(int pindx)
+ {
+-    /* the below array shoud not be static, or it won't gettextize
++    static char copy[BUFSIZ];
++    /* the below array should not be static, or it won't gettextize
+      * because of the early initialization. */
+-    char *names[NINHAB] =
++    char *names[NINHAB+1] =
+     {
+ 	/*
+ 	 * I used &lt;<A HREF="http://www.memory-alpha.org">http://www.memory-alpha.org</A>&gt; to find planets
+@@ -553,7 +554,7 @@
+ 	_(&quot;Marcos XII&quot;),		/* TOS: &quot;And the Children Shall Lead&quot;, */
+ 	_(&quot;Omega IV&quot;),		/* TOS: &quot;The Omega Glory&quot; */
+ 	_(&quot;Regulus V&quot;),		/* TOS: &quot;Amok Time */
+-	_(&quot;Deeva&quot;),		/* TOS: &quot;Operation -- Annihilate!&quot; */
++	_(&quot;Deneva&quot;),		/* TOS: &quot;Operation -- Annihilate!&quot; */
+ 	/* Worlds from BSD Trek */
+ 	_(&quot;Rigel II&quot;),		/* TOS: &quot;Shore Leave&quot; (&quot;III&quot; in BSD) */
+ 	_(&quot;Beta III&quot;),		/* TOS: &quot;The Return of the Archons&quot; */
+@@ -570,7 +571,8 @@
+ 	_(&quot;Coridan (Desotriana)&quot;),	/* TOS: &quot;Journey to Babel&quot; */
+ 	_(&quot;Iotia&quot;),		/* TOS: &quot;A Piece of the Action&quot; */
+ #endif
+-   };
++    };
+ 
+-    return names[pindx];
++    strcpy(copy, names[pindx]);
++    return copy;
+ }
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-19 19:04:35 UTC (rev 599)
++++ trunk/src/setup.c	2006-09-19 19:20:43 UTC (rev 600)
+@@ -181,11 +181,10 @@
+ 	prout(&quot;the Federation in a prisoner-of-war exchange.&quot;);
+ 	nb = Rand()*game.state.rembase+1;
+ 	/* Set up quadrant and position FQ adjacient to base */
+-	if (game.quadrant.x!=game.state.baseq[nb].x || game.quadrant.y!=game.state.baseq[nb].y) {
+-	    game.quadrant.x = game.state.baseq[nb].x;
+-	    game.quadrant.y = game.state.baseq[nb].y;
++	if (!same(game.quadrant, game.state.baseq[nb])) {
++	    game.quadrant = game.state.baseq[nb];
+ 	    game.sector.x = game.sector.y = 5;
+-	    newqad(1);
++	    newqad(true);
+ 	}
+ 	for (;;) {
+ 	    /* position next to base by trial and error */
+@@ -199,7 +198,7 @@
+ 	    if (l &lt; QUADSIZE+1) break; /* found a spot */
+ 	    game.sector.x=QUADSIZE/2;
+ 	    game.sector.y=QUADSIZE/2;
+-	    newqad(1);
++	    newqad(true);
+ 	}
+     }
+     /* Get new commission */
+@@ -450,7 +449,7 @@
+     prout(&quot;Good Luck!&quot;);
+     if (game.state.nscrem) prout(&quot;  YOU'LL NEED IT.&quot;);
+     waitfor();
+-    newqad(0);
++    newqad(false);
+     if (game.nenhere-iqhere-game.ithere) game.shldup = true;
+     if (game.neutz) attack(0);	// bad luck to start in a Romulan Neutral Zone
+ }
+@@ -592,7 +591,7 @@
+     game.kpower[i] = Rand()*150.0 +300.0 +25.0*game.skill;
+ }
+ 
+-void newqad(int shutup) 
++void newqad(bool shutup) 
+ {
+     int i, j;
+     coord w;
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-19 19:04:35 UTC (rev 599)
++++ trunk/src/sst.h	2006-09-19 19:20:43 UTC (rev 600)
+@@ -367,7 +367,7 @@
+ void prout(char *, ...);
+ void proutn(char *, ...);
+ void stars(void);
+-void newqad(int);
++void newqad(bool);
+ bool ja(void);
+ void cramen(int);
+ void crmshp(void);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000066.html">[Sst-commit-watch] r599 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000068.html">[Sst-commit-watch] r601 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#67">[ date ]</a>
+              <a href="thread.html#67">[ thread ]</a>
+              <a href="subject.html#67">[ subject ]</a>
+              <a href="author.html#67">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,597 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r645 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r645%20-%20trunk/src&In-Reply-To=%3C200609290741.k8T7fhVo012845%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000111.html">
+   <LINK REL="Next"  HREF="000113.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r645 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r645%20-%20trunk/src&In-Reply-To=%3C200609290741.k8T7fhVo012845%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r645 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 29 09:41:43 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000111.html">[Sst-commit-watch] r644 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000113.html">[Sst-commit-watch] r646 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#112">[ date ]</a>
+              <a href="thread.html#112">[ thread ]</a>
+              <a href="subject.html#112">[ subject ]</a>
+              <a href="author.html#112">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-29 09:41:43 +0200 (Fri, 29 Sep 2006)
+New Revision: 645
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+Get rfid of the iterator macros I wrote.  They interfere with
+mechaniucal translation.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-28 21:21:33 UTC (rev 644)
++++ trunk/src/ai.c	2006-09-29 07:41:43 UTC (rev 645)
+@@ -17,7 +17,7 @@
+     if (!irun) {
+ 	/* avoid intruding on another commander's territory */
+ 	if (ienm == IHC) {
+-	    for_commanders(n)
++	    for (n = 1; n &lt;= game.state.remcom; n++)
+ 		if (same(game.state.kcmdr[n],iq))
+ 		    return false;
+ 	    /* refuse to leave if currently attacking starbase */
+@@ -59,7 +59,7 @@
+ 	game.state.kscmdr=iq;
+     }
+     else {
+-	for_commanders(n) {
++	for (n = 1; n &lt;= game.state.remcom; n++) {
+ 	    if (same(game.state.kcmdr[n], game.quadrant)) {
+ 		game.state.kcmdr[n]=iq;
+ 		break;
+@@ -285,7 +285,7 @@
+     // Figure out which Klingon is the commander (or Supercommander)
+     //   and do move
+     if (game.comhere) 
+-	for_local_enemies(i) {
++	for (i = 1; i &lt;= game.nenhere; i++) {
+ 	    w = game.ks[i];
+ 	    if (game.quad[w.x][w.y] == IHC) {
+ 		movebaddy(w, i, IHC);
+@@ -293,7 +293,7 @@
+ 	    }
+ 	}
+     if (game.ishere) 
+-	for_local_enemies(i) {
++	for (i = 1; i &lt;= game.nenhere; i++) {
+ 	    w = game.ks[i];
+ 	    if (game.quad[w.x][w.y] == IHS) {
+ 		movebaddy(w, i, IHS);
+@@ -304,7 +304,7 @@
+     // Move these last so they can base their actions on what the
+     // commander(s) do.
+     if (game.skill &gt;= SKILL_EXPERT &amp;&amp; (game.options &amp; OPTION_MVBADDY)) 
+-	for_local_enemies(i) {
++	for (i = 1; i &lt;= game.nenhere; i++) {
+ 	    w = game.ks[i];
+ 	    if (game.quad[w.x][w.y] == IHK || game.quad[w.x][w.y] == IHR)
+ 		movebaddy(w, i, game.quad[w.x][w.y]);
+@@ -324,7 +324,7 @@
+ 	return 1;
+     if (avoid) {
+ 	/* Avoid quadrants with bases if we want to avoid Enterprise */
+-	for_starbases(i)
++	for (i = 1; i &lt;= game.state.rembase; i++)
+ 	    if (same(game.state.baseq[i], iq)) 
+ 		return true;
+     }
+@@ -341,7 +341,7 @@
+ 	game.ishere = false;
+ 	game.ientesc = false;
+ 	unschedule(FSCDBAS);
+-	for_local_enemies(i) 
++	for (i = 1; i &lt;= game.nenhere; i++) 
+ 	    if (game.quad[game.ks[i].x][game.ks[i].y] == IHS)
+ 		break;
+ 	game.quad[game.ks[i].x][game.ks[i].y] = IHDOT;
+@@ -409,7 +409,7 @@
+ 	    return;
+ 	}
+ 	sc = game.state.kscmdr;
+-	for_starbases(i) {
++	for (i = 1; i &lt;= game.state.rembase; i++) {
+ 	    basetbl[i] = i;
+ 	    bdist[i] = distance(game.state.baseq[i], sc);
+ 	}
+@@ -435,16 +435,16 @@
+ 	   without too many Klingons, and not already under attack. */
+ 	ifindit = iwhichb = 0;
+ 
+-	for_starbases(i2) {
++	for (i2 = 1; i2 &lt;= game.state.rembase; i2++) {
+ 	    i = basetbl[i2];	/* bug in original had it not finding nearest*/
+ 	    ibq = game.state.baseq[i];
+ 	    if (same(ibq, game.quadrant) || same(ibq, game.battle) ||
+ 		game.state.galaxy[ibq.x][ibq.y].supernova ||
+ 		game.state.galaxy[ibq.x][ibq.y].klingons &gt; MAXKLQUAD-1) 
+ 		continue;
+-	    /* if there is a commander, and no other base is appropriate,
+-	       we will take the one with the commander */
+-	    for_commanders (j) {
++	    // if there is a commander, and no other base is appropriate,
++	    //   we will take the one with the commander
++	    for (j = 1; j &lt;= game.state.remcom; j++) {
+ 		if (same(ibq, game.state.kcmdr[j]) &amp;&amp; ifindit!= 2) {
+ 		    ifindit = 2;
+ 		    iwhichb = i;
+@@ -510,35 +510,37 @@
+     if (game.state.rembase == 0) {
+ 	unschedule(FSCMOVE);
+     }
+-    else for_starbases(i) {
+-	ibq = game.state.baseq[i];
+-	if (same(ibq, game.state.kscmdr) &amp;&amp; same(game.state.kscmdr, game.battle)) {
+-	    /* attack the base */
+-	    if (avoid)
+-		return; /* no, don't attack base! */
+-	    game.iseenit = false;
+-	    game.isatb = 1;
+-	    schedule(FSCDBAS, 1.0 +2.0*Rand());
+-	    if (is_scheduled(FCDBAS)) 
+-		postpone(FSCDBAS, scheduled(FCDBAS)-game.state.date);
+-	    if (damaged(DRADIO) &amp;&amp; game.condition != docked)
+-		return; /* no warning */
+-	    game.iseenit = true;
+-	    pause_game(true);
+-	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
+-	    proutn(cramlc(quadrant, game.state.kscmdr));
+-	    skip(1);
+-	    prout(_(&quot;   reports that it is under attack from the Klingon Super-commander.&quot;));
+-	    proutn(_(&quot;   It can survive until stardate %d.\&quot;&quot;),
+-		   (int)scheduled(FSCDBAS));
+-	    if (!game.resting)
++    else {
++	for (i = 1; i &lt;= game.state.rembase; i++) {
++	    ibq = game.state.baseq[i];
++	    if (same(ibq, game.state.kscmdr) &amp;&amp; same(game.state.kscmdr, game.battle)) {
++		/* attack the base */
++		if (avoid)
++		    return; /* no, don't attack base! */
++		game.iseenit = false;
++		game.isatb = 1;
++		schedule(FSCDBAS, 1.0 +2.0*Rand());
++		if (is_scheduled(FCDBAS)) 
++		    postpone(FSCDBAS, scheduled(FCDBAS)-game.state.date);
++		if (damaged(DRADIO) &amp;&amp; game.condition != docked)
++		    return; /* no warning */
++		game.iseenit = true;
++		pause_game(true);
++		proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
++		proutn(cramlc(quadrant, game.state.kscmdr));
++		skip(1);
++		prout(_(&quot;   reports that it is under attack from the Klingon Super-commander.&quot;));
++		proutn(_(&quot;   It can survive until stardate %d.\&quot;&quot;),
++		       (int)scheduled(FSCDBAS));
++		if (!game.resting)
++		    return;
++		prout(_(&quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;));
++		if (ja() == false)
++		    return;
++		game.resting = false;
++		game.optime = 0.0; /* actually finished */
+ 		return;
+-	    prout(_(&quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;));
+-	    if (ja() == false)
+-		return;
+-	    game.resting = false;
+-	    game.optime = 0.0; /* actually finished */
+-	    return;
++	    }
+ 	}
+     }
+     /* Check for intelligence report */
+@@ -608,7 +610,7 @@
+     game.ks[game.nenhere] = game.tholian;
+ 
+     /* check to see if all holes plugged */
+-    for_sectors(i) {
++    for (i = 1; i &lt;= QUADSIZE; i++) {
+ 	if (game.quad[1][i]!=IHWEB &amp;&amp; game.quad[1][i]!=IHT)
+ 	    return;
+ 	if (game.quad[QUADSIZE][i]!=IHWEB &amp;&amp; game.quad[QUADSIZE][i]!=IHT)
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-28 21:21:33 UTC (rev 644)
++++ trunk/src/battle.c	2006-09-29 07:41:43 UTC (rev 645)
+@@ -335,7 +335,7 @@
+ 	case IHR: /* Hit a regular enemy */
+ 	case IHK:
+ 	    /* find the enemy */
+-	    for_local_enemies(ll)
++	    for (ll = 1; ll &lt;= game.nenhere; ll++)
+ 		if (same(w, game.ks[ll]))
+ 		    break;
+ 	    kp = fabs(game.kpower[ll]);
+@@ -380,7 +380,7 @@
+ 	case IHB: /* Hit a base */
+ 	    skip(1);
+ 	    prout(_(&quot;***STARBASE DESTROYED..&quot;));
+-	    for_starbases(ll) {
++	    for (ll = 1; ll &lt;= game.state.rembase; ll++) {
+ 		if (same(game.state.baseq[ll], game.quadrant)) {
+ 		    game.state.baseq[ll]=game.state.baseq[game.state.rembase];
+ 		    break;
+@@ -501,7 +501,7 @@
+ 	game.quad[w.x][w.y]=IHDOT;
+ 	game.quad[jw.x][jw.y]=iquad;
+ 	prout(_(&quot; displaced by blast to %s &quot;), cramlc(sector, jw));
+-	for_local_enemies(ll)
++	for (ll = 1; ll &lt;= game.nenhere; ll++)
+ 	    game.kdist[ll] = game.kavgd[ll] = distance(game.sector,game.ks[ll]);
+ 	sortklings();
+ 	return;
+@@ -597,7 +597,7 @@
+     if (game.skill &lt;= SKILL_FAIR) 
+ 	where = sector;
+ 
+-    for_local_enemies(loop) {
++    for (loop = 1; loop &lt;= game.nenhere; loop++) {
+ 	if (game.kpower[loop] &lt; 0)
+ 	    continue;	/* too weak to attack */
+ 	/* compute hit strength and diminish shield power */
+@@ -722,7 +722,7 @@
+ 	}
+     }
+     /* After attack, reset average distance to enemies */
+-    for_local_enemies(loop)
++    for (loop = 1; loop &lt;= game.nenhere; loop++)
+ 	game.kavgd[loop] = game.kdist[loop];
+     sortklings();
+     return;
+@@ -758,7 +758,7 @@
+ 	switch (type) {
+ 	case IHC:
+ 	    game.comhere = false;
+-	    for_commanders (i)
++	    for (i = 1; i &lt;= game.state.remcom; i++)
+ 		if (same(game.state.kcmdr[i], game.quadrant)) 
+ 		    break;
+ 	    game.state.kcmdr[i] = game.state.kcmdr[game.state.remcom];
+@@ -797,7 +797,7 @@
+     /* Remove enemy ship from arrays describing local conditions */
+     if (is_scheduled(FCDBAS) &amp;&amp; same(game.battle, game.quadrant) &amp;&amp; type==IHC)
+ 	unschedule(FCDBAS);
+-    for_local_enemies(i)
++    for (i = 1; i &lt;= game.nenhere; i++)
+ 	if (same(game.ks[i], w))
+ 	    break;
+     game.nenhere--;
+@@ -1138,9 +1138,10 @@
+ 	irec=0;
+ 	do {
+ 	    chew();
+-	    if (!kz) for_local_enemies(i)
+-		irec+=fabs(game.kpower[i])/(PHASEFAC*pow(0.90,game.kdist[i]))*
+-		    (1.01+0.05*Rand()) + 1.0;
++	    if (!kz)
++		for (i = 1; i &lt;= game.nenhere; i++)
++		    irec += fabs(game.kpower[i])/(PHASEFAC*pow(0.90,game.kdist[i]))*
++			(1.01+0.05*Rand()) + 1.0;
+ 	    kz=1;
+ 	    proutn(_(&quot;%d units required. &quot;), irec);
+ 	    chew();
+@@ -1175,7 +1176,7 @@
+ 	if (game.nenhere) {
+ 	    extra = 0.0;
+ 	    powrem = rpow;
+-	    for_local_enemies(i) {
++	    for (i = 1; i &lt;= game.nenhere; i++) {
+ 		hits[i] = 0.0;
+ 		if (powrem &lt;= 0)
+ 		    continue;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-28 21:21:33 UTC (rev 644)
++++ trunk/src/events.c	2006-09-29 07:41:43 UTC (rev 645)
+@@ -270,8 +270,8 @@
+ 		break;
+ 	    }
+ 	    i = 0;
+-	    for_starbases(j) {
+-		for_commanders(k)
++	    for (j = 1; j &lt;= game.state.rembase; j++) {
++		for (k = 1; k &lt;= game.state.remcom; k++)
+ 		    if (same(game.state.baseq[j], game.state.kcmdr[k]) &amp;&amp;
+ 			!same(game.state.baseq[j], game.quadrant) &amp;&amp;
+ 			!same(game.state.baseq[j], game.state.kscmdr)) {
+@@ -320,7 +320,7 @@
+ 	    if (evcode==FCDBAS) {
+ 		unschedule(FCDBAS);
+ 		/* find the lucky pair */
+-		for_commanders(i)
++		for (i = 1; i &lt;= game.state.remcom; i++)
+ 		    if (same(game.state.kcmdr[i], game.battle)) 
+ 			break;
+ 		if (i &gt; game.state.remcom || game.state.rembase == 0 ||
+@@ -358,7 +358,7 @@
+ 	    }
+ 	    /* Remove Starbase from galaxy */
+ 	    game.state.galaxy[game.battle.x][game.battle.y].starbase = false;
+-	    for_starbases(i)
++	    for (i = 1; i &lt;= game.state.rembase; i++)
+ 		if (same(game.state.baseq[i], game.battle))
+ 		    game.state.baseq[i] = game.state.baseq[game.state.rembase];
+ 	    game.state.rembase--;
+@@ -700,7 +700,7 @@
+ 			break;
+ 		    case IHB: /* Destroy base */
+ 			game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase = false;
+-			for_starbases(i)
++			for (i = 1; i &lt;= game.state.rembase; i++)
+ 			    if (same(game.state.baseq[i], game.quadrant)) 
+ 				break;
+ 			game.state.baseq[i] = game.state.baseq[game.state.rembase];
+@@ -744,7 +744,7 @@
+ 		    case IHC: /* Damage/destroy big enemies */
+ 		    case IHS:
+ 		    case IHR:
+-			for_local_enemies(ll)
++			for (ll = 1; ll &lt;= game.nenhere; ll++)
+ 			    if (same(game.ks[ll], scratch))
+ 				break;
+ 			game.kpower[ll] -= 800.0; /* If firepower is lost, die */
+@@ -825,16 +825,14 @@
+ 	/* Scheduled supernova -- select star */
+ 	/* logic changed here so that we won't favor quadrants in top
+ 	   left of universe */
+-	for_quadrants(nq.x) {
+-	    for_quadrants(nq.y) {
++	for (nq.x = 1; nq.x &lt;= GALSIZE; nq.x++)
++	    for (nq.y = 1; nq.y &lt;= GALSIZE; nq.y++)
+ 		stars += game.state.galaxy[nq.x][nq.y].stars;
+-	    }
+-	}
+ 	if (stars == 0)
+ 	    return; /* nothing to supernova exists */
+ 	num = Rand()*stars + 1;
+-	for_quadrants(nq.x) {
+-	    for_quadrants(nq.y) {
++	for (nq.x = 1; nq.x &lt;= GALSIZE; nq.x++) {
++	    for (nq.y = 1; nq.y &lt;= GALSIZE; nq.y++) {
+ 		num -= game.state.galaxy[nq.x][nq.y].stars;
+ 		if (num &lt;= 0)
+ 		    break;
+@@ -862,8 +860,8 @@
+ 	coord ns;
+ 	/* we are in the quadrant! */
+ 	num = Rand()* game.state.galaxy[nq.x][nq.y].stars + 1;
+-	for_sectors(ns.x) {
+-	    for_sectors(ns.y) {
++	for (ns.x = 1; ns.x &lt;= QUADSIZE; ns.x++) {
++	    for (ns.y = 1; ns.y &lt;= QUADSIZE; ns.y++) {
+ 		if (game.quad[ns.x][ns.y]==IHSTAR) {
+ 		    num--;
+ 		    if (num==0)
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-28 21:21:33 UTC (rev 644)
++++ trunk/src/moving.c	2006-09-29 07:41:43 UTC (rev 645)
+@@ -53,7 +53,7 @@
+ 		/* Don't do it if being pushed by Nova */
+ 		if (game.nenhere != 0 &amp;&amp; !novapush) {
+ 		    newcnd();
+-		    for_local_enemies(m) {
++		    for (m = 1; m &lt;= game.nenhere; m++) {
+ 			finald = distance(w, game.ks[m]);
+ 			game.kavgd[m] = 0.5 * (finald + game.kdist[m]);
+ 		    }
+@@ -195,7 +195,7 @@
+     /* No quadrant change -- compute new avg enemy distances */
+     game.quad[game.sector.x][game.sector.y] = game.ship;
+     if (game.nenhere) {
+-	for_local_enemies(m) {
++	for (m = 1; m &lt;= game.nenhere; m++) {
+ 	    finald = distance(w, game.ks[m]);
+ 	    game.kavgd[m] = 0.5 * (finald+game.kdist[m]);
+ 	    game.kdist[m] = finald;
+@@ -203,7 +203,8 @@
+ 	sortklings();
+ 	if (!game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+ 	    attack(false);
+-	for_local_enemies(m) game.kavgd[m] = game.kdist[m];
++	for (m = 1; m &lt;= game.nenhere; m++)
++	    game.kavgd[m] = game.kdist[m];
+     }
+     newcnd();
+     drawmaps(0);
+@@ -989,7 +990,7 @@
+     }
+     else {
+ 	ddist = FOREVER;
+-	for_starbases(m) {
++	for (m = 1; m &lt;= game.state.rembase; m++) {
+ 	    xdist = QUADSIZE * distance(game.state.baseq[m], game.quadrant);
+ 	    if (xdist &lt; ddist) {
+ 		ddist = xdist;
+@@ -1163,7 +1164,7 @@
+ 	for (;;) {
+ 	    /* position next to base by trial and error */
+ 	    game.quad[game.sector.x][game.sector.y] = IHDOT;
+-	    for_sectors(l) {
++	    for (l = 1; l &lt;= QUADSIZE; l++) {
+ 		game.sector.x = 3.0*Rand() - 1.0 + game.base.x;
+ 		game.sector.y = 3.0*Rand() - 1.0 + game.base.y;
+ 		if (VALID_SECTOR(game.sector.x, game.sector.y) &amp;&amp;
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-28 21:21:33 UTC (rev 644)
++++ trunk/src/planets.c	2006-09-29 07:41:43 UTC (rev 645)
+@@ -499,8 +499,8 @@
+ 	proutn(_(&quot;Spock-  \&quot;I believe the word is&quot;));
+ 	prouts(_(&quot; *ASTONISHING*&quot;));
+ 	prout(_(&quot; Mr. Sulu.&quot;));
+-	for_sectors(i)
+-	    for_sectors(j)
++	for (i = 1; i &lt;= QUADSIZE; i++)
++	    for (j = 1; j &lt;= QUADSIZE; j++)
+ 		if (game.quad[i][j] == IHDOT)
+ 		    game.quad[i][j] = IHQUEST;
+ 	prout(_(&quot;  Captain, our quadrant is now infested with&quot;));
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-28 21:21:33 UTC (rev 644)
++++ trunk/src/reports.c	2006-09-29 07:41:43 UTC (rev 645)
+@@ -195,8 +195,8 @@
+ {
+     int i, j;
+     game.lastchart = game.state.date;
+-    for_quadrants(i)
+-	for_quadrants(j) 
++    for (i = 1; i &lt;= GALSIZE; i++)
++	for (j = 1; j &lt;= GALSIZE; j++)
+ 	    if (game.state.galaxy[i][j].charted) {
+ 		game.state.chart[i][j].klingons = game.state.galaxy[i][j].klingons;
+ 		game.state.chart[i][j].starbase = game.state.galaxy[i][j].starbase;
+@@ -223,9 +223,9 @@
+ 	prout(_(&quot;(Last surveillance update %d stardates ago).&quot;),
+ 	      (int)(game.state.date-game.lastchart));
+     prout(&quot;      1    2    3    4    5    6    7    8&quot;);
+-    for_quadrants(i) {
++    for (i = 1; i &lt;= GALSIZE; i++) {
+ 	proutn(&quot;%d |&quot;, i);
+-	for_quadrants(j) {
++	for (j = 1; j &lt;= GALSIZE; j++) {
+ 	    char buf[4];
+ 	    if ((game.options &amp; OPTION_SHOWME) &amp;&amp; i == game.quadrant.x &amp;&amp; j == game.quadrant.y)
+ 		proutn(&quot;&lt;&quot;);
+@@ -412,7 +412,7 @@
+ 	newcnd();
+     for (i = 1; i &lt;= QUADSIZE; i++) {
+ 	proutn(&quot;%2d  &quot;, i);
+-	for_sectors(j) {
++	for (j = 1; j &lt;= QUADSIZE; j++) {
+ 	    sectscan(goodScan, i, j);
+ 	}
+ 	skip(1);
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-28 21:21:33 UTC (rev 644)
++++ trunk/src/setup.c	2006-09-29 07:41:43 UTC (rev 645)
+@@ -223,9 +223,9 @@
+     game.landed = false;
+     game.alive = true;
+     game.docfac = 0.25;
+-    for_quadrants(i)
+-	for_quadrants(j) {
+-	struct quadrant *quad = &amp;game.state.galaxy[i][j];
++    for (i = 1; i &lt;= GALSIZE; i++)
++	for (j = 1; j &lt;= GALSIZE; j++) {
++	    struct quadrant *quad = &amp;game.state.galaxy[i][j];
+ 	    quad-&gt;charted = 0;
+ 	    quad-&gt;planet = NOPLANET;
+ 	    quad-&gt;romulans = 0;
+@@ -256,8 +256,8 @@
+     game.lastchart = FOREVER;
+     // Put stars in the galaxy
+     game.instar = 0;
+-    for_quadrants(i)
+-	for_quadrants(j) {
++    for (i = 1; i &lt;= GALSIZE; i++)
++	for (j = 1; j &lt;= GALSIZE; j++) {
+ 	    int k = Rand()*9.0 + 1.0;
+ 	    game.instar += k;
+ 	    game.state.galaxy[i][j].stars = k;
+@@ -607,8 +607,8 @@
+ 	game.ientesc = true;
+     }
+     // Clear quadrant
+-    for_sectors(i)
+-	for_sectors(j) 
++    for (i = 1; i &lt;= QUADSIZE; i++)
++	for (j = 1; j &lt;= QUADSIZE; j++)
+ 	    game.quad[i][j] = IHDOT;
+     q = &amp;game.state.galaxy[game.quadrant.x][game.quadrant.y];
+     // cope with supernova
+@@ -627,7 +627,7 @@
+ 	for (i = 1; i &lt;= game.klhere; i++)
+ 	    w = newkling(i);
+ 	// If we need a commander, promote a Klingon
+-	for_commanders(i)
++	for (i = 1; i &lt;= game.state.remcom; i++)
+ 	    if (same(game.state.kcmdr[i], game.quadrant))
+ 		break;
+ 			
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-28 21:21:33 UTC (rev 644)
++++ trunk/src/sst.h	2006-09-29 07:41:43 UTC (rev 645)
+@@ -36,11 +36,6 @@
+  */
+ #define VALID_QUADRANT(x, y)	((x)&gt;=1 &amp;&amp; (x)&lt;=GALSIZE &amp;&amp; (y)&gt;=1 &amp;&amp; (y)&lt;=GALSIZE)
+ #define VALID_SECTOR(x, y)	((x)&gt;=1 &amp;&amp; (x)&lt;=QUADSIZE &amp;&amp; (y)&gt;=1 &amp;&amp; (y)&lt;=QUADSIZE)
+-#define for_quadrants(i)	for (i = 1; i &lt;= GALSIZE; i++)
+-#define for_sectors(i)		for (i = 1; i &lt;= QUADSIZE; i++)
+-#define for_commanders(i)	for (i = 1; i &lt;= game.state.remcom; i++)
+-#define for_local_enemies(i)	for (i = 1; i &lt;= game.nenhere; i++)
+-#define for_starbases(i)	for (i = 1; i &lt;= game.state.rembase; i++)
+ 
+ typedef struct {int x; int y;} coord;
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000111.html">[Sst-commit-watch] r644 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000113.html">[Sst-commit-watch] r646 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#112">[ date ]</a>
+              <a href="thread.html#112">[ thread ]</a>
+              <a href="subject.html#112">[ subject ]</a>
+              <a href="author.html#112">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r781 - in trunk: . src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r781%20-%20in%20trunk%3A%20.%20src&In-Reply-To=%3C200610271906.k9RJ69hS029074%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000247.html">
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r781 - in trunk: . src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r781%20-%20in%20trunk%3A%20.%20src&In-Reply-To=%3C200610271906.k9RJ69hS029074%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r781 - in trunk: . src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct 27 21:06:09 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000247.html">[Sst-commit-watch] r780 - trunk/po
+</A></li>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#248">[ date ]</a>
+              <a href="thread.html#248">[ thread ]</a>
+              <a href="subject.html#248">[ subject ]</a>
+              <a href="author.html#248">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2006-10-27 21:06:09 +0200 (Fri, 27 Oct 2006)
+New Revision: 781
+
+Modified:
+   trunk/configure
+   trunk/configure.ac
+   trunk/src/config.h.in
+Log:
+Use libncursesw, not libncurses
+
+Modified: trunk/configure
+===================================================================
+--- trunk/configure	2006-10-23 18:00:05 UTC (rev 780)
++++ trunk/configure	2006-10-27 19:06:09 UTC (rev 781)
+@@ -5988,13 +5988,13 @@
+ fi
+ 
+ 
+-echo &quot;$as_me:$LINENO: checking for newwin in -lncurses&quot; &gt;&amp;5
+-echo $ECHO_N &quot;checking for newwin in -lncurses... $ECHO_C&quot; &gt;&amp;6
+-if test &quot;${ac_cv_lib_ncurses_newwin+set}&quot; = set; then
++echo &quot;$as_me:$LINENO: checking for newwin in -lncursesw&quot; &gt;&amp;5
++echo $ECHO_N &quot;checking for newwin in -lncursesw... $ECHO_C&quot; &gt;&amp;6
++if test &quot;${ac_cv_lib_ncursesw_newwin+set}&quot; = set; then
+   echo $ECHO_N &quot;(cached) $ECHO_C&quot; &gt;&amp;6
+ else
+   ac_check_lib_save_LIBS=$LIBS
+-LIBS=&quot;-lncurses  $LIBS&quot;
++LIBS=&quot;-lncursesw  $LIBS&quot;
+ cat &gt;conftest.$ac_ext &lt;&lt;_ACEOF
+ /* confdefs.h.  */
+ _ACEOF
+@@ -6039,25 +6039,25 @@
+   ac_status=$?
+   echo &quot;$as_me:$LINENO: \$? = $ac_status&quot; &gt;&amp;5
+   (exit $ac_status); }; }; then
+-  ac_cv_lib_ncurses_newwin=yes
++  ac_cv_lib_ncursesw_newwin=yes
+ else
+   echo &quot;$as_me: failed program was:&quot; &gt;&amp;5
+ sed 's/^/| /' conftest.$ac_ext &gt;&amp;5
+ 
+-ac_cv_lib_ncurses_newwin=no
++ac_cv_lib_ncursesw_newwin=no
+ fi
+ rm -f conftest.err conftest.$ac_objext \
+       conftest$ac_exeext conftest.$ac_ext
+ LIBS=$ac_check_lib_save_LIBS
+ fi
+-echo &quot;$as_me:$LINENO: result: $ac_cv_lib_ncurses_newwin&quot; &gt;&amp;5
+-echo &quot;${ECHO_T}$ac_cv_lib_ncurses_newwin&quot; &gt;&amp;6
+-if test $ac_cv_lib_ncurses_newwin = yes; then
++echo &quot;$as_me:$LINENO: result: $ac_cv_lib_ncursesw_newwin&quot; &gt;&amp;5
++echo &quot;${ECHO_T}$ac_cv_lib_ncursesw_newwin&quot; &gt;&amp;6
++if test $ac_cv_lib_ncursesw_newwin = yes; then
+   cat &gt;&gt;confdefs.h &lt;&lt;_ACEOF
+-#define HAVE_LIBNCURSES 1
++#define HAVE_LIBNCURSESW 1
+ _ACEOF
+ 
+-  LIBS=&quot;-lncurses $LIBS&quot;
++  LIBS=&quot;-lncursesw $LIBS&quot;
+ 
+ else
+   { { echo &quot;$as_me:$LINENO: error: ncurses library is missing on your system.&quot; &gt;&amp;5
+
+Modified: trunk/configure.ac
+===================================================================
+--- trunk/configure.ac	2006-10-23 18:00:05 UTC (rev 780)
++++ trunk/configure.ac	2006-10-27 19:06:09 UTC (rev 781)
+@@ -27,7 +27,7 @@
+ # Checks for libraries.
+ AC_CHECK_LIB(m, floor, [],
+     AC_MSG_ERROR([math library is missing on your system.]))
+-AC_CHECK_LIB(ncurses, newwin, [],
++AC_CHECK_LIB(ncursesw, newwin, [],
+     AC_MSG_ERROR([ncurses library is missing on your system.]))
+ 
+ # Checks for header files.
+
+Modified: trunk/src/config.h.in
+===================================================================
+--- trunk/src/config.h.in	2006-10-23 18:00:05 UTC (rev 780)
++++ trunk/src/config.h.in	2006-10-27 19:06:09 UTC (rev 781)
+@@ -43,8 +43,8 @@
+ /* Define to 1 if you have the `m' library (-lm). */
+ #undef HAVE_LIBM
+ 
+-/* Define to 1 if you have the `ncurses' library (-lncurses). */
+-#undef HAVE_LIBNCURSES
++/* Define to 1 if you have the `ncursesw' library (-lncursesw). */
++#undef HAVE_LIBNCURSESW
+ 
+ /* Define to 1 if you have the &lt;linux/kd.h&gt; header file. */
+ #undef HAVE_LINUX_KD_H
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000247.html">[Sst-commit-watch] r780 - trunk/po
+</A></li>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#248">[ date ]</a>
+              <a href="thread.html#248">[ thread ]</a>
+              <a href="subject.html#248">[ subject ]</a>
+              <a href="author.html#248">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

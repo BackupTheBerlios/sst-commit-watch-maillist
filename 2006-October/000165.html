@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r698 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r698%20-%20trunk/src&In-Reply-To=%3C200610070433.k974X43l026480%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000164.html">
+   <LINK REL="Next"  HREF="000166.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r698 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r698%20-%20trunk/src&In-Reply-To=%3C200610070433.k974X43l026480%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r698 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Sat Oct  7 06:33:04 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000164.html">[Sst-commit-watch] r697 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000166.html">[Sst-commit-watch] r699 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#165">[ date ]</a>
+              <a href="thread.html#165">[ thread ]</a>
+              <a href="subject.html#165">[ subject ]</a>
+              <a href="author.html#165">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-07 06:33:02 +0200 (Sat, 07 Oct 2006)
+New Revision: 698
+
+Modified:
+   trunk/src/sst.py
+Log:
+Preparation for making curses interface work in Python.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-06 20:15:41 UTC (rev 697)
++++ trunk/src/sst.py	2006-10-07 04:33:02 UTC (rev 698)
+@@ -3511,6 +3511,7 @@
+ 	#noecho()
+         global fullscreen_window, srscan_window, report_window, status_window
+         global lrscan_window, message_window, prompt_window
++        (rows, columns)   = stdscr.getmaxyx()
+ 	fullscreen_window = stdscr
+ 	srscan_window     = curses.newwin(12, 25, 0,       0)
+ 	report_window     = curses.newwin(11, 0,  1,       25)
+@@ -3522,8 +3523,12 @@
+ 	setwnd(fullscreen_window)
+ 	textcolor(DEFAULT)
+ 
++def ioend():
++    &quot;Wrap up I/O.  Presently a stub.&quot;
++    pass
++
+ def waitfor():
+-    &quot;wait for user action -- OK to do nothing if on a TTY&quot;
++    &quot;Wait for user action -- OK to do nothing if on a TTY&quot;
+     if game.options &amp; OPTION_CURSES:
+ 	stsdcr.getch()
+ 
+@@ -6210,7 +6215,7 @@
+     if shutup==0:
+ 	# Put in THING if needed
+ 	if thing == game.quadrant:
+-	    enemy(symbol=IHQUEST, loc=dropin(),
++	    enemy(type=IHQUEST, loc=dropin(),
+                       power=randreal(6000,6500.0)+250.0*game.skill)
+ 	    if not damaged(DSRSENS):
+ 		skip(1)
+@@ -6227,7 +6232,7 @@
+ 		w.y = withprob(0.5) * (QUADSIZE-1)
+                 if game.quad[w.x][w.y] == IHDOT:
+                     break
+-            game.tholian = enemy(symbol=IHT, loc=w,
++            game.tholian = enemy(type=IHT, loc=w,
+                                  power=randrange(100, 500) + 25.0*game.skill)
+ 	    # Reserve unoccupied corners 
+ 	    if game.quad[0][0]==IHDOT:
+@@ -6810,35 +6815,38 @@
+             logfp.write(&quot;# seed %s\n&quot; % seed)
+             logfp.write(&quot;# options %s\n&quot; % &quot; &quot;.join(arguments))
+         random.seed(seed)
+-        iostart()
+         if arguments:
+             inqueue = arguments
+         else:
+             inqueue = None
+-        while True: # Play a game 
+-            setwnd(fullscreen_window)
+-            clrscr()
+-            prelim()
+-            setup(needprompt=not inqueue)
+-            if game.alldone:
+-                score()
+-                game.alldone = False
+-            else:
+-                makemoves()
++        try:
++            iostart()
++            while True: # Play a game 
++                setwnd(fullscreen_window)
++                clrscr()
++                prelim()
++                setup(needprompt=not inqueue)
++                if game.alldone:
++                    score()
++                    game.alldone = False
++                else:
++                    makemoves()
++                skip(1)
++                stars()
++                skip(1)
++                if game.tourn and game.alldone:
++                    proutn(_(&quot;Do you want your score recorded?&quot;))
++                    if ja() == True:
++                        chew2()
++                        freeze(False)
++                chew()
++                proutn(_(&quot;Do you want to play again? &quot;))
++                if not ja():
++                    break
+             skip(1)
+-            stars()
+-            skip(1)
+-            if game.tourn and game.alldone:
+-                proutn(_(&quot;Do you want your score recorded?&quot;))
+-                if ja() == True:
+-                    chew2()
+-                    freeze(False)
+-            chew()
+-            proutn(_(&quot;Do you want to play again? &quot;))
+-            if not ja():
+-                break
+-        skip(1)
+-        prout(_(&quot;May the Great Bird of the Galaxy roost upon your home planet.&quot;))
++            prout(_(&quot;May the Great Bird of the Galaxy roost upon your home planet.&quot;))
++        finally:
++            ioend()
+         raise SystemExit, 0
+     except KeyboardInterrupt:
+         print&quot;&quot;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000164.html">[Sst-commit-watch] r697 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000166.html">[Sst-commit-watch] r699 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#165">[ date ]</a>
+              <a href="thread.html#165">[ thread ]</a>
+              <a href="subject.html#165">[ subject ]</a>
+              <a href="author.html#165">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

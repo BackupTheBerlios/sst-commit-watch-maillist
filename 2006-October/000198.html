@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r731 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r731%20-%20trunk/src&In-Reply-To=%3C200610100722.k9A7Mw2p000535%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000197.html">
+   <LINK REL="Next"  HREF="000199.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r731 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r731%20-%20trunk/src&In-Reply-To=%3C200610100722.k9A7Mw2p000535%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r731 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 09:22:58 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000197.html">[Sst-commit-watch] r730 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000199.html">[Sst-commit-watch] r732 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#198">[ date ]</a>
+              <a href="thread.html#198">[ thread ]</a>
+              <a href="subject.html#198">[ subject ]</a>
+              <a href="author.html#198">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 09:22:57 +0200 (Tue, 10 Oct 2006)
+New Revision: 731
+
+Modified:
+   trunk/src/sst.py
+Log:
+Don't try to do color initialization in Python yet, direct C
+translation of that code doesn't work.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 07:06:46 UTC (rev 730)
++++ trunk/src/sst.py	2006-10-10 07:22:57 UTC (rev 731)
+@@ -3353,19 +3353,9 @@
+     else:
+ 	stdscr = curses.initscr()
+ 	stdscr.keypad(True)
+-	#saveterm()
+ 	curses.nonl()
+ 	curses.cbreak()
+         curses.start_color()
+-        curses.init_pair(curses.COLOR_BLACK, curses.COLOR_BLACK, curses.COLOR_BLACK)
+-        curses.init_pair(curses.COLOR_GREEN, curses.COLOR_GREEN, curses.COLOR_BLACK)
+-        curses.init_pair(curses.COLOR_RED, curses.COLOR_RED, curses.COLOR_BLACK)
+-        curses.init_pair(curses.COLOR_CYAN, curses.COLOR_CYAN, curses.COLOR_BLACK)
+-        curses.init_pair(curses.COLOR_WHITE, curses.COLOR_WHITE, curses.COLOR_BLACK)
+-        curses.init_pair(curses.COLOR_MAGENTA, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+-        curses.init_pair(curses.COLOR_BLUE, curses.COLOR_BLUE, curses.COLOR_BLACK)
+-        curses.init_pair(curses.COLOR_YELLOW, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+-	#noecho()
+         global fullscreen_window, srscan_window, report_window, status_window
+         global lrscan_window, message_window, prompt_window
+         (rows, columns)   = stdscr.getmaxyx()
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000197.html">[Sst-commit-watch] r730 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000199.html">[Sst-commit-watch] r732 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#198">[ date ]</a>
+              <a href="thread.html#198">[ thread ]</a>
+              <a href="subject.html#198">[ subject ]</a>
+              <a href="author.html#198">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,117 @@
+From esr at mail.berlios.de  Fri Dec 14 00:59:24 2007
+From: esr at mail.berlios.de (esr at BerliOS)
+Date: Fri, 14 Dec 2007 00:59:24 +0100
+Subject: [Sst-commit-watch] r782 - trunk/src
+Message-ID: <200712132359.lBDNxOQX019328@sheep.berlios.de>
+
+Author: esr
+Date: 2007-12-14 00:59:23 +0100 (Fri, 14 Dec 2007)
+New Revision: 782
+
+Modified:
+   trunk/src/sst.py
+Log:
+Use /tmp for logs, as /usr/tmp is not available under Ubuntu.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-27 19:06:09 UTC (rev 781)
++++ trunk/src/sst.py	2007-12-13 23:59:23 UTC (rev 782)
+@@ -6200,9 +6200,10 @@
+                 raise SystemExit, 1
+         # where to save the input in case of bugs
+         try:
+-            logfp = open("/usr/tmp/sst-input.log", "w")
++            logfp = open("/tmp/sst-input.log", "w")
+         except IOError:
+             sys.stderr.write("sst: warning, can't open logfile\n")
++            sys.exit(1)
+         if logfp:
+             logfp.write("# seed %s\n" % seed)
+             logfp.write("# options %s\n" % " ".join(arguments))
+
+
+
+From esr at mail.berlios.de  Fri Dec 14 01:15:52 2007
+From: esr at mail.berlios.de (esr at BerliOS)
+Date: Fri, 14 Dec 2007 01:15:52 +0100
+Subject: [Sst-commit-watch] r783 - trunk/src
+Message-ID: <200712140015.lBE0Fqkf011165@sheep.berlios.de>
+
+Author: esr
+Date: 2007-12-14 01:15:51 +0100 (Fri, 14 Dec 2007)
+New Revision: 783
+
+Modified:
+   trunk/src/sst.py
+Log:
+Fix buggy processing of shield energy change request.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2007-12-13 23:59:23 UTC (rev 782)
++++ trunk/src/sst.py	2007-12-14 00:15:51 UTC (rev 783)
+@@ -870,7 +870,6 @@
+ 	if action=="NONE":
+ 	    proutn(_("Do you wish to change shield energy? "))
+ 	    if ja() == True:
+-		proutn(_("Energy to transfer to shields- "))
+ 		action = "NRG"
+ 	    elif damaged(DSHIELD):
+ 		prout(_("Shields damaged and down."))
+@@ -918,21 +917,22 @@
+ 	while scanner.next() != "IHREAL":
+ 	    scanner.chew()
+ 	    proutn(_("Energy to transfer to shields- "))
++        nrg = scanner.real
+ 	scanner.chew()
+-	if scanner.real == 0:
++	if nrg == 0:
+ 	    return
+-	if scanner.real > game.energy:
++	if nrg > game.energy:
+ 	    prout(_("Insufficient ship energy."))
+ 	    return
+ 	game.ididit = True
+-	if game.shield+scanner.real >= game.inshld:
++	if game.shield+nrg >= game.inshld:
+ 	    prout(_("Shield energy maximized."))
+-	    if game.shield+scanner.real > game.inshld:
++	    if game.shield+nrg > game.inshld:
+ 		prout(_("Excess energy requested returned to ship energy"))
+ 	    game.energy -= game.inshld-game.shield
+ 	    game.shield = game.inshld
+ 	    return
+-	if scanner.real < 0.0 and game.energy-scanner.real > game.inenrg:
++	if nrg < 0.0 and game.energy-nrg > game.inenrg:
+ 	    # Prevent shield drain loophole 
+ 	    skip(1)
+ 	    prout(_("Engineering to bridge--"))
+@@ -940,18 +940,18 @@
+ 	    prout(_("  I can't drain the shields."))
+ 	    game.ididit = False
+ 	    return
+-	if game.shield+scanner.real < 0:
++	if game.shield+nrg < 0:
+ 	    prout(_("All shield energy transferred to ship."))
+ 	    game.energy += game.shield
+ 	    game.shield = 0.0
+ 	    return
+ 	proutn(_("Scotty- \""))
+-	if scanner.real > 0:
++	if nrg > 0:
+ 	    prout(_("Transferring energy to shields.\""))
+ 	else:
+ 	    prout(_("Draining energy from shields.\""))
+-	game.shield += scanner.real
+-	game.energy -= scanner.real
++	game.shield += nrg
++	game.energy -= nrg
+ 	return
+ 
+ def randdevice():
+
+
+

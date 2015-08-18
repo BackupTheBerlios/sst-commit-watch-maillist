@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r744 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r744%20-%20trunk/src&In-Reply-To=%3C200610101746.k9AHk4Um031465%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000210.html">
+   <LINK REL="Next"  HREF="000212.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r744 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r744%20-%20trunk/src&In-Reply-To=%3C200610101746.k9AHk4Um031465%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r744 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 19:46:04 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000210.html">[Sst-commit-watch] r743 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000212.html">[Sst-commit-watch] r745 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#211">[ date ]</a>
+              <a href="thread.html#211">[ thread ]</a>
+              <a href="subject.html#211">[ subject ]</a>
+              <a href="author.html#211">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 19:46:03 +0200 (Tue, 10 Oct 2006)
+New Revision: 744
+
+Modified:
+   trunk/src/sst.py
+Log:
+Minor fixes to curses interface.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 17:09:07 UTC (rev 743)
++++ trunk/src/sst.py	2006-10-10 17:46:03 UTC (rev 744)
+@@ -3357,7 +3357,7 @@
+     if game.options &amp; OPTION_CURSES:
+         drawmaps(0)
+         setwnd(prompt_window)
+-        prompt_window.wclear()
++        prompt_window.clear()
+         prompt_window.addstr(prompt)
+         prompt_window.getstr()
+         prompt_window.clear()
+@@ -3452,8 +3452,8 @@
+ def clreol():
+     &quot;Clear to end of line -- can be a no-op in tty mode&quot; 
+     if game.options &amp; OPTION_CURSES:
+-        wclrtoeol(curwnd)
+-        wrefresh(curwnd)
++        curwnd.clrtoeol()
++        curwnd.refresh()
+ 
+ def clrscr():
+     &quot;Clear screen -- can be a no-op in tty mode.&quot;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000210.html">[Sst-commit-watch] r743 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000212.html">[Sst-commit-watch] r745 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#211">[ date ]</a>
+              <a href="thread.html#211">[ thread ]</a>
+              <a href="subject.html#211">[ subject ]</a>
+              <a href="author.html#211">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

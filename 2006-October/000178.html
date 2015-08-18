@@ -1,0 +1,890 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r711 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r711%20-%20trunk/src&In-Reply-To=%3C200610082218.k98MIQwO002391%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000177.html">
+   <LINK REL="Next"  HREF="000179.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r711 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r711%20-%20trunk/src&In-Reply-To=%3C200610082218.k98MIQwO002391%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r711 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Oct  9 00:18:26 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000177.html">[Sst-commit-watch] r710 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000179.html">[Sst-commit-watch] r712 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#178">[ date ]</a>
+              <a href="thread.html#178">[ thread ]</a>
+              <a href="subject.html#178">[ subject ]</a>
+              <a href="author.html#178">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-09 00:18:25 +0200 (Mon, 09 Oct 2006)
+New Revision: 711
+
+Modified:
+   trunk/src/sst.py
+Log:
+Use Python list operations to get rid of a lot of FORTRANish for loops.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-08 21:01:59 UTC (rev 710)
++++ trunk/src/sst.py	2006-10-08 22:18:25 UTC (rev 711)
+@@ -281,7 +281,7 @@
+ class planet:
+     def __init__(self):
+         self.name = None	# string-valued if inhabited
+-        self.w = coord()	# quadrant located
++        self.quadrant = coord()	# quadrant located
+         self.pclass = None	# could be &quot;&quot;M&quot;, &quot;N&quot;, &quot;O&quot;, or &quot;destroyed&quot;
+         self.crystals = &quot;absent&quot;# could be &quot;mined&quot;, &quot;present&quot;, &quot;absent&quot;
+         self.known = &quot;unknown&quot;	# could be &quot;unknown&quot;, &quot;known&quot;, &quot;shuttle_down&quot;
+@@ -320,9 +320,7 @@
+         self.snap = False	# snapshot taken
+         self.crew = 0   	# crew complement
+ 	self.remkl = 0  	# remaining klingons
+-	self.remcom = 0  	# remaining commanders
+ 	self.nscrem = 0		# remaining super commanders
+-	self.rembase = 0	# remaining bases
+ 	self.starkl = 0 	# destroyed stars
+ 	self.basekl = 0 	# destroyed bases
+ 	self.nromrem = 0	# Romulans remaining
+@@ -333,11 +331,7 @@
+ 	self.remres = 0 	# remaining resources
+ 	self.remtime = 0	# remaining time
+         self.baseq = [] 	# Base quadrant coordinates
+-        for i in range(BASEMAX):
+-            self.baseq.append(coord())
+         self.kcmdr = [] 	# Commander quadrant coordinates
+-        for i in range(QUADSIZE):
+-            self.kcmdr.append(coord())
+ 	self.kscmdr = coord()	# Supercommander quadrant coordinates
+         # the galaxy (subscript 0 not used)
+         self.galaxy = fill2d(GALSIZE, lambda i, j: quadrant())
+@@ -472,8 +466,6 @@
+         self.justin = False	# just entered quadrant
+         self.shldup = False	# shields are up
+         self.shldchg = False	# shield is changing (affects efficiency)
+-        self.comhere = False	# commander here
+-        self.ishere = False	# super-commander in quadrant
+         self.iscate = False	# super commander is here
+         self.ientesc = False	# attempted escape from supercommander
+         self.resting = False	# rest time
+@@ -537,12 +529,12 @@
+         self.height = 0.0	# height of orbit around planet
+     def recompute(self):
+         # Stas thinks this should be (C expression): 
+-        # game.state.remkl + game.state.remcom &gt; 0 ?
+-	#	game.state.remres/(game.state.remkl + 4*game.state.remcom) : 99
++        # game.state.remkl + len(game.state.kcmdr) &gt; 0 ?
++	#	game.state.remres/(game.state.remkl + 4*len(game.state.kcmdr)) : 99
+         # He says the existing expression is prone to divide-by-zero errors
+         # after killing the last klingon when score is shown -- perhaps also
+         # if the only remaining klingon is SCOM.
+-        game.state.remtime = game.state.remres/(game.state.remkl + 4*game.state.remcom)
++        game.state.remtime = game.state.remres/(game.state.remkl + 4*len(game.state.kcmdr))
+ # From enumerated type 'feature'
+ IHR = 'R'
+ IHK = 'K'
+@@ -627,9 +619,8 @@
+     if not irun:
+ 	# avoid intruding on another commander's territory 
+ 	if enemy.type == IHC:
+-	    for n in range(game.state.remcom):
+-		if game.state.kcmdr[n] == iq:
+-		    return False
++            if iq in game.state.kcmdr:
++                return False
+ 	    # refuse to leave if currently attacking starbase 
+ 	    if game.battle == game.quadrant:
+ 		return False
+@@ -651,7 +642,6 @@
+     game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons -= 1
+     game.state.galaxy[iq.x][iq.y].klingons += 1
+     if enemy.type==IHS:
+-	game.ishere = False
+ 	game.iscate = False
+ 	game.ientesc = False
+ 	game.isatb = 0
+@@ -659,11 +649,10 @@
+ 	unschedule(FSCDBAS)
+ 	game.state.kscmdr=iq
+     else:
+-	for n in range(game.state.remcom):
+-	    if game.state.kcmdr[n] == game.quadrant:
+-		game.state.kcmdr[n]=iq
++	for cmdr in game.state.kcmdr:
++	    if cmdr == game.quadrant:
++		game.state.kcmdr[n] = iq
+ 		break
+-	game.comhere = False
+     return True; # success 
+ 
+ #
+@@ -710,11 +699,11 @@
+     # tactical movement for the bad guys 
+     next = coord(); look = coord()
+     irun = False
+-    # This should probably be just game.comhere + game.ishere 
++    # This should probably be just (game.quadrant in game.state.kcmdr) + (game.state.kscmdr==game.quadrant) 
+     if game.skill &gt;= SKILL_EXPERT:
+-	nbaddys = ((game.comhere*2 + game.ishere*2+game.klhere*1.23+game.irhere*1.5)/2.0)
++	nbaddys = (((game.quadrant in game.state.kcmdr)*2 + (game.state.kscmdr==game.quadrant)*2+game.klhere*1.23+game.irhere*1.5)/2.0)
+     else:
+-	nbaddys = game.comhere + game.ishere
++	nbaddys = (game.quadrant in game.state.kcmdr) + (game.state.kscmdr==game.quadrant)
+     dist1 = enemy.kdist
+     mdist = int(dist1 + 0.5); # Nearest integer distance 
+     # If SC, check with spy to see if should hi-tail it 
+@@ -861,11 +850,11 @@
+ 	prout(&quot;== MOVCOM&quot;)
+     # Figure out which Klingon is the commander (or Supercommander)
+     # and do move
+-    if game.comhere:
++    if game.quadrant in game.state.kcmdr:
+         for enemy in game.enemies:
+ 	    if enemy.type == IHC:
+ 		movebaddy(enemy)
+-    if game.ishere:
++    if game.state.kscmdr==game.quadrant:
+         for enemy in game.enemies:
+ 	    if enemy.type == IHS:
+ 		movebaddy(enemy)
+@@ -885,22 +874,19 @@
+ 	game.state.galaxy[iq.x][iq.y].supernova or \
+ 	game.state.galaxy[iq.x][iq.y].klingons &gt; MAXKLQUAD-1:
+ 	return 1
+-    if avoid:
+-	# Avoid quadrants with bases if we want to avoid Enterprise 
+-	for i in range(game.state.rembase):
+-	    if game.state.baseq[i] == iq:
+-		return True
++    # Avoid quadrants with bases if we want to avoid Enterprise 
++    if avoid and iq in game.state.baseq:
++        return True
+     if game.justin and not game.iscate:
+ 	return True
+     # do the move 
+     game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].klingons -= 1
+     game.state.kscmdr = iq
+     game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].klingons += 1
+-    if game.ishere:
++    if game.state.kscmdr==game.quadrant:
+ 	# SC has scooted, Remove him from current quadrant 
+ 	game.iscate=False
+ 	game.isatb=0
+-	game.ishere = False
+ 	game.ientesc = False
+ 	unschedule(FSCDBAS)
+ 	for enemy in game.enemies:
+@@ -913,7 +899,7 @@
+         game.enemies.sort(lambda x, y: cmp(x.kdist, y.kdist))
+     # check for a helpful planet 
+     for i in range(game.inplan):
+-	if game.state.planets[i].w == game.state.kscmdr and \
++	if game.state.planets[i].quadrant == game.state.kscmdr and \
+ 	    game.state.planets[i].crystals == &quot;present&quot;:
+ 	    # destroy the planet 
+ 	    game.state.planets[i].pclass = &quot;destroyed&quot;
+@@ -933,7 +919,7 @@
+     if idebug:
+ 	prout(&quot;== SUPERCOMMANDER&quot;)
+     # Decide on being active or passive 
+-    avoid = ((game.incom - game.state.remcom + game.inkling - game.state.remkl)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) or \
++    avoid = ((game.incom - len(game.state.kcmdr) + game.inkling - game.state.remkl)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) or \
+ 	    (game.state.date-game.indate) &lt; 3.0)
+     if not game.iscate and avoid:
+ 	# compute move away from Enterprise 
+@@ -944,33 +930,32 @@
+ 	    idelta.y = game.quadrant.x-game.state.kscmdr.x
+     else:
+ 	# compute distances to starbases 
+-	if game.state.rembase &lt;= 0:
++	if not game.state.baseq:
+ 	    # nothing left to do 
+ 	    unschedule(FSCMOVE)
+ 	    return
+ 	sc = game.state.kscmdr
+-	for i in range(game.state.rembase):
+-	    basetbl.append((i, (game.state.baseq[i] - sc).distance()))
+-	if game.state.rembase &gt; 1:
++        for base in game.state.baseq:
++	    basetbl.append((i, (base - sc).distance()))
++	if game.state.baseq &gt; 1:
+             basetbl.sort(lambda x, y: cmp(x[1]. y[1]))
+ 	# look for nearest base without a commander, no Enterprise, and
+         # without too many Klingons, and not already under attack. 
+ 	ifindit = iwhichb = 0
+-	for i2 in range(game.state.rembase):
++	for (i2, base) in enumerate(game.state.baseq):
+ 	    i = basetbl[i2][0];	# bug in original had it not finding nearest
+-	    ibq = game.state.baseq[i]
+-	    if ibq == game.quadrant or ibq == game.battle or \
+-		game.state.galaxy[ibq.x][ibq.y].supernova or \
+-		game.state.galaxy[ibq.x][ibq.y].klingons &gt; MAXKLQUAD-1:
++	    if base == game.quadrant or base == game.battle or \
++		game.state.galaxy[base.x][base.y].supernova or \
++		game.state.galaxy[base.x][base.y].klingons &gt; MAXKLQUAD-1:
+ 		continue
+ 	    # if there is a commander, and no other base is appropriate,
+-	    #   we will take the one with the commander
+-	    for j in range(game.state.remcom):
+-		if ibq == game.state.kcmdr[j] and ifindit!= 2:
++	    # we will take the one with the commander
++            for cmdr in game.state.kcmdr:
++		if base == cmdr and ifindit != 2:
+ 		    ifindit = 2
+ 		    iwhichb = i
+ 		    break
+-	    if j &gt; game.state.remcom: # no commander -- use this one 
++	    else:	# no commander -- use this one 
+ 		ifindit = 1
+ 		iwhichb = i
+ 		break
+@@ -1007,11 +992,10 @@
+ 		iq.x = game.state.kscmdr.x
+ 		movescom(iq, avoid)
+     # check for a base 
+-    if game.state.rembase == 0:
++    if len(game.state.baseq) == 0:
+ 	unschedule(FSCMOVE)
+     else:
+-	for i in range(game.state.rembase):
+-	    ibq = game.state.baseq[i]
++        for (i, ibq) in enumerate(game.state.baseq):
+ 	    if ibq == game.state.kscmdr and game.state.kscmdr == game.battle:
+ 		# attack the base 
+ 		if avoid:
+@@ -1303,7 +1287,7 @@
+ 	game.damage[dev] += game.optime + extradm
+     game.shldup = False
+     prout(_(&quot;***Shields are down.&quot;))
+-    if game.state.remkl + game.state.remcom + game.state.nscrem:
++    if game.state.remkl + len(game.state.kcmdr) + game.state.nscrem:
+ 	announce()
+ 	damagereport()
+     else:
+@@ -1427,13 +1411,9 @@
+ 	elif iquad == IHB: # Hit a base 
+ 	    skip(1)
+ 	    prout(_(&quot;***STARBASE DESTROYED..&quot;))
+-	    for ll in range(game.state.rembase):
+-		if game.state.baseq[ll] == game.quadrant:
+-		    game.state.baseq[ll]=game.state.baseq[game.state.rembase]
+-		    break
++            game.state.baseq = filter(lambda x: x != game.quadrant, game.state.baseq)
+ 	    game.quad[w.x][w.y]=IHDOT
+-	    game.state.rembase -= 1
+-	    game.base.x=game.base.y=0
++	    game.base.invalidate()
+ 	    game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase -= 1
+ 	    game.state.chart[game.quadrant.x][game.quadrant.y].starbase -= 1
+ 	    game.state.basekl += 1
+@@ -1592,7 +1572,7 @@
+ 	game.neutz = False
+ 	return
+     # commanders get a chance to tac-move towards you 
+-    if (((game.comhere or game.ishere) and not game.justin) or game.skill == SKILL_EMERITUS) and torps_ok:
++    if (((game.quadrant in game.state.kcmdr or game.state.kscmdr==game.quadrant) and not game.justin) or game.skill == SKILL_EMERITUS) and torps_ok:
+ 	moveklings()
+     # if no enemies remain after movement, we're done 
+     if len(game.enemies)==0 or (len(game.enemies)==1 and thing == game.quadrant and not thing.angry):
+@@ -1644,7 +1624,7 @@
+ 	    dispersion = (randreal()+randreal())*0.5 - 0.5
+ 	    dispersion += 0.002*enemy.kpower*dispersion
+ 	    hit = torpedo(course, dispersion, origin=enemy.kloc, number=1, nburst=1)
+-	    if (game.state.remkl + game.state.remcom + game.state.nscrem)==0:
++	    if (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem)==0:
+ 		finish(FWON); # Klingons did themselves in! 
+ 	    if game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova or game.alldone:
+ 		return # Supernova or finished 
+@@ -1744,31 +1724,24 @@
+         game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons -= 1
+         game.klhere -= 1
+         if type == IHC:
+-            game.comhere = False
+-            for i in range(game.state.remcom):
+-                if game.state.kcmdr[i] == game.quadrant:
+-                    break
+-            game.state.kcmdr[i] = game.state.kcmdr[game.state.remcom]
+-            game.state.kcmdr[game.state.remcom].x = 0
+-            game.state.kcmdr[game.state.remcom].y = 0
+-            game.state.remcom -= 1
++            game.state.kcmdr.remove(game.quadrant)
+             unschedule(FTBEAM)
+-            if game.state.remcom != 0:
+-                schedule(FTBEAM, expran(1.0*game.incom/game.state.remcom))
++            if game.state.kcmdr:
++                schedule(FTBEAM, expran(1.0*game.incom/len(game.state.kcmdr)))
+             if is_scheduled(FCDBAS) and game.battle == game.quadrant:
+                 unschedule(FCDBAS)    
+         elif type ==  IHK:
+             game.state.remkl -= 1
+         elif type ==  IHS:
+             game.state.nscrem -= 1
+-            game.ishere = False
+-            game.state.kscmdr.x = game.state.kscmdr.y = game.isatb = 0
++            game.state.kscmdr.invalidate()
++            game.isatb = 0
+             game.iscate = False
+             unschedule(FSCMOVE)
+             unschedule(FSCDBAS)
+     # For each kind of enemy, finish message to player 
+     prout(_(&quot; destroyed.&quot;))
+-    if (game.state.remkl + game.state.remcom + game.state.nscrem)==0:
++    if (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem)==0:
+ 	return
+     game.recompute()
+     # Remove enemy ship from arrays describing local conditions
+@@ -1899,7 +1872,7 @@
+ 	torpedo(course[i], dispersion, origin=game.sector, number=i, nburst=n)
+ 	if game.alldone or game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova:
+ 	    return
+-    if (game.state.remkl + game.state.remcom + game.state.nscrem)==0:
++    if (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem)==0:
+ 	finish(FWON);
+ 
+ def overheat(rpow):
+@@ -1980,7 +1953,7 @@
+ 	skip(1)
+ 	if kpow == 0:
+ 	    deadkl(w, ienm, w)
+-	    if (game.state.remkl + game.state.remcom + game.state.nscrem)==0:
++	    if (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem)==0:
+ 		finish(FWON);		
+ 	    if game.alldone:
+ 		return
+@@ -2336,10 +2309,10 @@
+         # Adjust finish time to time of tractor beaming 
+         fintim = game.state.date+game.optime
+         attack(torps_ok=False)
+-        if game.state.remcom &lt;= 0:
++        if not game.state.kcmdr:
+             unschedule(FTBEAM)
+         else: 
+-            schedule(FTBEAM, game.optime+expran(1.5*game.intime/game.state.remcom))
++            schedule(FTBEAM, game.optime+expran(1.5*game.intime/len(game.state.kcmdr)))
+ 
+     def destroybase():
+         # Code merges here for any commander destroying base 
+@@ -2348,11 +2321,11 @@
+         if game.battle == game.quadrant:
+             game.state.chart[game.battle.x][game.battle.y].starbase = False
+             game.quad[game.base.x][game.base.y] = IHDOT
+-            game.base.x=game.base.y=0
++            game.base.invalidate()
+             newcnd()
+             skip(1)
+             prout(_(&quot;Spock-  \&quot;Captain, I believe the starbase has been destroyed.\&quot;&quot;))
+-        elif game.state.rembase != 1 and communicating():
++        elif game.state.baseq and communicating():
+             # Get word via subspace radio 
+             announce()
+             skip(1)
+@@ -2365,10 +2338,7 @@
+             game.state.chart[game.battle.x][game.battle.y].starbase = False
+         # Remove Starbase from galaxy 
+         game.state.galaxy[game.battle.x][game.battle.y].starbase = False
+-        for i in range(1, game.state.rembase+1):
+-            if game.state.baseq[i] == game.battle:
+-                game.state.baseq[i] = game.state.baseq[game.state.rembase]
+-        game.state.rembase -= 1
++        game.state.baseq = filter(lambda x: x != game.battle, game.state.baseq)
+         if game.isatb == 2:
+             # reinstate a commander's base attack 
+             game.battle = hold
+@@ -2411,7 +2381,7 @@
+ 	xtime = datemin-game.state.date
+ 	game.state.date = datemin
+ 	# Decrement Federation resources and recompute remaining time 
+-	game.state.remres -= (game.state.remkl+4*game.state.remcom)*xtime
++	game.state.remres -= (game.state.remkl+4*len(game.state.kcmdr))*xtime
+         game.recompute()
+ 	if game.state.remtime &lt;=0:
+ 	    finish(FDEPLETE)
+@@ -2475,15 +2445,15 @@
+ 	    else:
+ 		return
+ 	elif evcode == FTBEAM: # Tractor beam 
+-            if game.state.remcom == 0:
++            if not game.state.kcmdr:
+                 unschedule(FTBEAM)
+                 continue
+-            i = randrange(game.state.remcom)
++            i = randrange(len(game.state.kcmdr))
+             yank = (game.state.kcmdr[i]-game.quadrant).distance()
+             if istract or game.condition == &quot;docked&quot; or yank == 0:
+                 # Drats! Have to reschedule 
+                 schedule(FTBEAM, 
+-                         game.optime + expran(1.5*game.intime/game.state.remcom))
++                         game.optime + expran(1.5*game.intime/len(game.state.kcmdr)))
+                 continue
+             ictbeam = True
+             tractorbeam(yank)
+@@ -2492,21 +2462,17 @@
+ 	    game.state.snap = True
+ 	    schedule(FSNAP, expran(0.5 * game.intime))
+ 	elif evcode == FBATTAK: # Commander attacks starbase 
+-	    if game.state.remcom==0 or game.state.rembase==0:
++	    if not game.state.kcmdr or not game.state.baseq:
+ 		# no can do 
+ 		unschedule(FBATTAK)
+ 		unschedule(FCDBAS)
+                 continue
+-	    i = 0
+-	    for j in range(game.state.rembase):
+-		for k in range(game.state.remcom):
+-		    if game.state.baseq[j] == game.state.kcmdr[k] and \
+-			not game.state.baseq[j] == game.quadrant and \
+-                        not game.state.baseq[j] == game.state.kscmdr:
+-			i = 1
+-		if i == 1:
+-		    continue
+-	    if j&gt;game.state.rembase:
++            try:
++                for ibq in game.state.baseq:
++                   for cmdr in game.state.kcmdr: 
++                       if ibq == cmdr and ibq != game.quadrant and ibq != game.state.kscmdr:
++                           raise &quot;foundit&quot;
++            except &quot;foundit&quot;:
+ 		# no match found -- try later 
+ 		schedule(FBATTAK, expran(0.3*game.intime))
+ 		unschedule(FCDBAS)
+@@ -2539,14 +2505,16 @@
+ 	elif evcode == FCDBAS: # Commander succeeds in destroying base 
+ 	    if evcode==FCDBAS:
+ 		unschedule(FCDBAS)
++                if not game.state.baseq() \
++                       or not game.state.galaxy[game.battle.x][game.battle.y].starbase:
++		    game.battle.invalidate()
++                    continue
+ 		# find the lucky pair 
+-		for i in range(game.state.remcom):
+-		    if game.state.kcmdr[i] == game.battle: 
++		for cmdr in game.state.kcmdr:
++		    if cmdr == game.battle: 
+ 			break
+-		if i &gt; game.state.remcom or game.state.rembase == 0 or \
+-		    not game.state.galaxy[game.battle.x][game.battle.y].starbase:
++                else:
+ 		    # No action to take after all 
+-		    game.battle.invalidate()
+ 		    continue
+             destroybase()
+ 	elif evcode == FSCMOVE: # Supercommander moves 
+@@ -2813,11 +2781,7 @@
+                     game.quad[neighbor.x][neighbor.y] = IHDOT
+                 elif iquad == IHB: # Destroy base 
+                     game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase = False
+-                    for i in range(game.state.rembase):
+-                        if game.state.baseq[i] == game.quadrant: 
+-                            break
+-                    game.state.baseq[i] = game.state.baseq[game.state.rembase]
+-                    game.state.rembase -= 1
++                    game.state.baseq = filter(lambda x: x!= game.quadrant, game.state.baseq)
+                     game.base.invalidate()
+                     game.state.basekl += 1
+                     newcnd()
+@@ -2958,8 +2922,7 @@
+     comkills = len(game.state.kcmdr) - len(survivors)
+     game.state.kcmdr = survivors
+     kldead -= comkills
+-    game.state.remcom -= comkills
+-    if game.state.remcom==0:
++    if not game.state.kcmdr:
+         unschedule(FTBEAM)
+     game.state.remkl -= kldead
+     # destroy Romulans and planets in supernovaed quadrant 
+@@ -2968,12 +2931,11 @@
+     game.state.nromrem -= nrmdead
+     # Destroy planets 
+     for loop in range(game.inplan):
+-	if game.state.planets[loop].w == nq:
++	if game.state.planets[loop].quadrant == nq:
+ 	    game.state.planets[loop].pclass = &quot;destroyed&quot;
+ 	    npdead += 1
+     # Destroy any base in supernovaed quadrant
+     game.state.baseq = filter(lambda x: x != nq, game.state.baseq)
+-    game.state.rembase = len(game.state.baseq)
+     # If starship caused supernova, tally up destruction 
+     if induced:
+ 	game.state.starkl += game.state.galaxy[nq.x][nq.y].stars
+@@ -2983,7 +2945,7 @@
+     if game.quadrant == nq or communicating():
+ 	game.state.galaxy[nq.x][nq.y].supernova = True
+     # If supernova destroys last Klingons give special message 
+-    if (game.state.remkl + game.state.remcom + game.state.nscrem)==0 and not nq == game.quadrant:
++    if (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem)==0 and not nq == game.quadrant:
+ 	skip(2)
+ 	if not induced:
+ 	    prout(_(&quot;Lucky you!&quot;))
+@@ -3063,7 +3025,7 @@
+         return 0
+     else:
+         starting = (game.inkling + game.incom + game.inscom)
+-        remaining = (game.state.remkl + game.state.remcom + game.state.nscrem)
++        remaining = (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem)
+         return (starting - remaining)/elapsed
+ 
+ def badpoints():
+@@ -3153,7 +3115,7 @@
+ 	prout(_(&quot;conquered.  Your starship is now Klingon property,&quot;))
+ 	prout(_(&quot;and you are put on trial as a war criminal.  On the&quot;))
+ 	proutn(_(&quot;basis of your record, you are &quot;))
+-	if (game.state.remkl + game.state.remcom + game.state.nscrem)*3.0 &gt; (game.inkling + game.incom + game.inscom):
++	if (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem)*3.0 &gt; (game.inkling + game.incom + game.inscom):
+ 	    prout(_(&quot;acquitted.&quot;))
+ 	    skip(1)
+ 	    prout(_(&quot;LIVE LONG AND PROSPER.&quot;))
+@@ -3266,9 +3228,9 @@
+     elif game.ship == IHE:
+ 	game.ship = IHF
+     game.alive = False
+-    if (game.state.remkl + game.state.remcom + game.state.nscrem) != 0:
++    if (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem) != 0:
+ 	goodies = game.state.remres/game.inresor
+-	baddies = (game.state.remkl + 2.0*game.state.remcom)/(game.inkling+2.0*game.incom)
++	baddies = (game.state.remkl + 2.0*len(game.state.kcmdr))/(game.inkling+2.0*game.incom)
+ 	if goodies/baddies &gt;= randreal(1.0, 1.5):
+ 	    prout(_(&quot;As a result of your actions, a treaty with the Klingon&quot;))
+ 	    prout(_(&quot;Empire has been signed. The terms of the treaty are&quot;))
+@@ -3292,7 +3254,7 @@
+     # compute player's score 
+     timused = game.state.date - game.indate
+     iskill = game.skill
+-    if (timused == 0 or (game.state.remkl + game.state.remcom + game.state.nscrem) != 0) and timused &lt; 5.0:
++    if (timused == 0 or (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem) != 0) and timused &lt; 5.0:
+ 	timused = 5.0
+     perdate = killrate()
+     ithperd = 500*perdate + 0.5
+@@ -3308,7 +3270,7 @@
+     if not game.gamewon:
+ 	game.state.nromrem = 0 # None captured if no win
+     iscore = 10*(game.inkling - game.state.remkl) \
+-             + 50*(game.incom - game.state.remcom) \
++             + 50*(game.incom - len(game.state.kcmdr)) \
+              + ithperd + iwon \
+              + 20*(game.inrom - game.state.nromrem) \
+              + 200*(game.inscom - game.state.nscrem) \
+@@ -3327,9 +3289,9 @@
+     if game.inkling - game.state.remkl:
+ 	prout(_(&quot;%6d ordinary Klingons destroyed        %5d&quot;) %
+ 	      (game.inkling - game.state.remkl, 10*(game.inkling - game.state.remkl)))
+-    if game.incom - game.state.remcom:
++    if game.incom - len(game.state.kcmdr):
+ 	prout(_(&quot;%6d Klingon commanders destroyed       %5d&quot;) %
+-	      (game.incom - game.state.remcom, 50*(game.incom - game.state.remcom)))
++	      (game.incom - len(game.state.kcmdr), 50*(game.incom - len(game.state.kcmdr))))
+     if game.inscom - game.state.nscrem:
+ 	prout(_(&quot;%6d Super-Commander destroyed          %5d&quot;) %
+ 	      (game.inscom - game.state.nscrem, 200*(game.inscom - game.state.nscrem)))
+@@ -4398,7 +4360,7 @@
+ 	# Repeat if another snova
+         if not game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova:
+             break
+-    if (game.state.remkl + game.state.remcom + game.state.nscrem)==0: 
++    if (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem)==0: 
+ 	finish(FWON) # Snova killed remaining enemy. 
+ 
+ def timwrp():
+@@ -4410,8 +4372,8 @@
+ 	      int(game.state.date-game.snapsht.date))
+ 	game.state = game.snapsht
+ 	game.state.snap = False
+-	if game.state.remcom:
+-	    schedule(FTBEAM, expran(game.intime/game.state.remcom))
++	if len(game.state.kcmdr):
++	    schedule(FTBEAM, expran(game.intime/len(game.state.kcmdr)))
+ 	    schedule(FBATTAK, expran(0.3*game.intime))
+ 	schedule(FSNOVA, expran(0.5*game.intime))
+ 	# next snapshot will be sooner 
+@@ -4536,7 +4498,6 @@
+ def mayday():
+     # yell for help from nearest starbase 
+     # There's more than one way to move in this game! 
+-    line = 0
+     scanner.chew()
+     # Test for conditions which prevent calling for help 
+     if game.condition == &quot;docked&quot;:
+@@ -4545,7 +4506,7 @@
+     if damaged(DRADIO):
+ 	prout(_(&quot;Subspace radio damaged.&quot;))
+ 	return
+-    if game.state.rembase==0:
++    if not game.state.baseq:
+ 	prout(_(&quot;Lt. Uhura-  \&quot;Captain, I'm not getting any response from Starbase.\&quot;&quot;))
+ 	return
+     if game.landed:
+@@ -4560,13 +4521,12 @@
+ 	ddist = (game.base - game.sector).distance()
+     else:
+ 	ddist = FOREVER
+-	for m in range(game.state.rembase):
+-	    xdist = QUADSIZE * (game.state.baseq[m] - game.quadrant).distance()
++        for ibq in game.state.baseq:
++	    xdist = QUADSIZE * (ibq - game.quadrant).distance()
+ 	    if xdist &lt; ddist:
+ 		ddist = xdist
+-		line = m
+ 	# Since starbase not in quadrant, set up new quadrant 
+-	game.quadrant = game.state.baseq[line]
++	game.quadrant = ibq
+ 	newqad(True)
+     # dematerialize starship 
+     game.quad[game.sector.x][game.sector.y]=IHDOT
+@@ -4664,7 +4624,7 @@
+ 	prouts(_(&quot;***ALL HANDS ABANDON SHIP!&quot;))
+ 	skip(2)
+ 	prout(_(&quot;Captain and crew escape in shuttle craft.&quot;))
+-	if game.state.rembase==0:
++	if not game.state.baseq:
+ 	    # Oops! no place to go... 
+ 	    finish(FABANDN)
+ 	    return
+@@ -4688,7 +4648,7 @@
+ 	game.nprobes = 0 # No probes 
+ 	prout(_(&quot;You are captured by Klingons and released to&quot;))
+ 	prout(_(&quot;the Federation in a prisoner-of-war exchange.&quot;))
+-	nb = randrange(game.state.rembase)
++	nb = randrange(len(game.state.baseq))
+ 	# Set up quadrant and position FQ adjacient to base 
+ 	if not game.quadrant == game.state.baseq[nb]:
+ 	    game.quadrant = game.state.baseq[nb]
+@@ -4757,7 +4717,7 @@
+ 	    iknow = True
+ 	    if idebug and game.state.planets[i].known==&quot;unknown&quot;:
+ 		proutn(&quot;(Unknown) &quot;)
+-	    proutn(_(&quot;Quadrant %s&quot;) % game.state.planets[i].w)
++	    proutn(_(&quot;Quadrant %s&quot;) % game.state.planets[i].quadrant)
+ 	    proutn(_(&quot;   class &quot;))
+ 	    proutn(game.state.planets[i].pclass)
+ 	    proutn(&quot;   &quot;)
+@@ -5133,7 +5093,7 @@
+ 	while len(game.enemies) &gt; 0:
+ 	    deadkl(game.enemies[1].kloc, game.quad[game.enemies[1].kloc.x][game.enemies[1].kloc.y],game.enemies[1].kloc)
+ 	prout(_(&quot;Ensign Chekov-  \&quot;Congratulations, Captain!\&quot;&quot;))
+-	if (game.state.remkl + game.state.remcom + game.state.nscrem) == 0:
++	if (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem) == 0:
+ 	    finish(FWON)    
+ 	if (game.options &amp; OPTION_PLAIN) == 0:
+ 	    prout(_(&quot;Spock-  \&quot;Captain, I believe the `Experimental Death Ray'&quot;))
+@@ -5226,23 +5186,23 @@
+     if game.tourn:
+ 	prout(_(&quot;This is tournament game %d.&quot;) % game.tourn)
+     prout(_(&quot;Your secret password is \&quot;%s\&quot;&quot;) % game.passwd)
+-    proutn(_(&quot;%d of %d Klingons have been killed&quot;) % (((game.inkling + game.incom + game.inscom) - (game.state.remkl + game.state.remcom + game.state.nscrem)), 
++    proutn(_(&quot;%d of %d Klingons have been killed&quot;) % (((game.inkling + game.incom + game.inscom) - (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem)), 
+ 	   (game.inkling + game.incom + game.inscom)))
+-    if game.incom - game.state.remcom:
+-	prout(_(&quot;, including %d Commander%s.&quot;) % (game.incom - game.state.remcom, (_(&quot;s&quot;), &quot;&quot;)[(game.incom - game.state.remcom)==1]))
++    if game.incom - len(game.state.kcmdr):
++	prout(_(&quot;, including %d Commander%s.&quot;) % (game.incom - len(game.state.kcmdr), (_(&quot;s&quot;), &quot;&quot;)[(game.incom - len(game.state.kcmdr))==1]))
+     elif game.inkling - game.state.remkl + (game.inscom - game.state.nscrem) &gt; 0:
+ 	prout(_(&quot;, but no Commanders.&quot;))
+     else:
+ 	prout(&quot;.&quot;)
+     if game.skill &gt; SKILL_FAIR:
+ 	prout(_(&quot;The Super Commander has %sbeen destroyed.&quot;) % (&quot;&quot;, _(&quot;not &quot;))[game.state.nscrem])
+-    if game.state.rembase != game.inbase:
++    if len(game.state.baseq) != game.inbase:
+ 	proutn(_(&quot;There &quot;))
+-	if game.inbase-game.state.rembase==1:
++	if game.inbase-len(game.state.baseq)==1:
+ 	    proutn(_(&quot;has been 1 base&quot;))
+ 	else:
+-	    proutn(_(&quot;have been %d bases&quot;) % (game.inbase-game.state.rembase))
+-	prout(_(&quot; destroyed, %d remaining.&quot;) % game.state.rembase)
++	    proutn(_(&quot;have been %d bases&quot;) % (game.inbase-len(game.state.baseq)))
++	prout(_(&quot; destroyed, %d remaining.&quot;) % len(game.state.baseq))
+     else:
+ 	prout(_(&quot;There are %d bases.&quot;) % game.inbase)
+     if communicating() or game.iseenit:
+@@ -5442,7 +5402,7 @@
+ 	prstat(_(&quot;Shields&quot;), s+data)
+     if not req or req == 9:
+         prstat(_(&quot;Klingons Left&quot;), &quot;%d&quot; \
+-               % (game.state.remkl + game.state.remcom + game.state.nscrem))
++               % (game.state.remkl + len(game.state.kcmdr) + game.state.nscrem))
+     if not req or req == 10:
+ 	if game.options &amp; OPTION_WORLDS:
+ 	    plnet = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet
+@@ -5786,24 +5746,6 @@
+ 	    quad.starbase = False
+ 	    quad.supernova = False
+ 	    quad.status = &quot;secure&quot;
+-    # Initialize times for extraneous events
+-    schedule(FSNOVA, expran(0.5 * game.intime))
+-    schedule(FTBEAM, expran(1.5 * (game.intime / game.state.remcom)))
+-    schedule(FSNAP, randreal(1.0, 2.0)) # Force an early snapshot
+-    schedule(FBATTAK, expran(0.3*game.intime))
+-    unschedule(FCDBAS)
+-    if game.state.nscrem:
+-	schedule(FSCMOVE, 0.2777)
+-    else:
+-	unschedule(FSCMOVE)
+-    unschedule(FSCDBAS)
+-    unschedule(FDSPROB)
+-    if (game.options &amp; OPTION_WORLDS) and game.skill &gt;= SKILL_GOOD:
+-	schedule(FDISTR, expran(1.0 + game.intime))
+-    else:
+-	unschedule(FDISTR)
+-    unschedule(FENSLV)
+-    unschedule(FREPRO)
+     # Starchart is functional but we've never seen it
+     game.lastchart = FOREVER
+     # Put stars in the galaxy
+@@ -5836,7 +5778,7 @@
+ 			prout(&quot;=== Saving base #%d, close to #%d&quot; % (i, j))
+             if not contflag:
+                 break
+-	game.state.baseq[i] = w
++	game.state.baseq.append(w)
+ 	game.state.galaxy[w.x][w.y].starbase = True
+ 	game.state.chart[w.x][w.y].starbase = True
+     # Position ordinary Klingon Battle Cruisers
+@@ -5868,7 +5810,7 @@
+                    not w in game.state.kcmdr[:i]:
+                 break
+ 	game.state.galaxy[w.x][w.y].klingons += 1
+-	game.state.kcmdr[i] = w
++	game.state.kcmdr.append(w)
+     # Locate planets in galaxy
+     for i in range(game.inplan):
+         while True:
+@@ -5876,7 +5818,7 @@
+             if game.state.galaxy[w.x][w.y].planet == None:
+                 break
+         new = planet()
+-	new.w = w
++	new.quadrant = w
+         new.crystals = &quot;absent&quot;
+ 	if (game.options &amp; OPTION_WORLDS) and i &lt; NINHAB:
+ 	    new.pclass = &quot;M&quot;	# All inhabited planets are class M
+@@ -5904,6 +5846,24 @@
+                 break
+ 	game.state.kscmdr = w
+ 	game.state.galaxy[w.x][w.y].klingons += 1
++    # Initialize times for extraneous events
++    schedule(FSNOVA, expran(0.5 * game.intime))
++    schedule(FTBEAM, expran(1.5 * (game.intime / len(game.state.kcmdr))))
++    schedule(FSNAP, randreal(1.0, 2.0)) # Force an early snapshot
++    schedule(FBATTAK, expran(0.3*game.intime))
++    unschedule(FCDBAS)
++    if game.state.nscrem:
++	schedule(FSCMOVE, 0.2777)
++    else:
++	unschedule(FSCMOVE)
++    unschedule(FSCDBAS)
++    unschedule(FDSPROB)
++    if (game.options &amp; OPTION_WORLDS) and game.skill &gt;= SKILL_GOOD:
++	schedule(FDISTR, expran(1.0 + game.intime))
++    else:
++	unschedule(FDISTR)
++    unschedule(FENSLV)
++    unschedule(FREPRO)
+     # Place thing (in tournament game, we don't want one!)
+     global thing
+     if game.tourn is None:
+@@ -6037,8 +5997,7 @@
+ 
+     # Use parameters to generate initial values of things
+     game.damfac = 0.5 * game.skill
+-    game.state.rembase = randrange(BASEMIN, BASEMAX+1)
+-    game.inbase = game.state.rembase
++    game.inbase = randrange(BASEMIN, BASEMAX+1)
+     game.inplan = 0
+     if game.options &amp; OPTION_PLANETS:
+ 	game.inplan += randrange(MAXUNINHAB/2, MAXUNINHAB+1)
+@@ -6049,14 +6008,11 @@
+     game.state.remtime = 7.0 * game.length
+     game.intime = game.state.remtime
+     game.state.remkl = game.inkling = 2.0*game.intime*((game.skill+1 - 2*randreal())*game.skill*0.1+.15)
+-    game.incom = int(game.skill + 0.0625*game.inkling*randreal())
+-    game.state.remcom = min(10, game.incom)
+-    game.incom = game.state.remcom
++    game.incom = min(10, int(game.skill + 0.0625*game.inkling*randreal()))
+     game.state.remres = (game.inkling+4*game.incom)*game.intime
+     game.inresor = game.state.remres
+     if game.inkling &gt; 50:
+-        game.state.rembase += 1
+-	game.inbase = game.state.rembase
++        game.state.inbase += 1
+     return False
+ 
+ def dropin(iquad=None):
+@@ -6089,8 +6045,6 @@
+     w = coord()
+     game.justin = True
+     game.klhere = 0
+-    game.comhere = False
+-    game.ishere = False
+     game.irhere = 0
+     game.iplnet = 0
+     game.neutz = False
+@@ -6118,12 +6072,11 @@
+ 	for i in range(game.klhere):
+             newkling()
+ 	# If we need a commander, promote a Klingon
+-	for i in range(game.state.remcom):
+-	    if game.state.kcmdr[i] == game.quadrant:
++        for cmdr in game.state.kcmdr:
++	    if cmdr == game.quadrant:
+                 e = game.enemies[game.klhere-1]
+                 game.quad[e.kloc.x][e.kloc.y] = IHC
+                 e.kpower = randreal(950,1350) + 50.0*game.skill
+-                game.comhere = True
+ 		break	
+ 	# If we need a super-commander, promote a Klingon
+ 	if game.quadrant == game.state.kscmdr:
+@@ -6131,7 +6084,6 @@
+ 	    game.quad[e.kloc.x][e.kloc.y] = IHS
+ 	    e.kpower = randreal(1175.0,  1575.0) + 125.0*game.skill
+ 	    game.iscate = (game.state.remkl &gt; 1)
+-	    game.ishere = True
+     # Put in Romulans if needed
+     for i in range(game.klhere, len(game.enemies)):
+         enemy(IHR, loc=dropin(), power=randreal(400.0,850.0)+50.0*game.skill)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000177.html">[Sst-commit-watch] r710 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000179.html">[Sst-commit-watch] r712 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#178">[ date ]</a>
+              <a href="thread.html#178">[ thread ]</a>
+              <a href="subject.html#178">[ subject ]</a>
+              <a href="author.html#178">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

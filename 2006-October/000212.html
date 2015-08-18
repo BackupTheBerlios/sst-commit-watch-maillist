@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r745 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r745%20-%20trunk/src&In-Reply-To=%3C200610102009.k9AK902Y021593%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000211.html">
+   <LINK REL="Next"  HREF="000213.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r745 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r745%20-%20trunk/src&In-Reply-To=%3C200610102009.k9AK902Y021593%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r745 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 22:09:00 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000211.html">[Sst-commit-watch] r744 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000213.html">[Sst-commit-watch] r746 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#212">[ date ]</a>
+              <a href="thread.html#212">[ thread ]</a>
+              <a href="subject.html#212">[ subject ]</a>
+              <a href="author.html#212">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 22:08:59 +0200 (Tue, 10 Oct 2006)
+New Revision: 745
+
+Modified:
+   trunk/src/sst.py
+Log:
+Lexer fixes for Stas.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 17:46:03 UTC (rev 744)
++++ trunk/src/sst.py	2006-10-10 20:08:59 UTC (rev 745)
+@@ -5388,18 +5388,17 @@
+ def freeze(boss):
+     &quot;Save game.&quot;
+     if boss:
+-	scanner.token = &quot;emsave.trk&quot;
+-    else:
++	scanner.push(&quot;emsave.trk&quot;)
++    key = scanner.next()
++    if key == &quot;IHEOL&quot;:
++        proutn(_(&quot;File name: &quot;))
+         key = scanner.next()
+-	if key == &quot;IHEOL&quot;:
+-	    proutn(_(&quot;File name: &quot;))
+-	    key = scanner.next()
+-	if key != &quot;IHALPHA&quot;:
+-	    huh()
+-	    return
+-	scanner.chew()
+-        if '.' not in scanner.token:
+-	    scanner.token += &quot;.trk&quot;
++    if key != &quot;IHALPHA&quot;:
++        huh()
++        return
++    scanner.chew()
++    if '.' not in scanner.token:
++        scanner.token += &quot;.trk&quot;
+     try:
+         fp = open(scanner.token, &quot;wb&quot;)
+     except IOError:
+@@ -5774,7 +5773,7 @@
+ 	# Approximates Tom Almy's version.
+ 	game.options &amp;=~ (OPTION_THINGY | OPTION_BLKHOLE | OPTION_BASE | OPTION_WORLDS)
+ 	game.options |= OPTION_ALMY
+-    elif scanner.sees(&quot;fancy&quot;):
++    elif scanner.sees(&quot;fancy&quot;) or scanner.sees(&quot;\n&quot;):
+ 	pass
+     elif len(scanner.token):
+         proutn(_(&quot;What is \&quot;%s\&quot;?&quot;) % scanner.token)
+@@ -6293,10 +6292,10 @@
+             if not line:
+                 continue
+             else:
+-                self.inqueue = line.lstrip().split() + [&quot;IHEOL&quot;] 
++                self.inqueue = line.lstrip().split() + [&quot;\n&quot;]
+         # From here on in it's all looking at the queue
+         self.token = self.inqueue.pop(0)
+-        if self.token == &quot;IHEOL&quot;:
++        if self.token == &quot;\n&quot;:
+             self.type = &quot;IHEOL&quot;
+             return &quot;IHEOL&quot;
+         try:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000211.html">[Sst-commit-watch] r744 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000213.html">[Sst-commit-watch] r746 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#212">[ date ]</a>
+              <a href="thread.html#212">[ thread ]</a>
+              <a href="subject.html#212">[ subject ]</a>
+              <a href="author.html#212">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

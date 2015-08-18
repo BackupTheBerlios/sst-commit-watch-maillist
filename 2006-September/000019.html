@@ -1,0 +1,206 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r552 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r552%20-%20trunk/src&In-Reply-To=%3C200609132258.k8DMwi5A009460%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000018.html">
+   <LINK REL="Next"  HREF="000020.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r552 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r552%20-%20trunk/src&In-Reply-To=%3C200609132258.k8DMwi5A009460%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r552 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 14 00:58:44 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000018.html">[Sst-commit-watch] r551 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000020.html">[Sst-commit-watch] r553 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#19">[ date ]</a>
+              <a href="thread.html#19">[ thread ]</a>
+              <a href="subject.html#19">[ subject ]</a>
+              <a href="author.html#19">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-14 00:58:43 +0200 (Thu, 14 Sep 2006)
+New Revision: 552
+
+Modified:
+   trunk/src/xio.c
+Log:
+Separate widgets for each button group,
+
+
+Modified: trunk/src/xio.c
+===================================================================
+--- trunk/src/xio.c	2006-09-13 22:40:39 UTC (rev 551)
++++ trunk/src/xio.c	2006-09-13 22:58:43 UTC (rev 552)
+@@ -9,7 +9,8 @@
+ #include &quot;sst.h&quot;
+ 
+ static XtAppContext app_context;
+-static Widget toplevel, form, text, buttons; 
++static Widget toplevel, text, form; 
++static Widget navigation, weapons, status, planets, misc; 
+ 
+ static String fallback[] = {
+     /* text window resources */
+@@ -21,8 +22,10 @@
+ struct cmd_t {
+     char *name;
+     void (*callback)(Widget, XtPointer, XtPointer);
++    Widget *parent;
+     int enable;
+     Widget widget;
++
+ };
+ 
+ static void quit_proc(Widget w, XtPointer client_data, XtPointer call_data)
+@@ -38,35 +41,39 @@
+ }
+ 
+ static struct cmd_t commands[] = {
+-    {&quot;Phasers&quot;,		NULL,		0},
+-    {&quot;Torpedo&quot;,		NULL,		0},
+-    {&quot;Move&quot;,		NULL,		0},
+-    {&quot;Shields&quot;,		NULL,		0},
+-    {&quot;Dock&quot;,		noargs_proc,	0},
+-    {&quot;Damages&quot;,		noargs_proc,	0},
+-    {&quot;Chart&quot;,		noargs_proc,	0},
+-    {&quot;Impulse&quot;,		NULL,		0},
+-    {&quot;Rest&quot;,		NULL,		0},
+-    {&quot;Warp&quot;,		NULL,		0},
+-    {&quot;Score&quot;,		noargs_proc,	0},
+-    {&quot;Sensors&quot;,		noargs_proc,	OPTION_PLANETS},
+-    {&quot;Orbit&quot;,		noargs_proc,	OPTION_PLANETS},
+-    {&quot;Transport&quot;,	noargs_proc,	OPTION_PLANETS},
+-    {&quot;Mine&quot;,		noargs_proc,	OPTION_PLANETS},
+-    {&quot;Crystals&quot;,	noargs_proc,	OPTION_PLANETS},
+-    {&quot;Shuttle&quot;,		noargs_proc,	OPTION_PLANETS},
+-    {&quot;Planets&quot;,		noargs_proc,	OPTION_PLANETS},
+-    {&quot;Report&quot;,		noargs_proc,	0},
+-    {&quot;Computer&quot;,	noargs_proc,   	0},
+-    {&quot;Emexit&quot;,		noargs_proc,	0},
+-    {&quot;Probe&quot;,		NULL,		OPTION_PROBE},
+-    {&quot;Save&quot;,		NULL,		0},
+-    {&quot;Abandon&quot;,		noargs_proc,	0},
+-    {&quot;Destruct&quot;,	noargs_proc,	0},
+-    {&quot;Deathray&quot;,	noargs_proc,	0},
+-    {&quot;Mayday&quot;,		noargs_proc,	0},
+-    {&quot;Quit&quot;,		quit_proc,	0},
+-    {&quot;Help&quot;,		noargs_proc,	0},
++    {&quot;Move&quot;,		NULL,		&amp;navigation,	0},
++    {&quot;Dock&quot;,		noargs_proc,	&amp;navigation,	0},
++    {&quot;Chart&quot;,		noargs_proc,	&amp;navigation,	0},
++    {&quot;Impulse&quot;,		NULL,		&amp;navigation,	0},
++    {&quot;Rest&quot;,		NULL,		&amp;navigation,	0},
++    {&quot;Warp&quot;,		NULL,		&amp;navigation,	0},
++    {&quot;Probe&quot;,		NULL,		&amp;navigation,	OPTION_PROBE},
++
++    {&quot;Phasers&quot;,		NULL,		&amp;weapons,	0},
++    {&quot;Torpedo&quot;,		NULL,		&amp;weapons,	0},
++    {&quot;Shields&quot;,		NULL,		&amp;weapons,	0},
++    {&quot;Damages&quot;,		noargs_proc,	&amp;weapons,	0},
++    {&quot;Abandon&quot;,		noargs_proc,	&amp;weapons,	0},
++    {&quot;Destruct&quot;,	noargs_proc,	&amp;weapons,	0},
++    {&quot;Deathray&quot;,	noargs_proc,	&amp;weapons,	0},
++    {&quot;Mayday&quot;,		noargs_proc,	&amp;weapons,	0},
++
++    {&quot;Score&quot;,		noargs_proc,	&amp;status,	0},
++    {&quot;Report&quot;,		noargs_proc,	&amp;status,	0},
++    {&quot;Computer&quot;,	noargs_proc,   	&amp;status,	0},
++
++    {&quot;Sensors&quot;,		noargs_proc,	&amp;planets,	OPTION_PLANETS},
++    {&quot;Orbit&quot;,		noargs_proc,	&amp;planets,	OPTION_PLANETS},
++    {&quot;Transport&quot;,	noargs_proc,	&amp;planets,	OPTION_PLANETS},
++    {&quot;Mine&quot;,		noargs_proc,	&amp;planets,	OPTION_PLANETS},
++    {&quot;Crystals&quot;,	noargs_proc,	&amp;planets,	OPTION_PLANETS},
++    {&quot;Shuttle&quot;,		noargs_proc,	&amp;planets,	OPTION_PLANETS},
++    {&quot;Planets&quot;,		noargs_proc,	&amp;planets,	OPTION_PLANETS},
++
++    {&quot;Emexit&quot;,		noargs_proc,	&amp;misc,		0},
++    {&quot;Save&quot;,		NULL,		&amp;misc,		0},
++    {&quot;Quit&quot;,		quit_proc,	&amp;misc,		0},
++    {&quot;Help&quot;,		noargs_proc,	&amp;misc,		0},
+ };
+ 
+ int main(int argc, char **argv)
+@@ -83,15 +90,36 @@
+ 				   XtNwidth, 400, XtNheight, 200,
+ 				   NULL);
+     XtVaSetValues(text, XtNeditType,XawtextRead, XtNdisplayCaret,False, NULL);
+-    /* The button panel */
+-    buttons  = XtVaCreateManagedWidget(&quot;form&quot;, 
++    /* The button panels */
++    navigation  = XtVaCreateManagedWidget(&quot;navigation&quot;, 
+ 				       boxWidgetClass, form,
+ 				       XtNfromVert, text, 
+ 				       XtNorientation, XtorientHorizontal,
+ 				       NULL); 
++    weapons  = XtVaCreateManagedWidget(&quot;weapons&quot;, 
++				       boxWidgetClass, form,
++				       XtNfromVert, navigation, 
++				       XtNorientation, XtorientHorizontal,
++				       NULL); 
++    status   = XtVaCreateManagedWidget(&quot;status&quot;, 
++				       boxWidgetClass, form,
++				       XtNfromVert, weapons, 
++				       XtNorientation, XtorientHorizontal,
++				       NULL); 
++    planets  = XtVaCreateManagedWidget(&quot;planets&quot;, 
++				       boxWidgetClass, form,
++				       XtNfromVert, status, 
++				       XtNorientation, XtorientHorizontal,
++				       NULL); 
++    misc  = XtVaCreateManagedWidget(&quot;misc&quot;, 
++				       boxWidgetClass, form,
++				       XtNfromVert, planets, 
++				       XtNorientation, XtorientHorizontal,
++				       NULL); 
+     for (cp = commands; cp &lt; commands + sizeof(commands)/sizeof(commands[0]); cp++) {
+ 	cp-&gt;widget = XtVaCreateManagedWidget(cp-&gt;name, 
+-					     commandWidgetClass, buttons, 
++					     commandWidgetClass, 
++					     *cp-&gt;parent, 
+ 					     XtNlabel, cp-&gt;name,
+ 					     NULL);
+ 	if (cp-&gt;callback)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000018.html">[Sst-commit-watch] r551 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000020.html">[Sst-commit-watch] r553 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#19">[ date ]</a>
+              <a href="thread.html#19">[ thread ]</a>
+              <a href="subject.html#19">[ subject ]</a>
+              <a href="author.html#19">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

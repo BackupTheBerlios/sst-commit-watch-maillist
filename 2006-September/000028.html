@@ -1,0 +1,138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r562 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r562%20-%20trunk/src&In-Reply-To=%3C200609142058.k8EKwnKo027201%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000029.html">
+   <LINK REL="Next"  HREF="000030.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r562 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r562%20-%20trunk/src&In-Reply-To=%3C200609142058.k8EKwnKo027201%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r562 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 14 22:58:49 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000029.html">[Sst-commit-watch] r561 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000030.html">[Sst-commit-watch] r563 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#28">[ date ]</a>
+              <a href="thread.html#28">[ thread ]</a>
+              <a href="subject.html#28">[ subject ]</a>
+              <a href="author.html#28">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-14 22:58:49 +0200 (Thu, 14 Sep 2006)
+New Revision: 562
+
+Modified:
+   trunk/src/io.c
+   trunk/src/sst.h
+Log:
+Various declaration cleanups.
+
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-14 20:42:27 UTC (rev 561)
++++ trunk/src/io.c	2006-09-14 20:58:49 UTC (rev 562)
+@@ -11,6 +11,12 @@
+ static int rows, linecount;	/* for paging */
+ 
+ WINDOW *curwnd;
++WINDOW *fullscreen_window;
++WINDOW *srscan_window;
++WINDOW *report_window;
++WINDOW *lrscan_window;
++WINDOW *message_window;
++WINDOW *prompt_window;
+ 
+ static void outro(void)
+ /* wrap up, either normally or due to signal */
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-14 20:42:27 UTC (rev 561)
++++ trunk/src/sst.h	2006-09-14 20:58:49 UTC (rev 562)
+@@ -144,15 +144,8 @@
+ #define FDSPROB 8   // Move deep space probe
+ #define NEVENTS (9)
+ 
+-// Scalar variables that are needed for freezing the game
+-// are placed in a structure. #defines are used to access by their
+-// original names. Gee, I could have done this with the d structure,
+-// but I just didn't think of it back when I started.
+-
+ #define SSTMAGIC	&quot;SST2.0\n&quot;
+ 
+-extern WINDOW *curwnd;
+-
+ struct game {
+     char magic[sizeof(SSTMAGIC)];
+     unsigned long options;
+@@ -403,12 +396,13 @@
+ #define SCAN_STATUS		3
+ #define SCAN_NO_LEFTSIDE	4
+ 
+-WINDOW *fullscreen_window;
+-WINDOW *srscan_window;
+-WINDOW *report_window;
+-WINDOW *lrscan_window;
+-WINDOW *message_window;
+-WINDOW *prompt_window;
++extern WINDOW *curwnd;
++extern WINDOW *fullscreen_window;
++extern WINDOW *srscan_window;
++extern WINDOW *report_window;
++extern WINDOW *lrscan_window;
++extern WINDOW *message_window;
++extern WINDOW *prompt_window;
+ 
+ extern void clreol(void);
+ extern void clrscr(void);
+@@ -421,6 +415,4 @@
+    DARKGRAY, LIGHTBLUE, LIGHTGREEN, LIGHTCYAN, LIGHTRED, LIGHTMAGENTA, YELLOW, WHITE
+ };
+ 
+-#define DAMAGED	128	/* marker for damaged ship in starmap */
+-
+ #endif
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000029.html">[Sst-commit-watch] r561 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000030.html">[Sst-commit-watch] r563 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#28">[ date ]</a>
+              <a href="thread.html#28">[ thread ]</a>
+              <a href="subject.html#28">[ subject ]</a>
+              <a href="author.html#28">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r762 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r762%20-%20trunk/src&In-Reply-To=%3C200610131139.k9DBdcHc000803%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000228.html">
+   <LINK REL="Next"  HREF="000230.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r762 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r762%20-%20trunk/src&In-Reply-To=%3C200610131139.k9DBdcHc000803%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r762 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct 13 13:39:38 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000228.html">[Sst-commit-watch] r761 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000230.html">[Sst-commit-watch] r763 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#229">[ date ]</a>
+              <a href="thread.html#229">[ thread ]</a>
+              <a href="subject.html#229">[ subject ]</a>
+              <a href="author.html#229">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-13 13:39:37 +0200 (Fri, 13 Oct 2006)
+New Revision: 762
+
+Modified:
+   trunk/src/sst.py
+Log:
+More vector-arithmetic abstraction.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-13 10:32:35 UTC (rev 761)
++++ trunk/src/sst.py	2006-10-13 11:39:37 UTC (rev 762)
+@@ -250,12 +250,12 @@
+         return coord(self.i*other, self.j*other)
+     def __div__(self, other):
+         return coord(self.i/other, self.j/other)
++    def __mod__(self, other):
++        return coord(self.i % other, self.j % other)
+     def __rdiv__(self, other):
+         return coord(self.i/other, self.j/other)
+     def roundtogrid(self):
+         return coord(int(round(self.i)), int(round(self.j)))
+-    def trunctogrid(self):
+-        return coord(int(round(self.i)), int(round(self.j)))
+     def distance(self, other=None):
+         if not other: other = coord(0, 0)
+         return math.sqrt((self.i - other.i)**2 + (self.j - other.j)**2)
+@@ -273,13 +273,15 @@
+         else:
+             s.j = self.j / abs(self.j)
+         return s
++    def quadrant(self):
++        return (self / QUADSIZE).roundtogrid()
++    def sector(self):
++        return self.roundtogrid() % QUADSIZE
+     def scatter(self):
+         s = coord()
+         s.i = self.i + randrange(-1, 2)
+         s.j = self.j + randrange(-1, 2)
+         return s
+-    def __hash__(self):
+-        return hash((x, y))
+     def __str__(self):
+         if self.i == None or self.j == None:
+             return &quot;Nowhere&quot;
+@@ -3923,6 +3925,10 @@
+     def __init__(self, bearing, distance, origin=None): 
+         self.distance = distance
+         self.bearing = bearing
++        if origin is None:
++            self.origin = cartesian(game.quadrant, game.sector)
++        else:
++            self.origin = origin
+         # The bearing() code we inherited from FORTRAN is actually computing
+         # clockface directions!
+         if self.bearing &lt; 0.0:
+@@ -3949,9 +3955,9 @@
+         else:
+             return False
+     def quadrant(self):
+-        return (self.location / QUADSIZE).roundtogrid()
++        return self.location.quadrant()
+     def sector(self):
+-        return coord(int(round(self.location.i)) % QUADSIZE, int(round(self.location.j)) % QUADSIZE)
++        return self.location.sector()
+     def power(self, warp):
+ 	return self.distance*(warp**3)*(game.shldup+1)
+     def time(self, warp):
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000228.html">[Sst-commit-watch] r761 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000230.html">[Sst-commit-watch] r763 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#229">[ date ]</a>
+              <a href="thread.html#229">[ thread ]</a>
+              <a href="subject.html#229">[ subject ]</a>
+              <a href="author.html#229">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

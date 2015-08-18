@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r732 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r732%20-%20trunk/src&In-Reply-To=%3C200610100741.k9A7fYw8002262%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000198.html">
+   <LINK REL="Next"  HREF="000200.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r732 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r732%20-%20trunk/src&In-Reply-To=%3C200610100741.k9A7fYw8002262%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r732 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 09:41:34 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000198.html">[Sst-commit-watch] r731 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000200.html">[Sst-commit-watch] r733 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#199">[ date ]</a>
+              <a href="thread.html#199">[ thread ]</a>
+              <a href="subject.html#199">[ subject ]</a>
+              <a href="author.html#199">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 09:41:34 +0200 (Tue, 10 Oct 2006)
+New Revision: 732
+
+Modified:
+   trunk/src/sst.py
+Log:
+Atexit was screwing up the Python curses bindings. Weird.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 07:22:57 UTC (rev 731)
++++ trunk/src/sst.py	2006-10-10 07:41:34 UTC (rev 732)
+@@ -3323,27 +3323,8 @@
+ prompt_window     = None
+ curwnd = None
+ 
+-def outro():
+-    &quot;Wrap up, either normally or due to signal&quot;
+-    if game.options &amp; OPTION_CURSES:
+-	#clear()
+-	#curs_set(1)
+-	#refresh()
+-	#resetterm()
+-	#echo()
+-	curses.endwin()
+-	sys.stdout.write('\n')
+-    if logfp:
+-	logfp.close()
+-
+ def iostart():
+     global stdscr, rows
+-    #setlocale(LC_ALL, &quot;&quot;)
+-    #bindtextdomain(PACKAGE, LOCALEDIR)
+-    #textdomain(PACKAGE)
+-    if atexit.register(outro):
+-	sys.stderr.write(&quot;Unable to register outro(), exiting...\n&quot;)
+-	raise SysExit,1
+     if not (game.options &amp; OPTION_CURSES):
+ 	ln_env = os.getenv(&quot;LINES&quot;)
+         if ln_env:
+@@ -3355,7 +3336,6 @@
+ 	stdscr.keypad(True)
+ 	curses.nonl()
+ 	curses.cbreak()
+-        curses.start_color()
+         global fullscreen_window, srscan_window, report_window, status_window
+         global lrscan_window, message_window, prompt_window
+         (rows, columns)   = stdscr.getmaxyx()
+@@ -3368,20 +3348,18 @@
+ 	prompt_window     = curses.newwin(1,  0,  rows-2,  0) 
+ 	message_window.scrollok(True)
+ 	setwnd(fullscreen_window)
+-	textcolor(DEFAULT)
+ 
+-def textcolor(color):
+-    &quot;Set text foreground color.  Presently a stub.&quot;
+-    pass	# FIXME
+-
+ def ioend():
+     &quot;Wrap up I/O.  Presently a stub.&quot;
+-    pass
++    stdscr.keypad(False)
++    curses.echo()
++    curses.nocbreak()
++    curses.endwin()
+ 
+ def waitfor():
+     &quot;Wait for user action -- OK to do nothing if on a TTY&quot;
+     if game.options &amp; OPTION_CURSES:
+-	stsdcr.getch()
++	stdscr.getch()
+ 
+ def announce():
+     skip(1)
+@@ -4442,13 +4420,13 @@
+ 	elif m == 3: proutn(_(&quot;3rd&quot;))
+ 	proutn(_(&quot; attempt to re-materialize &quot;) + crmshp())
+ 	game.quad[ix][iy]=(IHMATER0,IHMATER1,IHMATER2)[m-1]
+-	textcolor(&quot;red&quot;)
++	#textcolor(&quot;red&quot;)
+ 	warble()
+ 	if randreal() &gt; probf:
+ 	    break
+ 	prout(_(&quot;fails.&quot;))
+ 	curses.delay_output(500)
+-	textcolor(None)
++	#textcolor(None)
+     if m &gt; 3:
+ 	game.quad[ix][iy]=IHQUEST
+ 	game.alive = False
+@@ -4457,9 +4435,9 @@
+ 	finish(FMATERIALIZE)
+ 	return
+     game.quad[ix][iy]=game.ship
+-    textcolor(&quot;green&quot;)
++    #textcolor(&quot;green&quot;)
+     prout(_(&quot;succeeds.&quot;))
+-    textcolor(None)
++    #textcolor(None)
+     dock(False)
+     skip(1)
+     prout(_(&quot;Lt. Uhura-  \&quot;Captain, we made it!\&quot;&quot;))
+@@ -5227,15 +5205,15 @@
+     &quot;Light up an individual dot in a sector.&quot;
+     if goodScan or (abs(i-game.sector.i)&lt;= 1 and abs(j-game.sector.j) &lt;= 1):
+ 	if (game.quad[i][j]==IHMATER0) or (game.quad[i][j]==IHMATER1) or (game.quad[i][j]==IHMATER2) or (game.quad[i][j]==IHE) or (game.quad[i][j]==IHF):
+-	    if game.condition   == &quot;red&quot;: textcolor(&quot;red&quot;)
+-	    elif game.condition == &quot;green&quot;: textcolor(&quot;green&quot;)
+-	    elif game.condition == &quot;yellow&quot;: textcolor(&quot;yellow&quot;)
+-	    elif game.condition == &quot;docked&quot;: textcolor(&quot;cyan&quot;)
+-	    elif game.condition == &quot;dead&quot;: textcolor(&quot;brown&quot;)
++	    #if game.condition   == &quot;red&quot;: textcolor(&quot;red&quot;)
++	    #elif game.condition == &quot;green&quot;: textcolor(&quot;green&quot;)
++	    #elif game.condition == &quot;yellow&quot;: textcolor(&quot;yellow&quot;)
++	    #elif game.condition == &quot;docked&quot;: textcolor(&quot;cyan&quot;)
++	    #elif game.condition == &quot;dead&quot;: textcolor(&quot;brown&quot;)
+ 	    if game.quad[i][j] != game.ship: 
+ 		highvideo()
+ 	proutn(&quot;%c &quot; % game.quad[i][j])
+-	textcolor(None)
++	#textcolor(None)
+     else:
+ 	proutn(&quot;- &quot;)
+ 
+@@ -6618,5 +6596,7 @@
+             ioend()
+         raise SystemExit, 0
+     except KeyboardInterrupt:
++        if logfp:
++            logfp.close()
+         print &quot;&quot;
+         pass
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000198.html">[Sst-commit-watch] r731 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000200.html">[Sst-commit-watch] r733 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#199">[ date ]</a>
+              <a href="thread.html#199">[ thread ]</a>
+              <a href="subject.html#199">[ subject ]</a>
+              <a href="author.html#199">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

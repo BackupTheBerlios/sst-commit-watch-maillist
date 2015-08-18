@@ -1,0 +1,353 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r595 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r595%20-%20trunk/src&In-Reply-To=%3C200609190919.k8J9JfIS017501%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000061.html">
+   <LINK REL="Next"  HREF="000063.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r595 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r595%20-%20trunk/src&In-Reply-To=%3C200609190919.k8J9JfIS017501%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r595 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 19 11:19:41 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000061.html">[Sst-commit-watch] r594 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000063.html">[Sst-commit-watch] r596 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#62">[ date ]</a>
+              <a href="thread.html#62">[ thread ]</a>
+              <a href="subject.html#62">[ subject ]</a>
+              <a href="author.html#62">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-19 11:19:41 +0200 (Tue, 19 Sep 2006)
+New Revision: 595
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/events.c
+   trunk/src/sst.h
+Log:
+More booleans cleanup.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-19 08:56:52 UTC (rev 594)
++++ trunk/src/ai.c	2006-09-19 09:19:41 UTC (rev 595)
+@@ -1,8 +1,9 @@
+ #include &quot;sst.h&quot;
+ 
+-static int tryexit(int lookx, int looky, int ienm, int loccom, int irun) 
++static bool tryexit(int lookx, int looky, int ienm, int loccom, int irun) 
++/* a bad guy attempts to bug out */
+ {
+-    int l;
++    int n;
+     coord iq;
+ 
+     iq.x = game.quadrant.x+(lookx+(QUADSIZE-1))/QUADSIZE - 1;
+@@ -10,18 +11,18 @@
+     if (!VALID_QUADRANT(iq.x,iq.y) ||
+ 	game.state.galaxy[iq.x][iq.y].supernova ||
+ 	game.state.galaxy[iq.x][iq.y].klingons &gt; 8)
+-	return 0; /* no can do -- neg energy, supernovae, or &gt;8 Klingons */
+-    if (ienm == IHR) return 0; /* Romulans cannot escape! */
++	return false; /* no can do -- neg energy, supernovae, or &gt;8 Klingons */
++    if (ienm == IHR) return false; /* Romulans cannot escape! */
+     if (irun == 0) {
+ 	/* avoid intruding on another commander's territory */
+ 	if (ienm == IHC) {
+-	    for_commanders(l)
+-		if (same(game.state.kcmdr[l],iq)) return 0;
++	    for_commanders(n)
++		if (same(game.state.kcmdr[n],iq)) return false;
+ 	    /* refuse to leave if currently attacking starbase */
+-	    if (same(game.battle, game.quadrant)) return 0;
++	    if (same(game.battle, game.quadrant)) return false;
+ 	}
+ 	/* don't leave if over 1000 units of energy */
+-	if (game.kpower[loccom] &gt; 1000.) return 0;
++	if (game.kpower[loccom] &gt; 1000.) return false;
+     }
+     /* print escape message and move out of quadrant.
+        We know this if either short or long range sensors are working */
+@@ -54,25 +55,26 @@
+ 	game.state.kscmdr.y=iq.y;
+     }
+     else {
+-	for_commanders(l) {
+-	    if (same(game.state.kcmdr[l], game.quadrant)) {
+-		game.state.kcmdr[l]=iq;
++	for_commanders(n) {
++	    if (same(game.state.kcmdr[n], game.quadrant)) {
++		game.state.kcmdr[n]=iq;
+ 		break;
+ 	    }
+ 	}
+ 	game.comhere = 0;
+     }
+-    return 1; /* success */
++    return true; /* success */
+ }
+ 
+ 
+-static void movebaddy(coord com, int loccom, int ienm) 
++static void movebaddy(coord com, int loccom, int ienm)
++/* tactical movement for the bad guys */
+ {
+     int motion, mdist, nsteps, mx, my, lookx, looky, ll;
+     coord next;
+     int irun = 0;
+     int krawlx, krawly;
+-    int success;
++    bool success;
+     int attempts;
+     /* This should probably be just game.comhere + game.ishere */
+     int nbaddys = game.skill &gt;= SKILL_EXPERT ?
+@@ -186,7 +188,7 @@
+ 	looky = next.y + my;
+ 	krawlx = mx &lt; 0 ? 1 : -1;
+ 	krawly = my &lt; 0 ? 1 : -1;
+-	success = 0;
++	success = false;
+ 	attempts = 0; /* Settle mysterious hang problem */
+ 	while (attempts++ &lt; 20 &amp;&amp; !success) {
+ 	    if (lookx &lt; 1 || lookx &gt; QUADSIZE) {
+@@ -220,7 +222,7 @@
+ 		}
+ 		else break; /* we have failed */
+ 	    }
+-	    else success = 1;
++	    else success = true;
+ 	}
+ 	if (success) {
+ 	    next.x = lookx;
+@@ -254,6 +256,7 @@
+ }
+ 
+ void movcom(void) 
++/* move a commander */
+ {
+     coord w; 
+     int i;
+@@ -291,7 +294,8 @@
+     sortkl();
+ }
+ 
+-static bool movescom(coord iq, int flag, int *ipage) 
++static bool movescom(coord iq, bool flag, bool *ipage) 
++/* commander movement helper */
+ {
+     int i;
+ 
+@@ -350,13 +354,14 @@
+     return false; /* looks good! */
+ }
+ 			
+-void scom(int *ipage)
++void scom(bool *ipage)
++/* move the Super Commander */
+ {
+     int i, i2, j, ideltax, ideltay, ifindit, iwhichb;
+     coord iq, sc, ibq;
+     int basetbl[BASEMAX+1];
+     double bdist[BASEMAX+1];
+-    int flag;
++    bool flag;
+ 
+     if (idebug) prout(&quot;== SCOM&quot;);
+ 
+@@ -525,6 +530,7 @@
+ }
+ 
+ void movetho(void)
++/* move the Tholian */
+ {
+     int idx, idy, im, i;
+     coord dummy;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-19 08:56:52 UTC (rev 594)
++++ trunk/src/events.c	2006-09-19 09:19:41 UTC (rev 595)
+@@ -58,9 +58,9 @@
+ 
+ void events(void) 
+ {
+-    int ictbeam=0, ipage=0, istract=0, line, i=0, j, k, l, ixhold=0, iyhold=0;
++    int istract=0, evcode, i=0, j, k, l;
+     double fintim = game.state.date + game.optime, datemin, xtime, repair, yank=0;
+-    int radio_was_broken;
++    bool radio_was_broken, ictbeam = false, ipage = false;
+     struct quadrant *pdest, *q;
+     coord w, hold;
+     event *ev, *ev2;
+@@ -92,15 +92,15 @@
+     radio_was_broken = (game.damage[DRADIO] != 0.0);
+ 
+     for (;;) {
+-	/* Select earliest extraneous event, line==0 if no events */
+-	line = FSPY;
++	/* Select earliest extraneous event, evcode==0 if no events */
++	evcode = FSPY;
+ 	if (game.alldone) return;
+ 	datemin = fintim;
+ 	for (l = 1; l &lt; NEVENTS; l++)
+ 	    if (game.future[l].date &lt; datemin) {
+-		line = l;
++		evcode = l;
+ 		if (idebug)
+-		    prout(&quot;== Event %d fires&quot;, line);
++		    prout(&quot;== Event %d fires&quot;, evcode);
+ 		datemin = game.future[l].date;
+ 	    }
+ 	xtime = datemin-game.state.date;
+@@ -141,12 +141,12 @@
+ 	    prout(_(&quot;   The star chart is now up to date.\&quot;&quot;));
+ 	    skip(1);
+ 	}
+-	/* Cause extraneous event LINE to occur */
++	/* Cause extraneous event EVCODE to occur */
+ 	game.optime -= xtime;
+-	switch (line) {
++	switch (evcode) {
+ 	case FSNOVA: /* Supernova */
+-	    if (ipage==0) pause_game(1);
+-	    ipage=1;
++	    if (!ipage) pause_game(1);
++	    ipage=true;
+ 	    snova(0,0);
+ 	    schedule(FSNOVA, expran(0.5*game.intime));
+ 	    if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova) return;
+@@ -168,7 +168,7 @@
+ 	    }
+ 	    else return;
+ 	case FTBEAM: /* Tractor beam */
+-	    if (line==FTBEAM) {
++	    if (evcode==FTBEAM) {
+ 		if (game.state.remcom == 0) {
+ 		    unschedule(FTBEAM);
+ 		    break;
+@@ -184,8 +184,8 @@
+ 	    }
+ 	    /* tractor beaming cases merge here */
+ 	    yank = sqrt(yank);
+-	    if (ipage==0) pause_game(1);
+-	    ipage=1;
++	    if (!ipage) pause_game(1);
++	    ipage=true;
+ 	    game.optime = (10.0/(7.5*7.5))*yank; /* 7.5 is yank rate (warp 7.5) */
+ 	    ictbeam = 1;
+ 	    skip(1);
+@@ -212,7 +212,7 @@
+ 		    prout(_(&quot;Galileo, left on the planet surface, is well hidden.&quot;));
+ 		}
+ 	    }
+-	    if (line==0)
++	    if (evcode==0)
+ 		game.quadrant = game.state.kscmdr;
+ 	    else
+ 		game.quadrant = game.state.kcmdr[i];
+@@ -279,8 +279,8 @@
+ 	    if (game.damage[DRADIO] != 0.0 &amp;&amp; game.condit != IHDOCKED) 
+ 		break; /* No warning :-( */
+ 	    game.iseenit = 1;
+-	    if (ipage==0) pause_game(1);
+-	    ipage = 1;
++	    if (!ipage) pause_game(1);
++	    ipage = true;
+ 	    skip(1);
+ 	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
+ 	    prout(cramlc(quadrant, game.battle));
+@@ -296,12 +296,11 @@
+ 	    game.isatb = 2;
+ 	    if (!game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].starbase) 
+ 		break; /* WAS RETURN! */
+-	    ixhold = game.battle.x;
+-	    iyhold = game.battle.y;
++	    hold = game.battle;
+ 	    game.battle = game.state.kscmdr;
+ 	    /* FALL THROUGH */
+ 	case FCDBAS: /* Commander succeeds in destroying base */
+-	    if (line==FCDBAS) {
++	    if (evcode==FCDBAS) {
+ 		unschedule(FCDBAS);
+ 		/* find the lucky pair */
+ 		for_commanders(i)
+@@ -328,8 +327,8 @@
+ 	    else if (game.state.rembase != 1 &amp;&amp;
+ 		     (game.damage[DRADIO] &lt;= 0.0 || game.condit == IHDOCKED)) {
+ 		/* Get word via subspace radio */
+-		if (ipage==0) pause_game(1);
+-		ipage = 1;
++		if (!ipage) pause_game(1);
++		ipage = true;
+ 		skip(1);
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Command reports that&quot;));
+ 		proutn(_(&quot;   the starbase in &quot;));
+@@ -348,8 +347,7 @@
+ 	    game.state.rembase--;
+ 	    if (game.isatb == 2) {
+ 		/* reinstate a commander's base attack */
+-		game.battle.x = ixhold;
+-		game.battle.y = iyhold;
++		game.battle = hold;
+ 		game.isatb = 0;
+ 	    }
+ 	    else {
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-19 08:56:52 UTC (rev 594)
++++ trunk/src/sst.h	2006-09-19 09:19:41 UTC (rev 595)
+@@ -385,7 +385,7 @@
+ void pause_game(int);
+ void nova(int, int);
+ void snova(int, int);
+-void scom(int *);
++void scom(bool *);
+ void hittem(double *);
+ void prouts(char *, ...);
+ int isit(char *);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000061.html">[Sst-commit-watch] r594 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000063.html">[Sst-commit-watch] r596 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#62">[ date ]</a>
+              <a href="thread.html#62">[ thread ]</a>
+              <a href="subject.html#62">[ subject ]</a>
+              <a href="author.html#62">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

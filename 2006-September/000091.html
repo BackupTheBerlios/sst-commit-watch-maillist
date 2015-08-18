@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r624 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r624%20-%20trunk/src&In-Reply-To=%3C200609211047.k8LAlXkb021870%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000090.html">
+   <LINK REL="Next"  HREF="000092.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r624 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r624%20-%20trunk/src&In-Reply-To=%3C200609211047.k8LAlXkb021870%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r624 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 21 12:47:33 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000090.html">[Sst-commit-watch] r623 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000092.html">[Sst-commit-watch] r625 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#91">[ date ]</a>
+              <a href="thread.html#91">[ thread ]</a>
+              <a href="subject.html#91">[ subject ]</a>
+              <a href="author.html#91">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-21 12:47:26 +0200 (Thu, 21 Sep 2006)
+New Revision: 624
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/setup.c
+Log:
+More applications of same().
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-20 21:18:05 UTC (rev 623)
++++ trunk/src/ai.c	2006-09-21 10:47:26 UTC (rev 624)
+@@ -301,7 +301,8 @@
+     if (flag) {
+ 	/* Avoid quadrants with bases if we want to avoid Enterprise */
+ 	for_starbases(i)
+-	    if (game.state.baseq[i].x==iq.x &amp;&amp; game.state.baseq[i].y==iq.y) return 1;
++	    if (same(game.state.baseq[i], iq)) 
++		return true;
+     }
+     if (game.justin &amp;&amp; !game.iscate) return true;
+     /* do the move */
+@@ -329,7 +330,7 @@
+     }
+     /* check for a helpful planet */
+     for (i = 0; i &lt; game.inplan; i++) {
+-	if (game.state.plnets[i].w.x==game.state.kscmdr.x &amp;&amp; game.state.plnets[i].w.y==game.state.kscmdr.y &amp;&amp;
++	if (same(game.state.plnets[i].w, game.state.kscmdr) &amp;&amp;
+ 	    game.state.plnets[i].crystals == 1) {
+ 	    /* destroy the planet */
+ 	    DESTROY(&amp;game.state.plnets[i]);
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-20 21:18:05 UTC (rev 623)
++++ trunk/src/setup.c	2006-09-21 10:47:26 UTC (rev 624)
+@@ -324,7 +324,8 @@
+ 		   game.state.galaxy[w.x][w.y].klingons &gt; 8);
+ 	    // check for duplicate
+ 	    for (j = 1; j &lt; i; j++)
+-		if (game.state.kcmdr[j].x==w.x &amp;&amp; game.state.kcmdr[j].y==w.y) break;
++		if (same(game.state.kcmdr[j], w))
++		    break;
+ 	} while (j &lt; i);
+ 	game.state.galaxy[w.x][w.y].klingons++;
+ 	game.state.kcmdr[i] = w;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000090.html">[Sst-commit-watch] r623 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000092.html">[Sst-commit-watch] r625 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#91">[ date ]</a>
+              <a href="thread.html#91">[ thread ]</a>
+              <a href="subject.html#91">[ subject ]</a>
+              <a href="author.html#91">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

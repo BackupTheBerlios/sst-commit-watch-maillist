@@ -1,0 +1,409 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r578 - in trunk: . src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r578%20-%20in%20trunk%3A%20.%20src&In-Reply-To=%3C200609170514.k8H5ErJ2013205%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000043.html">
+   <LINK REL="Next"  HREF="000045.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r578 - in trunk: . src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r578%20-%20in%20trunk%3A%20.%20src&In-Reply-To=%3C200609170514.k8H5ErJ2013205%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r578 - in trunk: . src">esr at mail.berlios.de
+       </A><BR>
+    <I>Sun Sep 17 07:14:53 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000043.html">[Sst-commit-watch] r577 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000045.html">[Sst-commit-watch] r579 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#44">[ date ]</a>
+              <a href="thread.html#44">[ thread ]</a>
+              <a href="subject.html#44">[ subject ]</a>
+              <a href="author.html#44">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-17 07:14:52 +0200 (Sun, 17 Sep 2006)
+New Revision: 578
+
+Modified:
+   trunk/TODO
+   trunk/src/events.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+First checkin of experimental event code for the BSDTrek-style Klingon
+attack on inhabited systems.  Currently #ifdefed out; the only operative
+change is the newkling() function and a bit of data-structure cleanup.
+
+
+Modified: trunk/TODO
+===================================================================
+--- trunk/TODO	2006-09-17 00:52:17 UTC (rev 577)
++++ trunk/TODO	2006-09-17 05:14:52 UTC (rev 578)
+@@ -15,3 +15,7 @@
+ * Russian translation
+ 
+ * Wrap a GUI around it.
++
++* Wandering planet-killer as in &quot;The Doomsday Machine&quot;;
++  see &lt;<A HREF="http://www.ericweisstein.com/fun/startrek/TheDoomsdayMachine.html">http://www.ericweisstein.com/fun/startrek/TheDoomsdayMachine.html</A>&gt;.
++ 
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-17 00:52:17 UTC (rev 577)
++++ trunk/src/events.c	2006-09-17 05:14:52 UTC (rev 578)
+@@ -347,6 +347,122 @@
+ 		    return;
+ 	    }
+ 	    break;
++#ifdef EXPERIMENTAL
++	case FDISTR: /* inhabited system issues distress call */
++	    /* in BSD Trek this is a straight 1 stardate ahead */ 
++	    game.future[FDISTR] =  game.state.date + 1.0 + Rand();
++	    /* if we already have too many, throw this one away */
++	    if (game.ndistr &gt;= MAXDISTR)
++		break;
++	    /* try a whole bunch of times to find something suitable */
++	    for (i = 0; i &lt; 100; i++) {
++		struct quadrant *q;
++		iran(GALSIZE, &amp;ix, &amp;iy);
++		q = &amp;game.state.galaxy[game.quadx][game.quady];
++		/* need a quadrant which is not the current one,
++		   which has some stars which are inhabited and
++		   not already under attack, which is not
++		   supernova'ed, and which has some Klingons in it */
++		if (!((ix == game.quadx &amp;&amp; iy == game.quady) || q-&gt;stars&lt;=0 ||
++		      (q-&gt;qsystemname &amp; Q_DISTRESSED) ||
++		      (q-&gt;qsystemname &amp; Q_SYSTEM) == 0 || q-&gt;klings &lt;= 0))
++		    break;
++	    }
++	    if (i &gt;= 100)
++		/* can't seem to find one; ignore this call */
++		break;
++
++	    /* got one!!  Schedule its enslavement */
++	    game.ndistr++;
++	    e = xsched(E_ENSLV, 1, ix, iy, q-&gt;qsystemname);
++	    q-&gt;qsystemname = (e - Event) | Q_DISTRESSED;
++
++	    /* tell the captain about it if we can */
++	    if (game.damage[DRADIO] == 0.0)
++	    {
++		printf(&quot;\nUhura: Captain, starsystem %s in quadrant %d,%d is under attack\n&quot;,
++		       Systemname[e-&gt;systemname], ix, iy);
++		restcancel++;
++	    }
++	    else
++		/* if we can't tell him, make it invisible */
++		e-&gt;evcode |= E_HIDDEN;
++	    break;
++      case FENSLV:		/* starsystem is enslaved */
++	    unschedule(e);
++	    /* see if current distress call still active */
++	    q = &amp;Quad[e-&gt;x][e-&gt;y];
++	    if (q-&gt;klings &lt;= 0)
++	    {
++		/* no Klingons, clean up */
++		/* restore the system name */
++		q-&gt;qsystemname = e-&gt;systemname;
++		break;
++	    }
++
++	    /* play stork and schedule the first baby */
++	    e = schedule(E_REPRO, Param.eventdly[E_REPRO] * franf(), e-&gt;x, e-&gt;y, e-&gt;systemname);
++
++	    /* report the disaster if we can */
++	    if (game.damage[DRADIO] == 0.0)
++	    {
++		printf(&quot;\nUhura:  We've lost contact with starsystem %s\n&quot;,
++		       Systemname[e-&gt;systemname]);
++		printf(&quot;  in quadrant %d,%d.\n&quot;, e-&gt;x, e-&gt;y);
++	    }
++	    else
++		e-&gt;evcode |= E_HIDDEN;
++	    break;
++      case FREPRO:		/* Klingon reproduces */
++	    /* see if distress call is still active */
++	    q = &amp;Quad[e-&gt;x][e-&gt;y];
++	    if (q-&gt;klings &lt;= 0)
++	    {
++		unschedule(e);
++		q-&gt;qsystemname = e-&gt;systemname;
++		break;
++	    }
++	    xresched(e, E_REPRO, 1);
++	    /* reproduce one Klingon */
++	    ix = e-&gt;x;
++	    iy = e-&gt;y;
++	    if (Now.klings == 127)
++		break;		/* full right now */
++	    if (q-&gt;klings &gt;= MAXKLQUAD)
++	    {
++		/* this quadrant not ok, pick an adjacent one */
++		for (i = ix - 1; i &lt;= ix + 1; i++)
++		{
++		    if (!VALID_QUADRANT(i))
++			continue;
++		    for (j = iy - 1; j &lt;= iy + 1; j++)
++		    {
++			if (!VALID_QUADRANT(j))
++			    continue;
++			q = &amp;Quad[i][j];
++			/* check for this quad ok (not full &amp; no snova) */
++			if (q-&gt;klings &gt;= MAXKLQUAD || q-&gt;stars &lt; 0)
++			    continue;
++			break;
++		    }
++		    if (j &lt;= iy + 1)
++			break;
++		}
++		if (j &gt; iy + 1)
++		    /* cannot create another yet */
++		    break;
++		ix = i;
++		iy = j;
++	    }
++	    /* deliver the child */
++	    game.remkl++;
++	    if (ix == game.quadx &amp;&amp; iy == game.quady)
++		newkling(++game.klhere, &amp;ixhold, &amp;iyhold);
++
++	    /* recompute time left */
++	    game.state.remtime = game.state.remres/(game.state.remkl+4*game.state.remcom);
++	    break;
++#endif /* EXPERIMENTAL */
+ 	}
+     }
+ }
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-17 00:52:17 UTC (rev 577)
++++ trunk/src/setup.c	2006-09-17 05:14:52 UTC (rev 578)
+@@ -228,12 +228,16 @@
+     game.docfac = 0.25;
+     for_quadrants(i)
+ 	for_quadrants(j) {
+-	    game.state.galaxy[i][j].charted = 0;
+-	    game.state.galaxy[i][j].planet = NULL;
+-	    game.state.galaxy[i][j].romulans = 0;
+-	    game.state.galaxy[i][j].klingons = 0;
+-	    game.state.galaxy[i][j].starbase = 0;
+-	    game.state.galaxy[i][j].supernova = 0;
++	struct quadrant *quad = &amp;game.state.galaxy[i][j];
++	    quad-&gt;charted = 0;
++	    quad-&gt;planet = NULL;
++	    quad-&gt;romulans = 0;
++	    quad-&gt;klingons = 0;
++	    quad-&gt;starbase = 0;
++	    quad-&gt;supernova = 0;
++#ifdef EXPERIMENTAL
++	    quad-&gt;status = secure;
++#endif /* EXPERIMENTAL */
+ 	}
+     // Initialize times for extraneous events
+     game.future[FSNOVA] = game.state.date + expran(0.5 * game.intime);
+@@ -244,6 +248,13 @@
+     game.future[FSCMOVE] = game.state.nscrem ? game.state.date+0.2777 : FOREVER;
+     game.future[FSCDBAS] = FOREVER;
+     game.future[FDSPROB] = FOREVER;
++#ifdef EXPERIMENTAL
++    if (game.options &amp; OPTION_WORLDS)
++	/* in BSD-Trek, this is a fixed one stardate in the future */
++	game.future[FDISTR] = game.state.date + 1.0 + Rand();
++    game.future[FENSLV] = FOREVER;
++    game.future[FREPRO] = FOREVER;
++#endif /* EXPERIMENTAL */
+     // Starchart is functional but we've never seen it
+     game.lastchart = FOREVER;
+     // Put stars in the galaxy
+@@ -537,11 +548,20 @@
+     if (!game.alive) game.condit=IHDEAD;
+ }
+ 
++void newkling(int i, int *pix, int *piy)
++/* drop new Klingon into current quadrant */
++{
++    dropin(IHK, pix, piy);
++    game.kx[i] = *pix;
++    game.ky[i] = *piy;
++    game.kdist[i] = game.kavgd[i] = sqrt(square(game.sectx-*pix) + square(game.secty-*piy));
++    game.kpower[i] = Rand()*150.0 +300.0 +25.0*game.skill;
++}
+ 
+ void newqad(int shutup) 
+ {
+     int i, j, ix, iy;
+-    planet *planhere;
++    struct quadrant *here;
+ 
+     game.iattak = 1;
+     game.justin = 1;
+@@ -570,25 +590,21 @@
+     for_sectors(i)
+ 	for_sectors(j) 
+ 	    game.quad[i][j] = IHDOT;
++    here = &amp;game.state.galaxy[game.quadx][game.quady];
+     // cope with supernova
+-    if (game.state.galaxy[game.quadx][game.quady].supernova)
++    if (here-&gt;supernova)
+ 	return;
+-    game.klhere = game.state.galaxy[game.quadx][game.quady].klingons;
+-    game.irhere = game.state.galaxy[game.quadx][game.quady].romulans;
++    game.klhere = here-&gt;klingons;
++    game.irhere = here-&gt;romulans;
+     game.nenhere = game.klhere + game.irhere;
+ 
+     // Position Starship
+     game.quad[game.sectx][game.secty] = game.ship;
+ 
+-    if (game.state.galaxy[game.quadx][game.quady].klingons) {
++    if (here-&gt;klingons) {
+ 	// Position ordinary Klingons
+-	for (i = 1; i &lt;= game.klhere; i++) {
+-	    dropin(IHK, &amp;ix, &amp;iy);
+-	    game.kx[i] = ix;
+-	    game.ky[i] = iy;
+-	    game.kdist[i] = game.kavgd[i] = sqrt(square(game.sectx-ix) + square(game.secty-iy));
+-	    game.kpower[i] = Rand()*150.0 +300.0 +25.0*game.skill;
+-	}
++	for (i = 1; i &lt;= game.klhere; i++)
++	    newkling(i, &amp;ix, &amp;iy);
+ 	// If we need a commander, promote a Klingon
+ 	for_commanders(i)
+ 	    if (game.state.cx[i]==game.quadx &amp;&amp; game.state.cy[i]==game.quady) break;
+@@ -616,14 +632,13 @@
+ 	game.kpower[i] = Rand()*400.0 + 450.0 + 50.0*game.skill;
+     }
+     // If quadrant needs a starbase, put it in
+-    if (game.state.galaxy[game.quadx][game.quady].starbase)
++    if (here-&gt;starbase)
+ 	dropin(IHB, &amp;game.basex, &amp;game.basey);
+ 	
+     // If quadrant needs a planet, put it in
+-    planhere = game.state.galaxy[game.quadx][game.quady].planet;
+-    if (planhere) {
+-	game.iplnet = planhere - game.state.plnets;
+-	if (planhere-&gt;inhabited == UNINHABITED)
++    if (here-&gt;planet) {
++	game.iplnet = here-&gt;planet - game.state.plnets;
++	if (here-&gt;planet-&gt;inhabited == UNINHABITED)
+ 	    dropin(IHP, &amp;game.plnetx, &amp;game.plnety);
+ 	else
+ 	    dropin(IHW, &amp;game.plnetx, &amp;game.plnety);
+@@ -631,11 +646,11 @@
+     // Check for game.condition
+     newcnd();
+     // And finally the stars
+-    for (i = 1; i &lt;= game.state.galaxy[game.quadx][game.quady].stars; i++) 
++    for (i = 1; i &lt;= here-&gt;stars; i++) 
+ 	dropin(IHSTAR, &amp;ix, &amp;iy);
+ 
+     // Check for RNZ
+-    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (!planhere || planhere-&gt;inhabited == UNINHABITED)) {
++    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (!here-&gt;planet || here-&gt;planet-&gt;inhabited == UNINHABITED)) {
+ 	game.neutz = 1;
+ 	if (game.damage[DRADIO] &lt;= 0.0) {
+ 	    skip(1);
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-17 00:52:17 UTC (rev 577)
++++ trunk/src/sst.h	2006-09-17 05:14:52 UTC (rev 578)
+@@ -72,7 +72,7 @@
+ 	double date,		// stardate
+ 	    remres,		// remaining resources
+ 	    remtime;		// remaining time
+-    struct {
++    struct quadrant {
+ 	int stars;
+ 	planet *planet;
+ 	int starbase;
+@@ -80,6 +80,9 @@
+ 	int romulans;
+ 	int supernova;
+ 	int charted;
++#ifdef EXPERIMENTAL
++	enum {secure, distressed, enslaved} status;
++#endif /* EXPERIMENTAL */
+     } galaxy[GALSIZE+1][GALSIZE+1]; 	// The Galaxy (subscript 0 not used)
+     struct {
+ 	int stars;
+@@ -152,8 +155,19 @@
+ #define FSCMOVE 6   // Supercommander moves (might attack base)
+ #define FSCDBAS 7   // Supercommander destroys base
+ #define FDSPROB 8   // Move deep space probe
++#ifndef EXPERIMENTAL
+ #define NEVENTS (9)
++#else /* EXPERIMENTAL */
++#define FDISTR	9   // Emit distress call from an inhabited world 
++#define FENSLV	10  // Inhabited word is enslaved */
++#define FREPRO	11  // Klingons build a ship in an enslaved system
++#define NEVENTS (12)
++#endif /* EXPERIMENTAL */
+ 
++#ifdef EXPERIMENTAL
++#define	MAXDISTR	5	/* maximum concurrent distress calls */
++#endif /* EXPERIMENTAL */
++
+ #define SSTMAGIC	&quot;SST2.0\n&quot;
+ 
+ struct game {
+@@ -228,6 +242,9 @@
+ 	ithx,		// coordinates of Tholian
+ 	ithy,		//
+ 	iseenit,	// seen base attack report
++#ifdef EXPERIMENTAL
++	ndistr,		//* count of distress calls */ 
++#endif /* EXPERIMENTAL */
+ 	probecx,	// current probe quadrant
+ 	probecy,	//
+ 	proben,		// number of moves for probe
+@@ -401,6 +418,7 @@
+ void makechart(void);
+ void enqueue(char *);
+ char *systemname(planet *);
++void newkling(int, int *, int *);
+ 
+ /* mode arguments for srscan() */
+ #define SCAN_FULL		1
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000043.html">[Sst-commit-watch] r577 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000045.html">[Sst-commit-watch] r579 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#44">[ date ]</a>
+              <a href="thread.html#44">[ thread ]</a>
+              <a href="subject.html#44">[ subject ]</a>
+              <a href="author.html#44">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

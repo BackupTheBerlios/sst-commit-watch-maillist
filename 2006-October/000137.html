@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r670 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r670%20-%20trunk/src&In-Reply-To=%3C200610050547.k955lJa2020955%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000136.html">
+   <LINK REL="Next"  HREF="000138.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r670 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r670%20-%20trunk/src&In-Reply-To=%3C200610050547.k955lJa2020955%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r670 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct  5 07:47:19 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000136.html">[Sst-commit-watch] r669 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000138.html">[Sst-commit-watch] r671 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#137">[ date ]</a>
+              <a href="thread.html#137">[ thread ]</a>
+              <a href="subject.html#137">[ subject ]</a>
+              <a href="author.html#137">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-05 07:47:19 +0200 (Thu, 05 Oct 2006)
+New Revision: 670
+
+Modified:
+   trunk/src/sst.py
+Log:
+Checkpoint Python version before trying to move to zero-origin
+indexing everywhere.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-05 04:21:56 UTC (rev 669)
++++ trunk/src/sst.py	2006-10-05 05:47:19 UTC (rev 670)
+@@ -236,7 +236,7 @@
+     def is_valid(self):
+         return self.x != None and self.y != None
+     def __eq__(self, other):
+-        return self.x == other.y and self.x == other.y
++        return other != None and self.x == other.y and self.x == other.y
+     def __add__(self, other):
+         return coord(self.x+self.x, self.y+self.y)
+     def __sub__(self, other):
+@@ -279,6 +279,15 @@
+ 	self.starbase = None
+ 	self.klingons = None
+ 
++def fill2d(size, fillfun):
++    &quot;Fill an empty list in 2D.&quot;
++    lst = []
++    for i in range(size+1):
++        lst.append([]) 
++        for j in range(size+1):
++            lst[i][j] = fillfun(i, j)
++    return lst
++
+ class snapshot:
+     def __init__(self):
+         self.snap = False	# snapshot taken
+@@ -303,16 +312,10 @@
+         for i in range(QUADSIZE+1):
+             self.kcmdr.append(coord())
+ 	self.kscmdr = coord()	# Supercommander quadrant coordinates
+-        self.galaxy = [] 	# The Galaxy (subscript 0 not used)
+-        for i in range(GALSIZE+1):
+-            self.galaxy.append([])
+-            for j in range(GALSIZE+1):
+-                self.galaxy[i].append(quadrant())
+-    	self.chart = [] 	# the starchart (subscript 0 not used)
+-        for i in range(GALSIZE+1):
+-            self.chart.append([])
+-            for j in range(GALSIZE+1):
+-                self.chart[i].append(page())
++        # the galaxy (subscript 0 not used)
++        self.galaxy = fill2d(GALSIZE, lambda i, j: quadrant())
++        # the starchart (subscript 0 not used)
++    	self.chart = fill2d(GALSIZE, lambda i, j: page())
+ 
+ class event:
+     def __init__(self):
+@@ -393,10 +396,10 @@
+         self.options = None	# Game options
+         self.state = snapshot()	# A snapshot structure
+         self.snapsht = snapshot()	# Last snapshot taken for time-travel purposes
+-        self.quad = [[IHDOT * (QUADSIZE+1)] * (QUADSIZE+1)]	# contents of our quadrant
+-        self.kpower = [[0 * (QUADSIZE+1)] * (QUADSIZE+1)]	# enemy energy levels
+-        self.kdist = [[0 * (QUADSIZE+1)] * (QUADSIZE+1)]	# enemy distances
+-        self.kavgd = [[0 * (QUADSIZE+1)] * (QUADSIZE+1)]	# average distances
++        self.quad = fill2d(QUADSIZE, lambda i, j: IHDOT)	# contents of our quadrant
++        self.kpower = fill2d(QUADSIZE, lambda i, j: 0.0)	# enemy energy levels
++        self.kdist = fill2d(QUADSIZE, lambda i, j: 0.0)		# enemy distances
++        self.kavgd = fill2d(QUADSIZE, lambda i, j: 0.0) 	# average distances
+         self.damage = [0.0] * NDEVICES	# damage encountered
+         self.future = []		# future events
+         for i in range(NEVENTS):
+@@ -6244,10 +6247,8 @@
+     # set up a new state of quadrant, for when we enter or re-enter it 
+     w = coord()
+     game.justin = True
+-    invalidate(game.base)
+     game.klhere = 0
+     game.comhere = False
+-    invalidate(game.plnet)
+     game.ishere = False
+     game.irhere = 0
+     game.iplnet = 0
+@@ -6264,10 +6265,6 @@
+ 	# Attempt to escape Super-commander, so tbeam back!
+ 	game.iscate = False
+ 	game.ientesc = True
+-    # Clear quadrant
+-    for i in range(1, QUADSIZE+1):
+-	for j in range(1, QUADSIZE+1):
+-	    game.quad[i][j] = IHDOT
+     q = game.state.galaxy[game.quadrant.x][game.quadrant.y]
+     # cope with supernova
+     if q.supernova:
+@@ -6286,7 +6283,7 @@
+ 	    w = newkling(i)
+ 	# If we need a commander, promote a Klingon
+ 	for i in range(1, game.state.remcom+1):
+-	    if same(game.state.kcmdr[i], game.quadrant):
++	    if game.state.kcmdr[i] == game.quadrant:
+ 		break
+ 			
+ 	if i &lt;= game.state.remcom:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000136.html">[Sst-commit-watch] r669 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000138.html">[Sst-commit-watch] r671 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#137">[ date ]</a>
+              <a href="thread.html#137">[ thread ]</a>
+              <a href="subject.html#137">[ subject ]</a>
+              <a href="author.html#137">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

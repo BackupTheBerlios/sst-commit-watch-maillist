@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r775 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r775%20-%20trunk/src&In-Reply-To=%3C200610201957.k9KJvdcL010850%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000241.html">
+   <LINK REL="Next"  HREF="000243.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r775 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r775%20-%20trunk/src&In-Reply-To=%3C200610201957.k9KJvdcL010850%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r775 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct 20 21:57:39 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000241.html">[Sst-commit-watch] r774 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000243.html">[Sst-commit-watch] r776 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#242">[ date ]</a>
+              <a href="thread.html#242">[ thread ]</a>
+              <a href="subject.html#242">[ subject ]</a>
+              <a href="author.html#242">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-20 21:57:38 +0200 (Fri, 20 Oct 2006)
+New Revision: 775
+
+Modified:
+   trunk/src/sst.py
+Log:
+Use a better way of getting the username.  Also, fix a typo.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-18 01:13:00 UTC (rev 774)
++++ trunk/src/sst.py	2006-10-20 19:57:38 UTC (rev 775)
+@@ -11,7 +11,7 @@
+ See the doc/HACKING file in the distribution for designers notes and advice
+ ion how to modify (and how not to modify!) this code.
+ &quot;&quot;&quot;
+-import os, sys, math, curses, time, readline, cPickle, random, copy, gettext
++import os, sys, math, curses, time, readline, cPickle, random, copy, gettext, getpass
+ 
+ SSTDOC  	= &quot;/usr/share/doc/sst/sst.doc&quot;
+ DOC_NAME	= &quot;sst.doc&quot;
+@@ -4015,7 +4015,7 @@
+ 	# Likewise, if in the original time the Galileo was abandoned, but
+ 	# was on ship earlier, it would have vanished -- let's restore it.
+ 	if game.iscraft == &quot;offship&quot; and not gotit and game.damage[DSHUTTL] &gt;= 0.0:
+-	    prout(_(&quot;Checkov-  \&quot;Security reports the Galileo has reappeared in the dock!\&quot;&quot;))
++	    prout(_(&quot;Chekov-  \&quot;Security reports the Galileo has reappeared in the dock!\&quot;&quot;))
+ 	    game.iscraft = &quot;onship&quot;
+         # There used to be code to do the actual reconstrction here,
+         # but the starchart is now part of the snapshotted galaxy state.
+@@ -6240,7 +6240,7 @@
+             logfp.write(&quot;# seed %s\n&quot; % seed)
+             logfp.write(&quot;# options %s\n&quot; % &quot; &quot;.join(arguments))
+             logfp.write(&quot;# recorded by %s@%s on %s\n&quot; % \
+-                    (os.getenv(&quot;LOGNAME&quot;),socket.gethostname(),time.ctime()))
++                    (getpass.getuser(),socket.gethostname(),time.ctime()))
+         random.seed(seed)
+         scanner = sstscanner()
+         map(scanner.append, arguments)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000241.html">[Sst-commit-watch] r774 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000243.html">[Sst-commit-watch] r776 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#242">[ date ]</a>
+              <a href="thread.html#242">[ thread ]</a>
+              <a href="subject.html#242">[ subject ]</a>
+              <a href="author.html#242">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

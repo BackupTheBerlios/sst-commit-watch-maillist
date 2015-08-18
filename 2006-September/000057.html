@@ -1,0 +1,604 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r590 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r590%20-%20trunk/src&In-Reply-To=%3C200609190627.k8J6R7CD001617%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000056.html">
+   <LINK REL="Next"  HREF="000058.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r590 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r590%20-%20trunk/src&In-Reply-To=%3C200609190627.k8J6R7CD001617%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r590 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 19 08:27:07 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000056.html">[Sst-commit-watch] r589 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000058.html">[Sst-commit-watch] r591 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#57">[ date ]</a>
+              <a href="thread.html#57">[ thread ]</a>
+              <a href="subject.html#57">[ subject ]</a>
+              <a href="author.html#57">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-19 08:27:07 +0200 (Tue, 19 Sep 2006)
+New Revision: 590
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+More int-to-boolean cleanup.  Make the FDISTR event work.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-18 19:38:35 UTC (rev 589)
++++ trunk/src/ai.c	2006-09-19 06:27:07 UTC (rev 590)
+@@ -130,7 +130,7 @@
+  */
+ 
+ 	forces = game.kpower[loccom]+100.0*game.nenhere+400*(nbaddys-1);
+-	if (game.shldup==0) forces += 1000; /* Good for enemy if shield is down! */
++	if (!game.shldup) forces += 1000; /* Good for enemy if shield is down! */
+ 	if (game.damage[DPHASER] == 0.0 || game.damage[DPHOTON] == 0.0) {
+ 	    if (game.damage[DPHASER] != 0) /* phasers damaged */
+ 		forces += 300.0;
+@@ -500,10 +500,10 @@
+ 	    prout(_(&quot;   reports that it is under attack from the Klingon Super-commander.&quot;));
+ 	    proutn(_(&quot;   It can survive until stardate %d.\&quot;&quot;),
+ 		   (int)scheduled(FSCDBAS));
+-	    if (game.resting==0) return;
++	    if (!game.resting) return;
+ 	    prout(_(&quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;));
+ 	    if (ja()==0) return;
+-	    game.resting = 0;
++	    game.resting = false;
+ 	    game.optime = 0.0; /* actually finished */
+ 	    return;
+ 	}
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-18 19:38:35 UTC (rev 589)
++++ trunk/src/battle.c	2006-09-19 06:27:07 UTC (rev 590)
+@@ -59,7 +59,7 @@
+ 	    prout(_(&quot;Shields already up.&quot;));
+ 	    return;
+ 	}
+-	game.shldup = 1;
++	game.shldup = true;
+ 	game.shldchg = 1;
+ 	if (game.condit != IHDOCKED) game.energy -= 50.0;
+ 	prout(_(&quot;Shields raised.&quot;));
+@@ -72,11 +72,11 @@
+ 	game.ididit=1;
+ 	return;
+     case SHDN:
+-	if (game.shldup==0) {
++	if (!game.shldup) {
+ 	    prout(_(&quot;Shields already down.&quot;));
+ 	    return;
+ 	}
+-	game.shldup=0;
++	game.shldup=false;
+ 	game.shldchg=1;
+ 	prout(_(&quot;Shields lowered.&quot;));
+ 	game.ididit=1;
+@@ -166,7 +166,7 @@
+ 	extradm = (10.0*type*Rand()+1.0)*game.damfac;
+ 	game.damage[l] += game.optime + extradm; /* Damage for at least time of travel! */
+     }
+-    game.shldup = 0;
++    game.shldup = false;
+     if (KLINGREM) {
+ 	pause_game(2);
+ 	dreprt();
+@@ -470,7 +470,7 @@
+     prout(_(&quot; damaged.&quot;));
+     if (game.damage[DSHIELD] &amp;&amp; game.shldup) {
+ 	prout(_(&quot;***Shields knocked down.&quot;));
+-	game.shldup=0;
++	game.shldup=false;
+     }
+ }
+ 
+@@ -542,7 +542,7 @@
+ 		return; /* Supernova or finished */
+ 	    if (hit == 0) continue;
+ 	}
+-	if (game.shldup != 0 || game.shldchg != 0 || game.condit==IHDOCKED) {
++	if (game.shldup || game.shldchg != 0 || game.condit==IHDOCKED) {
+ 	    /* shields will take hits */
+ 	    double absorb, hitsh, propor = pfac*game.shield*(game.condit==IHDOCKED ? 2.1 : 1.0);
+ 	    if(propor &lt; 0.1) propor = 0.1;
+@@ -1183,13 +1183,13 @@
+ 		prout(_(&quot;Sulu-  \&quot;Sir, the high-speed shield control has malfunctioned . . .&quot;));
+ 		prouts(_(&quot;         CLICK   CLICK   POP  . . .&quot;));
+ 		prout(_(&quot; No response, sir!&quot;));
+-		game.shldup = 0;
++		game.shldup = false;
+ 	    }
+ 	    else
+ 		prout(_(&quot;Shields raised.&quot;));
+ 	}
+ 	else
+-	    game.shldup = 0;
++	    game.shldup = false;
+     }
+     overheat(rpow);
+ }
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-18 19:38:35 UTC (rev 589)
++++ trunk/src/events.c	2006-09-19 06:27:07 UTC (rev 590)
+@@ -39,7 +39,7 @@
+ 	skip(1);
+ 	proutn(_(&quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;));
+ 	if (ja()) {
+-	    game.resting = 0;
++	    game.resting = false;
+ 	    game.optime = 0.0;
+ 	    return true;
+ 	}
+@@ -57,8 +57,30 @@
+     coord w, hold;
+     event *ev;
+ 
+-    if (idebug) prout(&quot;=== EVENTS&quot;);
++    if (idebug) {
++	prout(&quot;=== EVENTS from %.2f to %.2f:&quot;, game.state.date, fintim);
++	for (i = 1; i &lt; NEVENTS; i++) {
++	    switch (i) {
++	    case FSNOVA:  proutn(&quot;=== Supernova       &quot;); break;
++	    case FTBEAM:  proutn(&quot;=== T Beam          &quot;); break;
++	    case FSNAP:   proutn(&quot;=== Snapshot        &quot;); break;
++	    case FBATTAK: proutn(&quot;=== Base Attack     &quot;); break;
++	    case FCDBAS:  proutn(&quot;=== Base Destroy    &quot;); break;
++	    case FSCMOVE: proutn(&quot;=== SC Move         &quot;); break;
++	    case FSCDBAS: proutn(&quot;=== SC Base Destroy &quot;); break;
++	    case FDSPROB: proutn(&quot;=== Probe Move      &quot;); break;
++	    case FDISTR:  proutn(&quot;=== Distress Call   &quot;); break;
++	    case FENSLV:  proutn(&quot;=== Enlavement      &quot;); break;
++	    case FREPRO:  proutn(&quot;=== Klingon Build   &quot;); break;
++	    }
++	    if (is_scheduled(i))
++		prout(&quot;%.2f&quot;, scheduled(i));
++	    else
++		prout(&quot;never&quot;);
+ 
++	}
++    }
++
+     radio_was_broken = (game.damage[DRADIO] != 0.0);
+ 
+     for (;;) {
+@@ -69,6 +91,8 @@
+ 	for (l = 1; l &lt; NEVENTS; l++)
+ 	    if (game.future[l].date &lt; datemin) {
+ 		line = l;
++		if (idebug)
++		    prout(&quot;== Event %d fires&quot;, line);
+ 		datemin = game.future[l].date;
+ 	    }
+ 	xtime = datemin-game.state.date;
+@@ -180,14 +204,10 @@
+ 		    prout(_(&quot;Galileo, left on the planet surface, is well hidden.&quot;));
+ 		}
+ 	    }
+-	    if (line==0) {
+-		game.quadrant.x = game.state.kscmdr.x;
+-		game.quadrant.y = game.state.kscmdr.y;
+-	    }
+-	    else {
+-		game.quadrant.x = game.state.kcmdr[i].x;
+-		game.quadrant.y = game.state.kcmdr[i].y;
+-	    }
++	    if (line==0)
++		game.quadrant = game.state.kscmdr;
++	    else
++		game.quadrant = game.state.kcmdr[i];
+ 	    iran(QUADSIZE, &amp;game.sector.x, &amp;game.sector.y);
+ 	    crmshp();
+ 	    proutn(_(&quot; is pulled to &quot;));
+@@ -196,9 +216,9 @@
+ 	    prout(cramlc(sector, game.sector));
+ 	    if (game.resting) {
+ 		prout(_(&quot;(Remainder of rest/repair period cancelled.)&quot;));
+-		game.resting = 0;
++		game.resting = false;
+ 	    }
+-	    if (game.shldup==0) {
++	    if (!game.shldup) {
+ 		if (game.damage[DSHIELD]==0 &amp;&amp; game.shield &gt; 0) {
+ 		    doshield(2); /* Shldsup */
+ 		    game.shldchg=0;
+@@ -227,9 +247,9 @@
+ 	    i = 0;
+ 	    for_starbases(j) {
+ 		for_commanders(k)
+-		    if (game.state.baseq[j].x==game.state.kcmdr[k].x &amp;&amp; game.state.baseq[j].y==game.state.kcmdr[k].y &amp;&amp;
+-			(game.state.baseq[j].x!=game.quadrant.x || game.state.baseq[j].y!=game.quadrant.y) &amp;&amp;
+-			(game.state.baseq[j].x!=game.state.kscmdr.x || game.state.baseq[j].y!=game.state.kscmdr.y)) {
++		    if (same(game.state.baseq[j], game.state.kcmdr[k]) &amp;&amp;
++			!same(game.state.baseq[j], game.quadrant) &amp;&amp;
++			!same(game.state.baseq[j], game.state.kscmdr)) {
+ 			i = 1;
+ 			break;
+ 		    }
+@@ -242,8 +262,7 @@
+ 		break;
+ 	    }
+ 	    /* commander + starbase combination found -- launch attack */
+-	    game.battle.x = game.state.baseq[j].x;
+-	    game.battle.y = game.state.baseq[j].y;
++	    game.battle = game.state.baseq[j];
+ 	    schedule(FCDBAS, 1.0+3.0*Rand());
+ 	    if (game.isatb) /* extra time if SC already attacking */
+ 		postpone(FCDBAS, scheduled(FSCDBAS)-game.state.date);
+@@ -271,14 +290,14 @@
+ 		break; /* WAS RETURN! */
+ 	    ixhold = game.battle.x;
+ 	    iyhold = game.battle.y;
+-	    game.battle.x = game.state.kscmdr.x;
+-	    game.battle.y = game.state.kscmdr.y;
++	    game.battle = game.state.kscmdr;
++	    /* FALL THROUGH */
+ 	case FCDBAS: /* Commander succeeds in destroying base */
+ 	    if (line==FCDBAS) {
+ 		unschedule(FCDBAS);
+ 		/* find the lucky pair */
+ 		for_commanders(i)
+-		    if (game.state.kcmdr[i].x==game.battle.x &amp;&amp; game.state.kcmdr[i].y==game.battle.y) 
++		    if (same(game.state.kcmdr[i], game.battle)) 
+ 			break;
+ 		if (i &gt; game.state.remcom || game.state.rembase == 0 ||
+ 		    !game.state.galaxy[game.battle.x][game.battle.y].starbase) {
+@@ -290,7 +309,7 @@
+ 	    /* Code merges here for any commander destroying base */
+ 	    /* Not perfect, but will have to do */
+ 	    /* Handle case where base is in same quadrant as starship */
+-	    if (game.battle.x==game.quadrant.x &amp;&amp; game.battle.y==game.quadrant.y) {
++	    if (same(game.battle, game.quadrant)) {
+ 		game.state.chart[game.battle.x][game.battle.y].starbase = false;
+ 		game.quad[game.base.x][game.base.y] = IHDOT;
+ 		game.base.x=game.base.y=0;
+@@ -316,10 +335,8 @@
+ 	    /* Remove Starbase from galaxy */
+ 	    game.state.galaxy[game.battle.x][game.battle.y].starbase = false;
+ 	    for_starbases(i)
+-		if (game.state.baseq[i].x==game.battle.x &amp;&amp; game.state.baseq[i].y==game.battle.y) {
+-		    game.state.baseq[i].x=game.state.baseq[game.state.rembase].x;
+-		    game.state.baseq[i].y=game.state.baseq[game.state.rembase].y;
+-		}
++		if (same(game.state.baseq[i], game.battle))
++		    game.state.baseq[i] = game.state.baseq[game.state.rembase];
+ 	    game.state.rembase--;
+ 	    if (game.isatb == 2) {
+ 		/* reinstate a commander's base attack */
+@@ -395,25 +412,30 @@
+ 	case FDISTR: /* inhabited system issues distress call */
+ 	    schedule(FDISTR, expran(0.5*game.intime));
+ 	    /* try a whole bunch of times to find something suitable */
+-	    for (i = 0; i &lt; 100; i++) {
+-		iran(GALSIZE, &amp;w.x, &amp;w.y);
+-		q = &amp;game.state.galaxy[game.quadrant.x][game.quadrant.y];
++	    i = 100;
++	    do {
+ 		/* need a quadrant which is not the current one,
+ 		   which has some stars which are inhabited and
+ 		   not already under attack, which is not
+ 		   supernova'ed, and which has some Klingons in it */
+-		if (!(same(game.quadrant, w) || q-&gt;stars&lt;=0 ||
+-		      q-&gt;supernova || q-&gt;status != secure || q-&gt;klingons &lt;= 0))
+-		    break;
+-	    }
+-	    if (i &gt;= 100)
++		iran(GALSIZE, &amp;w.x, &amp;w.y);
++		q = &amp;game.state.galaxy[w.x][w.y];
++	    } while (--i &amp;&amp;
++		     (same(game.quadrant, w) || q-&gt;planet == NOPLANET ||
++		      q-&gt;supernova || q-&gt;status!=secure || q-&gt;klingons&lt;=0));
++	    if (i == 0) {
+ 		/* can't seem to find one; ignore this call */
++		if (idebug)
++		    prout(&quot;=== Couldn't find location for distress event.&quot;);
+ 		break;
++	    }
+ 
+ 	    /* got one!!  Schedule its enslavement */
+ 	    ev = schedule(FENSLV, expran(game.intime));
+ 	    ev-&gt;quadrant = w;
+ 	    q-&gt;status = distressed;
++	    if (idebug)
++		prout(&quot;=== Distress call set at %d, %d.&quot;, w.x, w.y);
+ 
+ 	    /* tell the captain about it if we can */
+ 	    if (game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED)
+@@ -444,6 +466,7 @@
+ 		      systemname(q-&gt;planet));
+ 		prout(&quot;  in quadrant %d,%d.\n&quot;, ev-&gt;quadrant.x,ev-&gt;quadrant.y);
+ 	    }
++	    break;
+       case FREPRO:		/* Klingon reproduces */
+ 	    ev = schedule(FREPRO, expran(1.0 * game.intime));
+ 	    /* see if current distress call still active */
+@@ -465,7 +488,7 @@
+ 			continue;
+ 		    q = &amp;game.state.galaxy[w.x][w.y];
+ 		    /* check for this quad ok (not full &amp; no snova) */
+-		    if (q-&gt;klingons &gt;= MAXKLQUAD || q-&gt;stars &lt; 0)
++		    if (q-&gt;klingons &gt;= MAXKLQUAD || !q-&gt;supernova)
+ 			continue;
+ 		    goto foundit;
+ 		}
+@@ -477,6 +500,7 @@
+ 
+ 	    /* deliver the child */
+ 	    game.state.remkl++;
++	    q-&gt;klingons++;
+ 	    if (same(game.quadrant, w))
+ 		newkling(++game.klhere, &amp;hold);
+ 
+@@ -513,10 +537,10 @@
+ 
+     /* Alternate resting periods (events) with attacks */
+ 
+-    game.resting = 1;
++    game.resting = true;
+     do {
+-	if (delay &lt;= 0) game.resting = 0;
+-	if (game.resting == 0) {
++	if (delay &lt;= 0) game.resting = false;
++	if (!game.resting) {
+ 	    prout(_(&quot;%d stardates left.&quot;), (int)game.state.remtime);
+ 	    return;
+ 	}
+@@ -540,7 +564,7 @@
+ 	// leave if quadrant supernovas
+ 	(!game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova);
+ 
+-    game.resting = 0;
++    game.resting = false;
+     game.optime = 0;
+ }
+ 
+@@ -640,7 +664,7 @@
+ 				double diff = 2000.0 - game.shield;
+ 				game.energy -= diff;
+ 				game.shield = 0.0;
+-				game.shldup = 0;
++				game.shldup = false;
+ 				prout(_(&quot;***Shields knocked out.&quot;));
+ 				game.damage[DSHIELD] += 0.005*game.damfac*Rand()*diff;
+ 			    }
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-18 19:38:35 UTC (rev 589)
++++ trunk/src/moving.c	2006-09-19 06:27:07 UTC (rev 590)
+@@ -523,7 +523,7 @@
+ 	    game.ididit = 0;
+ 	    skip(1);
+ 	    prout(&quot;Engineering to bridge--&quot;);
+-	    if (game.shldup==0 || 0.5*power &gt; game.energy) {
++	    if (!game.shldup || 0.5*power &gt; game.energy) {
+ 		iwarp = pow((game.energy/(game.dist+0.05)), 0.333333333);
+ 		if (iwarp &lt;= 0) {
+ 		    prout(&quot;We can't do it, Captain. We haven't the energy.&quot;);
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-18 19:38:35 UTC (rev 589)
++++ trunk/src/planets.c	2006-09-19 06:27:07 UTC (rev 590)
+@@ -127,7 +127,7 @@
+ 	prout(&quot; not in standard orbit.&quot;);
+ 	return;
+     }
+-    if (game.shldup!=0) {
++    if (game.shldup) {
+ 	prout(&quot;Impossible to transport through shields.&quot;);
+ 	return;
+     }
+@@ -312,7 +312,7 @@
+ 	prout(&quot;You will have to beam down to retrieve the shuttle craft.&quot;);
+ 	return;
+     }
+-    if (game.shldup!=0 || game.condit == IHDOCKED) {
++    if (game.shldup || game.condit == IHDOCKED) {
+ 	prout(&quot;Shuttle craft cannot pass through shields.&quot;);
+ 	return;
+     }
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-18 19:38:35 UTC (rev 589)
++++ trunk/src/reports.c	2006-09-19 06:27:07 UTC (rev 590)
+@@ -488,7 +488,7 @@
+ 	tpower = game.dist*twarp*twarp*twarp*(game.shldup+1);
+ 	if (tpower &gt;= game.energy) {
+ 	    prout(&quot;Insufficient energy, sir.&quot;);
+-	    if (game.shldup==0 || tpower &gt; game.energy*2.0) {
++	    if (!game.shldup || tpower &gt; game.energy*2.0) {
+ 		if (!wfl) return;
+ 		proutn(&quot;New warp factor to try? &quot;);
+ 		if (scan() == IHREAL) {
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-18 19:38:35 UTC (rev 589)
++++ trunk/src/setup.c	2006-09-19 06:27:07 UTC (rev 590)
+@@ -185,7 +185,7 @@
+     game.shield = game.inshld = 1250.0;
+     game.torps = game.intorps = 6;
+     game.lsupres=game.inlsr=3.0;
+-    game.shldup=0;
++    game.shldup=false;
+     game.warpfac=5.0;
+     game.wfacsq=25.0;
+     return;
+@@ -202,7 +202,8 @@
+     game.ship = IHE;
+     game.energy = game.inenrg = 5000.0;
+     game.shield = game.inshld = 2500.0;
+-    game.shldchg = game.shldup = 0;
++    game.shldchg = 0;
++    game.shldup = false;
+     game.inlsr = 4.0;
+     game.lsupres = 4.0;
+     iran(GALSIZE, &amp;game.quadrant.x, &amp;game.quadrant.y);
+@@ -216,7 +217,8 @@
+     // Set up assorted game parameters
+     game.battle.x = game.battle.y = 0;
+     game.state.date = game.indate = 100.0*(int)(31.0*Rand()+20.0);
+-    game.nkinks = game.nhelp = game.resting = game.casual = 0;
++    game.nkinks = game.nhelp = game.casual = 0;
++    game.resting = false;
+     game.isatb = game.iscate = game.imine = game.icrystl = game.icraft = game.state.nplankl = 0;
+     game.state.starkl = game.state.basekl = 0;
+     game.iscraft = 1;
+@@ -248,6 +250,8 @@
+     unschedule(FDSPROB);
+     if ((game.options &amp; OPTION_WORLDS) &amp;&amp; game.skill &gt;= SKILL_GOOD)
+ 	schedule(FDISTR, expran(1.0 + game.intime));
++    else
++	unschedule(FDISTR);
+     unschedule(FENSLV);
+     unschedule(FREPRO);
+     // Starchart is functional but we've never seen it
+@@ -411,7 +415,7 @@
+     if (game.state.nscrem) prout(&quot;  YOU'LL NEED IT.&quot;);
+     waitfor();
+     newqad(0);
+-    if (game.nenhere-iqhere-game.ithere) game.shldup=1.0;
++    if (game.nenhere-iqhere-game.ithere) game.shldup = true;
+     if (game.neutz) attack(0);	// bad luck to start in a Romulan Neutral Zone
+ }
+ 
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-18 19:38:35 UTC (rev 589)
++++ trunk/src/sst.c	2006-09-19 06:27:07 UTC (rev 590)
+@@ -871,7 +871,6 @@
+ 	int i;
+ 	for (i = 1; i &lt; NEVENTS; i++) {
+ 	    int key;
+-	    if (!is_scheduled(i)) continue;
+ 	    switch (i) {
+ 	    case FSNOVA:  proutn(&quot;Supernova       &quot;); break;
+ 	    case FTBEAM:  proutn(&quot;T Beam          &quot;); break;
+@@ -880,16 +879,22 @@
+ 	    case FCDBAS:  proutn(&quot;Base Destroy    &quot;); break;
+ 	    case FSCMOVE: proutn(&quot;SC Move         &quot;); break;
+ 	    case FSCDBAS: proutn(&quot;SC Base Destroy &quot;); break;
+-	    //case FDSPROB:proutn(&quot;Probe Move      &quot;); break;
++	    case FDSPROB: proutn(&quot;Probe Move      &quot;); break;
+ 	    case FDISTR:  proutn(&quot;Distress Call   &quot;); break;
+ 	    case FENSLV:  proutn(&quot;Enlavement      &quot;); break;
+ 	    case FREPRO:  proutn(&quot;Klingon Build   &quot;); break;
+ 	    }
+-	    proutn(&quot;%.2f&quot;, scheduled(i)-game.state.date);
++	    if (is_scheduled(i))
++		proutn(&quot;%.2f&quot;, scheduled(i)-game.state.date);
++	    else
++		proutn(&quot;never&quot;);
+ 	    chew();
+-	    proutn(&quot;  ?&quot;);
++	    proutn(&quot;? &quot;);
+ 	    key = scan();
+-	    if (key == IHREAL) {
++	    if (key == 'n') {
++		unschedule(i);
++		chew();
++	    } else if (key == IHREAL) {
+ 		ev = schedule(i, aaitem);
+ 		if (i == FENSLV || i == FREPRO) {
+ 		    chew();
+@@ -915,7 +920,7 @@
+ 	chew();
+     }
+     proutn(&quot;Induce supernova here? &quot;);
+-    if (ja() != 0) {
++    if (ja()) {
+ 	game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova = true;
+ 	atover(1);
+     }
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-18 19:38:35 UTC (rev 589)
++++ trunk/src/sst.h	2006-09-19 06:27:07 UTC (rev 590)
+@@ -204,6 +204,8 @@
+ 	ididit,		// action taken -- allows enemy to attack
+ 	alive,		// we are alive (not killed)
+ 	justin,		// just entered quadrant
++	shldup,		// shields are up
++	resting,	// rest time
+ 	alldone,	// game is now finished
+ 	neutz,		// Romulan Neutral Zone
+ 	isarmed,	// probe is armed
+@@ -254,7 +256,6 @@
+ 	indate,		// initial date
+ 	energy,		// energy level
+ 	shield,		// shield level
+-	shldup,		// shields are up
+ 	warpfac,	// warp speed
+ 	wfacsq,		// squared warp factor
+ 	lsupres,	// life support reserves
+@@ -262,7 +263,6 @@
+ 	direc,		// movement direction
+ 	optime,		// time taken by current operation
+ 	docfac,		// repair factor when docking (constant?)
+-	resting,	// rest time
+ 	damfac,		// damage factor
+ 	lastchart,	// time star chart was last updated
+ 	cryprob,	// probability that crystal will work
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000056.html">[Sst-commit-watch] r589 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000058.html">[Sst-commit-watch] r591 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#57">[ date ]</a>
+              <a href="thread.html#57">[ thread ]</a>
+              <a href="subject.html#57">[ subject ]</a>
+              <a href="author.html#57">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

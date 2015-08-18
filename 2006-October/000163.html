@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r696 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r696%20-%20trunk/src&In-Reply-To=%3C200610061900.k96J0SUV018939%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000162.html">
+   <LINK REL="Next"  HREF="000164.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r696 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r696%20-%20trunk/src&In-Reply-To=%3C200610061900.k96J0SUV018939%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r696 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct  6 21:00:28 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000162.html">[Sst-commit-watch] r695 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000164.html">[Sst-commit-watch] r697 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#163">[ date ]</a>
+              <a href="thread.html#163">[ thread ]</a>
+              <a href="subject.html#163">[ subject ]</a>
+              <a href="author.html#163">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-06 21:00:27 +0200 (Fri, 06 Oct 2006)
+New Revision: 696
+
+Modified:
+   trunk/src/sst.py
+Log:
+More code slimming.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-06 18:48:32 UTC (rev 695)
++++ trunk/src/sst.py	2006-10-06 19:00:27 UTC (rev 696)
+@@ -424,6 +424,7 @@
+         self.kpower = power	# enemy energy level
+         game.enemies.append(self)
+     def move(self, loc):
++        motion = (loc != self.kloc)
+         if self.kloc.x is not None and self.kloc.y is not None:
+             game.quad[self.kloc.x][self.kloc.y] = IHDOT
+         if loc:
+@@ -434,6 +435,7 @@
+             self.kloc = coord()	# enemy sector location
+             self.kdist = self.kavgd = None
+             game.enemies.remove(self)
++        return motion
+     def __repr__(self):
+         return &quot;&lt;%s=%f&gt;&quot; % (self.kloc, self.kpower)	# For debugging
+ 
+@@ -781,35 +783,33 @@
+     if idebug:
+ 	proutn(&quot;NSTEPS = %d:&quot; % nsteps)
+     # Compute preferred values of delta X and Y 
+-    mx = game.sector.x - enemy.kloc.x
+-    my = game.sector.y - enemy.kloc.y
+-    if 2.0 * abs(mx) &lt; abs(my):
+-	mx = 0
+-    if 2.0 * abs(my) &lt; abs(game.sector.x-enemy.kloc.x):
+-	my = 0
+-    if mx != 0:
+-        if mx*motion &lt; 0:
+-            mx = -1
++    m = game.sector - enemy.kloc
++    if 2.0 * abs(m.x) &lt; abs(m.y):
++	m.x = 0
++    if 2.0 * abs(m.y) &lt; abs(game.sector.x-enemy.kloc.x):
++	m.y = 0
++    if m.x != 0:
++        if m.x*motion &lt; 0:
++            m.x = -1
+         else:
+-            mx = 1
+-    if my != 0:
+-        if my*motion &lt; 0:
+-            my = -1
++            m.x = 1
++    if m.y != 0:
++        if m.y*motion &lt; 0:
++            m.y = -1
+         else:
+-            my = 1
++            m.y = 1
+     next = enemy.kloc
+     # main move loop 
+     for ll in range(nsteps):
+ 	if idebug:
+ 	    proutn(&quot; %d&quot; % (ll+1))
+ 	# Check if preferred position available 
+-	look.x = next.x + mx
+-	look.y = next.y + my
+-        if mx &lt; 0:
++	look = next + m
++        if m.x &lt; 0:
+             krawlx = 1
+         else:
+             krawlx = -1
+-        if my &lt; 0:
++        if m.y &lt; 0:
+             krawly = 1
+         else:
+             krawly = -1
+@@ -820,14 +820,14 @@
+ 	    if look.x &lt; 0 or look.x &gt;= QUADSIZE:
+ 		if motion &lt; 0 and tryexit(enemy, look, irun):
+ 		    return
+-		if krawlx == mx or my == 0:
++		if krawlx == m.x or m.y == 0:
+ 		    break
+ 		look.x = next.x + krawlx
+ 		krawlx = -krawlx
+ 	    elif look.y &lt; 0 or look.y &gt;= QUADSIZE:
+ 		if motion &lt; 0 and tryexit(enemy, look, irun):
+ 		    return
+-		if krawly == my or mx == 0:
++		if krawly == m.y or m.x == 0:
+ 		    break
+ 		look.y = next.y + krawly
+ 		krawly = -krawly
+@@ -837,10 +837,10 @@
+ 		    (enemy.type == IHC or enemy.type == IHS):
+ 		    collision(rammed=True, enemy=enemy)
+ 		    return
+-		if krawlx != mx and my != 0:
++		if krawlx != m.x and m.y != 0:
+ 		    look.x = next.x + krawlx
+ 		    krawlx = -krawlx
+-		elif krawly != my and mx != 0:
++		elif krawly != m.y and m.x != 0:
+ 		    look.y = next.y + krawly
+ 		    krawly = -krawly
+ 		else:
+@@ -855,13 +855,7 @@
+ 	    break; # done early 
+     if idebug:
+ 	skip(1)
+-    # Put commander in place within same quadrant 
+-    game.quad[enemy.kloc.x][enemy.kloc.y] = IHDOT
+-    game.quad[next.x][next.y] = enemy.type
+-    if next != enemy.kloc:
+-	# it moved 
+-	enemy.kloc = next
+-	enemy.kdist = enemy.kavgd = distance(game.sector, next)
++    if enemy.move(next):
+ 	if not damaged(DSRSENS) or game.condition == &quot;docked&quot;:
+ 	    proutn(&quot;***&quot;)
+ 	    cramen(enemy.type)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000162.html">[Sst-commit-watch] r695 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000164.html">[Sst-commit-watch] r697 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#163">[ date ]</a>
+              <a href="thread.html#163">[ thread ]</a>
+              <a href="subject.html#163">[ subject ]</a>
+              <a href="author.html#163">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

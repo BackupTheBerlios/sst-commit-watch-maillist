@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r819 - in trunk: . doc
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2010-November/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r819%20-%20in%20trunk%3A%20.%20doc&In-Reply-To=%3C20101130101908.BE7A048018C%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000287.html">
+   <LINK REL="Next"  HREF="000289.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r819 - in trunk: . doc</H1>
+    <B>esr at mail.berlios.de</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r819%20-%20in%20trunk%3A%20.%20doc&In-Reply-To=%3C20101130101908.BE7A048018C%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r819 - in trunk: . doc">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Nov 30 11:19:08 CET 2010</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000287.html">[Sst-commit-watch] r818 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000289.html">[Sst-commit-watch] r820 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#288">[ date ]</a>
+              <a href="thread.html#288">[ thread ]</a>
+              <a href="subject.html#288">[ subject ]</a>
+              <a href="author.html#288">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2010-11-30 11:19:08 +0100 (Tue, 30 Nov 2010)
+New Revision: 819
+
+Modified:
+   trunk/doc/sst.xml
+   trunk/sst.py
+Log:
+Add a -V option.
+
+
+Modified: trunk/doc/sst.xml
+===================================================================
+--- trunk/doc/sst.xml	2010-11-30 10:09:53 UTC (rev 818)
++++ trunk/doc/sst.xml	2010-11-30 10:19:08 UTC (rev 819)
+@@ -18,6 +18,7 @@
+       &lt;arg choice='opt'&gt;-r &lt;replaceable&gt;filename&lt;/replaceable&gt;&lt;/arg&gt; 
+       &lt;arg choice='opt'&gt;-t &lt;/arg&gt; 
+       &lt;arg choice='opt'&gt;-x &lt;/arg&gt; 
++      &lt;arg choice='opt'&gt;-V &lt;/arg&gt; 
+       &lt;arg rep='repeat' &gt;&lt;replaceable&gt;command&lt;/replaceable&gt;&lt;/arg&gt;  
+ &lt;/cmdsynopsis&gt;
+ 
+@@ -51,6 +52,8 @@
+ &lt;para&gt;The option -x enables some debugging features of interest
+ probably only to sst2k developers.&lt;/para&gt;
+ 
++&lt;para&gt;With -V, the program emits its version and exits.&lt;/para&gt;
++
+ &lt;para&gt;Input tokens for the setup prompts will be read from the
+ remainder of the command line before standard input.  Thus, for
+ example, you can invoke the program as&lt;/para&gt;
+
+Modified: trunk/sst.py
+===================================================================
+--- trunk/sst.py	2010-11-30 10:09:53 UTC (rev 818)
++++ trunk/sst.py	2010-11-30 10:19:08 UTC (rev 819)
+@@ -13,6 +13,8 @@
+ &quot;&quot;&quot;
+ import os, sys, math, curses, time, readline, cPickle, random, copy, gettext, getpass
+ 
++version=&quot;2.0&quot;
++
+ docpath  	= (&quot;.&quot;, &quot;../doc&quot;, &quot;/usr/share/doc/sst&quot;)
+ 
+ def _(str): return gettext.gettext(str)
+@@ -6255,7 +6257,7 @@
+         else:
+             game.options |= OPTION_TTY
+         seed = int(time.time())
+-        (options, arguments) = getopt.getopt(sys.argv[1:], &quot;r:s:tx&quot;)
++        (options, arguments) = getopt.getopt(sys.argv[1:], &quot;r:s:txV&quot;)
+         for (switch, val) in options:
+             if switch == '-r':
+                 try:
+@@ -6282,6 +6284,9 @@
+                 game.options &amp;=~ OPTION_CURSES
+             elif switch == '-x':
+                 idebug = True
++            elif switch == '-V':
++                print &quot;SST2K&quot;, version
++                raise SystemExit, 0 
+             else:
+                 sys.stderr.write(&quot;usage: sst [-t] [-x] [startcommand...].\n&quot;)
+                 raise SystemExit, 1
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000287.html">[Sst-commit-watch] r818 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000289.html">[Sst-commit-watch] r820 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#288">[ date ]</a>
+              <a href="thread.html#288">[ thread ]</a>
+              <a href="subject.html#288">[ subject ]</a>
+              <a href="author.html#288">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

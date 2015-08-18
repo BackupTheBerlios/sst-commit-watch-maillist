@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r657 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r657%20-%20trunk/src&In-Reply-To=%3C200610031819.k93IJekj014700%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000123.html">
+   <LINK REL="Next"  HREF="000125.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r657 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r657%20-%20trunk/src&In-Reply-To=%3C200610031819.k93IJekj014700%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r657 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct  3 20:19:40 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000123.html">[Sst-commit-watch] r656 - in trunk: po src
+</A></li>
+        <LI>Next message: <A HREF="000125.html">[Sst-commit-watch] r658 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#124">[ date ]</a>
+              <a href="thread.html#124">[ thread ]</a>
+              <a href="subject.html#124">[ subject ]</a>
+              <a href="author.html#124">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-03 20:19:39 +0200 (Tue, 03 Oct 2006)
+New Revision: 657
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/events.c
+   trunk/src/sst.h
+   trunk/src/sst.py
+Log:
+Small cleanups discovered during Python translation.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-10-03 17:19:58 UTC (rev 656)
++++ trunk/src/ai.c	2006-10-03 18:19:39 UTC (rev 657)
+@@ -263,7 +263,7 @@
+ 	if (!damaged(DSRSENS) || game.condition == docked) {
+ 	    proutn(&quot;***&quot;);
+ 	    cramen(ienm);
+-	    proutn(_(&quot; from %s&quot;), cramlc(2, com));
++	    proutn(_(&quot; from %s&quot;), cramlc(sector, com));
+ 	    if (game.kdist[loccom] &lt; dist1)
+ 		proutn(_(&quot; advances to &quot;));
+ 	    else
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-10-03 17:19:58 UTC (rev 656)
++++ trunk/src/events.c	2006-10-03 18:19:39 UTC (rev 657)
+@@ -22,7 +22,7 @@
+     return game.future[evtype].date != FOREVER;
+ }
+ 
+-extern double scheduled(int evtype)
++double scheduled(int evtype)
+ /* when will this event happen? */
+ {
+     return game.future[evtype].date;
+@@ -36,7 +36,7 @@
+ }
+ 
+ void postpone(int evtype, double offset)
+-/* poistpone a scheduled event */
++/* postpone a scheduled event */
+ {
+     game.future[evtype].date += offset;
+ }
+@@ -80,7 +80,7 @@
+ 	    case FSCDBAS: proutn(&quot;=== SC Base Destroy &quot;); break;
+ 	    case FDSPROB: proutn(&quot;=== Probe Move      &quot;); break;
+ 	    case FDISTR:  proutn(&quot;=== Distress Call   &quot;); break;
+-	    case FENSLV:  proutn(&quot;=== Enlavement      &quot;); break;
++	    case FENSLV:  proutn(&quot;=== Enslavement     &quot;); break;
+ 	    case FREPRO:  proutn(&quot;=== Klingon Build   &quot;); break;
+ 	    }
+ 	    if (is_scheduled(i))
+@@ -166,7 +166,8 @@
+ 	case FSPY: /* Check with spy to see if S.C. should tractor beam */
+ 	    if (game.state.nscrem == 0 ||
+ 		ictbeam || istract ||
+-		game.condition==docked || game.isatb==1 || game.iscate) return;
++		game.condition==docked || game.isatb==1 || game.iscate)
++		return;
+ 	    if (game.ientesc ||
+ 		(game.energy &lt; 2000 &amp;&amp; game.torps &lt; 4 &amp;&amp; game.shield &lt; 1250) ||
+ 		(damaged(DPHASER) &amp;&amp; (damaged(DPHOTON) || game.torps &lt; 4)) ||
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-10-03 17:19:58 UTC (rev 656)
++++ trunk/src/sst.h	2006-10-03 18:19:39 UTC (rev 657)
+@@ -155,8 +155,8 @@
+ #define FOREVER	1e30
+ 
+ /* Define future events */
+-#define FSPY	0	// Spy event happens always (no future[] entry)
+-					// can cause SC to tractor beam Enterprise
++#define FSPY	0   // Spy event happens always (no future[] entry)
++		    // can cause SC to tractor beam Enterprise
+ #define FSNOVA  1   // Supernova
+ #define FTBEAM  2   // Commander tractor beams Enterprise
+ #define FSNAP   3   // Snapshot for time warp
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-03 17:19:58 UTC (rev 656)
++++ trunk/src/sst.py	2006-10-03 18:19:39 UTC (rev 657)
+@@ -693,7 +693,7 @@
+ 	    game.state.planets[i].pclass = destroyed
+ 	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET
+ 	    if not damaged(DRADIO) or game.condition == docked:
+-		pause_game(True)
++		announce()
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;))
+ 		proutn(_(&quot;   a planet in Quadrant %s has been destroyed&quot;) % game.state.kscmdr)
+ 		prout(_(&quot;   by the Super-commander.\&quot;&quot;))
+@@ -798,7 +798,7 @@
+ 		if damaged(DRADIO) and game.condition != docked:
+ 		    return; # no warning 
+ 		game.iseenit = True
+-		pause_game(True)
++		announce()
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in Quadrant %s&quot;) \
+                       % game.state.kscmdr)
+ 		prout(_(&quot;   reports that it is under attack from the Klingon Super-commander.&quot;))
+@@ -818,7 +818,7 @@
+ 	 (damaged(DRADIO) and game.condition != docked) or \
+ 	 not game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].charted):
+ 	return
+-    pause_game(True)
++    announce()
+     prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;))
+     proutn(_(&quot;   the Super-commander is in Quadrant %s,&quot;) % game.state.kscmdr)
+     return;
+@@ -1084,7 +1084,7 @@
+     game.shldup = False
+     prout(_(&quot;***Shields are down.&quot;))
+     if game.state.remkl + game.state.remcom + game.state.nscrem:
+-	pause_game(True)
++	announce()
+ 	damagereport()
+     else:
+ 	finish(FWON)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000123.html">[Sst-commit-watch] r656 - in trunk: po src
+</A></li>
+	<LI>Next message: <A HREF="000125.html">[Sst-commit-watch] r658 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#124">[ date ]</a>
+              <a href="thread.html#124">[ thread ]</a>
+              <a href="subject.html#124">[ subject ]</a>
+              <a href="author.html#124">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r570 - trunk/doc
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r570%20-%20trunk/doc&In-Reply-To=%3C200609152012.k8FKC0dn008545%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000036.html">
+   <LINK REL="Next"  HREF="000038.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r570 - trunk/doc</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r570%20-%20trunk/doc&In-Reply-To=%3C200609152012.k8FKC0dn008545%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r570 - trunk/doc">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 15 22:12:00 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000036.html">[Sst-commit-watch] r569 - trunk/doc
+</A></li>
+        <LI>Next message: <A HREF="000038.html">[Sst-commit-watch] r571 - in trunk: doc src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#37">[ date ]</a>
+              <a href="thread.html#37">[ thread ]</a>
+              <a href="subject.html#37">[ subject ]</a>
+              <a href="author.html#37">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-15 22:12:00 +0200 (Fri, 15 Sep 2006)
+New Revision: 570
+
+Modified:
+   trunk/doc/makehelp.py
+Log:
+Fix an extremely obscure bug in the help generation triggered by
+non-breaking space in xmlto output.
+
+
+Modified: trunk/doc/makehelp.py
+===================================================================
+--- trunk/doc/makehelp.py	2006-09-15 18:51:40 UTC (rev 569)
++++ trunk/doc/makehelp.py	2006-09-15 20:12:00 UTC (rev 570)
+@@ -15,17 +15,17 @@
+ endmarker2 = &quot;Game History and Modifications&quot;
+ 
+ fp = open(&quot;sst-doc.txt&quot;, &quot;r&quot;)
+-savetext = &quot;&quot;
++savetext = []
+ state = 0
+ while True:
+     line = fp.readline()
+     if not line:
+         break
+     if state == 0 and line.startswith(beginmarker1):
+-        line = &quot;%% &quot; + line[12:].lstrip()
++        line = &quot;% &quot; + line[12:].lstrip()
+         state = 1
+     if state == 0 and line.startswith(beginmarker2):
+-        savetext += enddelim + &quot;%% ABBREV\n&quot;
++        savetext.append(enddelim + &quot;%% ABBREV\n&quot;)
+         state = 2
+     if state == 1:
+         if line.find(endmarker1) &gt; -1:
+@@ -34,12 +34,16 @@
+         if line.find(endmarker2) &gt; -1:
+             state = 0
+     if state:
+-        savetext += line.replace(&quot;%&quot;, &quot;%%&quot;)
++        line = line.replace(&quot;%&quot;, &quot;%%&quot;)
++        # Hack Unicode non-breaking spaces into ordinary spaces
++        line = line.replace(&quot;\xc2\xa0&quot;, &quot; &quot;).replace(&quot;\240&quot;, &quot;&quot;)
++        if line.startswith(&quot;Mnemonic:&quot;):
++            while not savetext[-1].strip():
++                savetext.pop()
++        savetext.append(line)
++savetext = &quot;&quot;.join(savetext)
+ 
+ # Remove the section titles
+ savetext = re.sub(&quot;\n+.*\n*Mnemonic:\\s*&quot;, &quot;\n********\n%% &quot;, savetext)
+ 
+-# Hack Unicode non-breaking spaces into ordinary spaces
+-savetext = savetext.replace(&quot;\xc2\xa0&quot;, &quot; &quot;).replace(&quot;\240&quot;, &quot;&quot;)
+-
+ sys.stdout.write(savetext + enddelim)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000036.html">[Sst-commit-watch] r569 - trunk/doc
+</A></li>
+	<LI>Next message: <A HREF="000038.html">[Sst-commit-watch] r571 - in trunk: doc src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#37">[ date ]</a>
+              <a href="thread.html#37">[ thread ]</a>
+              <a href="subject.html#37">[ subject ]</a>
+              <a href="author.html#37">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

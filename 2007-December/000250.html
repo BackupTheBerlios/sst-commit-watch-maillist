@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r783 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2007-December/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r783%20-%20trunk/src&In-Reply-To=%3C200712140015.lBE0Fqkf011165%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000249.html">
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r783 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r783%20-%20trunk/src&In-Reply-To=%3C200712140015.lBE0Fqkf011165%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r783 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Dec 14 01:15:52 CET 2007</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000249.html">[Sst-commit-watch] r782 - trunk/src
+</A></li>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#250">[ date ]</a>
+              <a href="thread.html#250">[ thread ]</a>
+              <a href="subject.html#250">[ subject ]</a>
+              <a href="author.html#250">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2007-12-14 01:15:51 +0100 (Fri, 14 Dec 2007)
+New Revision: 783
+
+Modified:
+   trunk/src/sst.py
+Log:
+Fix buggy processing of shield energy change request.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2007-12-13 23:59:23 UTC (rev 782)
++++ trunk/src/sst.py	2007-12-14 00:15:51 UTC (rev 783)
+@@ -870,7 +870,6 @@
+ 	if action==&quot;NONE&quot;:
+ 	    proutn(_(&quot;Do you wish to change shield energy? &quot;))
+ 	    if ja() == True:
+-		proutn(_(&quot;Energy to transfer to shields- &quot;))
+ 		action = &quot;NRG&quot;
+ 	    elif damaged(DSHIELD):
+ 		prout(_(&quot;Shields damaged and down.&quot;))
+@@ -918,21 +917,22 @@
+ 	while scanner.next() != &quot;IHREAL&quot;:
+ 	    scanner.chew()
+ 	    proutn(_(&quot;Energy to transfer to shields- &quot;))
++        nrg = scanner.real
+ 	scanner.chew()
+-	if scanner.real == 0:
++	if nrg == 0:
+ 	    return
+-	if scanner.real &gt; game.energy:
++	if nrg &gt; game.energy:
+ 	    prout(_(&quot;Insufficient ship energy.&quot;))
+ 	    return
+ 	game.ididit = True
+-	if game.shield+scanner.real &gt;= game.inshld:
++	if game.shield+nrg &gt;= game.inshld:
+ 	    prout(_(&quot;Shield energy maximized.&quot;))
+-	    if game.shield+scanner.real &gt; game.inshld:
++	    if game.shield+nrg &gt; game.inshld:
+ 		prout(_(&quot;Excess energy requested returned to ship energy&quot;))
+ 	    game.energy -= game.inshld-game.shield
+ 	    game.shield = game.inshld
+ 	    return
+-	if scanner.real &lt; 0.0 and game.energy-scanner.real &gt; game.inenrg:
++	if nrg &lt; 0.0 and game.energy-nrg &gt; game.inenrg:
+ 	    # Prevent shield drain loophole 
+ 	    skip(1)
+ 	    prout(_(&quot;Engineering to bridge--&quot;))
+@@ -940,18 +940,18 @@
+ 	    prout(_(&quot;  I can't drain the shields.&quot;))
+ 	    game.ididit = False
+ 	    return
+-	if game.shield+scanner.real &lt; 0:
++	if game.shield+nrg &lt; 0:
+ 	    prout(_(&quot;All shield energy transferred to ship.&quot;))
+ 	    game.energy += game.shield
+ 	    game.shield = 0.0
+ 	    return
+ 	proutn(_(&quot;Scotty- \&quot;&quot;))
+-	if scanner.real &gt; 0:
++	if nrg &gt; 0:
+ 	    prout(_(&quot;Transferring energy to shields.\&quot;&quot;))
+ 	else:
+ 	    prout(_(&quot;Draining energy from shields.\&quot;&quot;))
+-	game.shield += scanner.real
+-	game.energy -= scanner.real
++	game.shield += nrg
++	game.energy -= nrg
+ 	return
+ 
+ def randdevice():
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000249.html">[Sst-commit-watch] r782 - trunk/src
+</A></li>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#250">[ date ]</a>
+              <a href="thread.html#250">[ thread ]</a>
+              <a href="subject.html#250">[ subject ]</a>
+              <a href="author.html#250">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,1091 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r585 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r585%20-%20trunk/src&In-Reply-To=%3C200609180516.k8I5GfJN001534%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000051.html">
+   <LINK REL="Next"  HREF="000053.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r585 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r585%20-%20trunk/src&In-Reply-To=%3C200609180516.k8I5GfJN001534%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r585 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep 18 07:16:41 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000051.html">[Sst-commit-watch] r584 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000053.html">[Sst-commit-watch] r586 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#52">[ date ]</a>
+              <a href="thread.html#52">[ thread ]</a>
+              <a href="subject.html#52">[ subject ]</a>
+              <a href="author.html#52">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-18 07:16:40 +0200 (Mon, 18 Sep 2006)
+New Revision: 585
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/finish.c
+   trunk/src/io.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+More type cleanup.  Use stdbool facility from C99 so code checkers can
+do type-consistency analysis.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/ai.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -423,10 +423,8 @@
+ 
+ 	for_starbases(i2) {
+ 	    i = basetbl[i2];	/* bug in original had it not finding nearest*/
+-	    ibq.x = game.state.baseq[i].x;
+-	    ibq.y = game.state.baseq[i].y;
+-	    if ((ibq.x == game.quadrant.x &amp;&amp; ibq.y == game.quadrant.y) ||
+-		(ibq.x == game.battle.x &amp;&amp; ibq.y == game.battle.y) ||
++	    ibq = game.state.baseq[i];
++	    if (same(ibq, game.quadrant) || same(ibq, game.battle) ||
+ 		game.state.galaxy[ibq.x][ibq.y].supernova ||
+ 		game.state.galaxy[ibq.x][ibq.y].klingons &gt; 8) 
+ 		continue;
+@@ -446,8 +444,7 @@
+ 	    }
+ 	}
+ 	if (ifindit==0) return; /* Nothing suitable -- wait until next time*/
+-	ibq.x = game.state.baseq[iwhichb].x;
+-	ibq.y = game.state.baseq[iwhichb].y;
++	ibq = game.state.baseq[iwhichb];
+ 	/* decide how to move toward base */
+ 	ideltax = ibq.x - game.state.kscmdr.x;
+ 	ideltay = ibq.y - game.state.kscmdr.y;
+@@ -587,8 +584,7 @@
+ 	}
+     }
+     game.quad[game.tholian.x][game.tholian.y] = IHT;
+-    game.ks[game.nenhere].x=game.tholian.x;
+-    game.ks[game.nenhere].y=game.tholian.y;
++    game.ks[game.nenhere] = game.tholian;
+ 
+     /* check to see if all holes plugged */
+     for_sectors(i) {
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/battle.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -151,7 +151,7 @@
+     crmena(0, ienm, 2, w);
+     if (ibumpd) proutn(_(&quot; (original position)&quot;));
+     skip(1);
+-    deadkl(w.x, w.y, ienm, game.sector.x, game.sector.y);
++    deadkl(w, ienm, game.sector.x, game.sector.y);
+     proutn(&quot;***&quot;);
+     crmshp();
+     prout(_(&quot; heavily damaged.&quot;));
+@@ -265,7 +265,7 @@
+ 	    if (kp &lt; h1) h1 = kp;
+ 	    game.kpower[ll] -= (game.kpower[ll]&lt;0 ? -h1 : h1);
+ 	    if (game.kpower[ll] == 0) {
+-		deadkl(w.x, w.y, iquad, w.x, w.y);
++		deadkl(w, iquad, w.x, w.y);
+ 		return;
+ 	    }
+ 	    crmena(1, iquad, 2, w);
+@@ -283,7 +283,7 @@
+ 	    }
+ 	    if (game.quad[jx][jy]==IHBLANK) {
+ 		prout(_(&quot; buffeted into black hole.&quot;));
+-		deadkl(w.x, w.y, iquad, jx, jy);
++		deadkl(w, iquad, jx, jy);
+ 		return;
+ 	    }
+ 	    if (game.quad[jx][jy]!=IHDOT) {
+@@ -346,7 +346,7 @@
+ 		proutn(_(&quot;Mr. Spock-&quot;));
+ 		prouts(_(&quot;  \&quot;Fascinating!\&quot;&quot;));
+ 		skip(1);
+-		deadkl(w.x, w.y, iquad, w.x, w.y);
++		deadkl(w, iquad, w.x, w.y);
+ 	    } else {
+ 		/*
+ 		 * Stas Sergeev added the possibility that
+@@ -375,7 +375,7 @@
+ 		game.quad[w.x][w.y] = IHDOT;
+ 		game.ithere = 0;
+ 		game.tholian.x = game.tholian.y = 0;
+-		deadkl(w.x, w.y, iquad, w.x, w.y);
++		deadkl(w, iquad, w.x, w.y);
+ 		return;
+ 	    }
+ 	    skip(1);
+@@ -603,7 +603,7 @@
+     return;
+ }
+ 		
+-void deadkl(int ix, int iy, int type, int ixx, int iyy) 
++void deadkl(coord w, int type, int ixx, int iyy) 
+ {
+     /* Added ixx and iyy allow enemy to &quot;move&quot; before dying */
+     coord mv;
+@@ -658,7 +658,7 @@
+ 
+     /* For each kind of enemy, finish message to player */
+     prout(_(&quot; destroyed.&quot;));
+-    game.quad[ix][iy] = IHDOT;
++    game.quad[w.x][w.y] = IHDOT;
+     if (KLINGREM==0) return;
+ 
+     game.state.remtime = game.state.remres/(game.state.remkl + 4*game.state.remcom);
+@@ -667,7 +667,7 @@
+     if (is_scheduled(FCDBAS) &amp;&amp; game.battle.x==game.quadrant.x &amp;&amp; game.battle.y==game.quadrant.y &amp;&amp; type==IHC)
+ 	unschedule(FCDBAS);
+     for_local_enemies(i)
+-	if (game.ks[i].x==ix &amp;&amp; game.ks[i].y==iy) break;
++	if (same(game.ks[i], w)) break;
+     game.nenhere--;
+     if (i &lt;= game.nenhere)  {
+ 	for (j=i; j&lt;=game.nenhere; j++) {
+@@ -684,13 +684,13 @@
+     return;
+ }
+ 
+-static int targetcheck(double x, double y, double *course) 
++static bool targetcheck(double x, double y, double *course) 
+ {
+     double deltx, delty;
+-    /* Return TRUE if target is invalid */
++    /* Return true if target is invalid */
+     if (!VALID_SECTOR(x, y)) {
+ 	huh();
+-	return 1;
++	return true;
+     }
+     deltx = 0.1*(y - game.sector.y);
+     delty = 0.1*(game.sector.x - x);
+@@ -700,10 +700,10 @@
+ 	prout(_(&quot;  I recommend an immediate review of&quot;));
+ 	prout(_(&quot;  the Captain's psychological profile.\&quot;&quot;));
+ 	chew();
+-	return 1;
++	return true;
+     }
+     *course = 1.90985932*atan2(deltx, delty);
+-    return 0;
++    return false;
+ }
+ 
+ void photon(void) 
+@@ -1210,7 +1210,7 @@
+ 	crmena(0,ienm,2,w);
+ 	skip(1);
+ 	if (kpow == 0) {
+-	    deadkl(w.x, w.y, ienm, w.x, w.y);
++	    deadkl(w, ienm, w.x, w.y);
+ 	    if (KLINGREM==0) finish(FWON);
+ 	    if (game.alldone) return;
+ 	    kk--; /* don't do the increment */
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/events.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -36,6 +36,7 @@
+     int ictbeam=0, ipage=0, istract=0, line, i=0, j, k, l, ixhold=0, iyhold=0;
+     double fintim = game.state.date + game.optime, datemin, xtime, repair, yank=0;
+     int radio_was_broken;
++    struct quadrant *pdest;
+ 
+ #ifdef DEBUG
+     if (game.idebug) prout(&quot;EVENTS&quot;);
+@@ -280,8 +281,8 @@
+ 	    /* Not perfect, but will have to do */
+ 	    /* Handle case where base is in same quadrant as starship */
+ 	    if (game.battle.x==game.quadrant.x &amp;&amp; game.battle.y==game.quadrant.y) {
+-		game.state.chart[game.battle.x][game.battle.y].starbase = FALSE;
+-		game.quad[game.base.x][game.base.y]= IHDOT;
++		game.state.chart[game.battle.x][game.battle.y].starbase = false;
++		game.quad[game.base.x][game.base.y] = IHDOT;
+ 		game.base.x=game.base.y=0;
+ 		newcnd();
+ 		skip(1);
+@@ -299,10 +300,10 @@
+ 		prout(_(&quot; has been destroyed by&quot;));
+ 		if (game.isatb==2) prout(_(&quot;the Klingon Super-Commander&quot;));
+ 		else prout(_(&quot;a Klingon Commander&quot;));
+-		game.state.chart[game.battle.x][game.battle.y].starbase = FALSE;
++		game.state.chart[game.battle.x][game.battle.y].starbase = false;
+ 	    }
+ 	    /* Remove Starbase from galaxy */
+-	    game.state.galaxy[game.battle.x][game.battle.y].starbase = FALSE;
++	    game.state.galaxy[game.battle.x][game.battle.y].starbase = false;
+ 	    for_starbases(i)
+ 		if (game.state.baseq[i].x==game.battle.x &amp;&amp; game.state.baseq[i].y==game.battle.y) {
+ 		    game.state.baseq[i].x=game.state.baseq[game.state.rembase].x;
+@@ -360,17 +361,19 @@
+ 		    prout(&quot;.\&quot;&quot;);
+ 		}
+ 	    }
++	    pdest = &amp;game.state.galaxy[game.probec.x][game.probec.y];
+ 	    /* Update star chart if Radio is working or have access to
+ 	       radio. */
+ 	    if (game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED) {
+-		game.state.chart[game.probec.x][game.probec.y].klingons = game.state.galaxy[game.probec.x][game.probec.y].klingons;
+-		game.state.chart[game.probec.x][game.probec.y].starbase = game.state.galaxy[game.probec.x][game.probec.y].starbase;
+-		game.state.chart[game.probec.x][game.probec.y].stars = game.state.galaxy[game.probec.x][game.probec.y].stars;
+-		game.state.galaxy[game.probec.x][game.probec.y].charted = TRUE;
++		struct page *chp = &amp;game.state.chart[game.probec.x][game.probec.y];
++
++		chp-&gt;klingons = pdest-&gt;klingons;
++		chp-&gt;starbase = pdest-&gt;starbase;
++		chp-&gt;stars = pdest-&gt;stars;
++		pdest-&gt;charted = true;
+ 	    }
+ 	    game.proben--; // One less to travel
+-	    if (game.proben == 0 &amp;&amp; game.isarmed &amp;&amp;
+-		game.state.galaxy[game.probec.x][game.probec.y].stars) {
++	    if (game.proben == 0 &amp;&amp; game.isarmed &amp;&amp; pdest-&gt;stars) {
+ 		/* lets blow the sucker! */
+ 		snova(1,0);
+ 		unschedule(FDSPROB);
+@@ -629,7 +632,7 @@
+ 			game.quad[scratch.x][scratch.y] = IHDOT;
+ 			break;
+ 		    case IHB: /* Destroy base */
+-			game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase = FALSE;
++			game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase = false;
+ 			for_starbases(i)
+ 			    if (game.state.baseq[i].x==game.quadrant.x &amp;&amp; game.state.baseq[i].y==game.quadrant.y) 
+ 				break;
+@@ -667,7 +670,7 @@
+ 			kount++;
+ 			break;
+ 		    case IHK: /* kill klingon */
+-			deadkl(scratch.x,scratch.y,iquad, scratch.x, scratch.y);
++			deadkl(scratch,iquad, scratch.x, scratch.y);
+ 			break;
+ 		    case IHC: /* Damage/destroy big enemies */
+ 		    case IHS:
+@@ -676,7 +679,7 @@
+ 			    if (game.ks[ll].x==scratch.x &amp;&amp; game.ks[ll].y==scratch.y) break;
+ 			game.kpower[ll] -= 800.0; /* If firepower is lost, die */
+ 			if (game.kpower[ll] &lt;= 0.0) {
+-			    deadkl(scratch.x, scratch.y, iquad, scratch.x, scratch.y);
++			    deadkl(scratch, iquad, scratch.x, scratch.y);
+ 			    break;
+ 			}
+ 			newc.x = scratch.x + scratch.x - hits[mm][1];
+@@ -693,7 +696,7 @@
+ 			    proutn(_(&quot;, blasted into &quot;));
+ 			    crmena(0, IHBLANK, 2, newc);
+ 			    skip(1);
+-			    deadkl(scratch.x, scratch.y, iquad, newc.x, newc.y);
++			    deadkl(scratch, iquad, newc.x, newc.y);
+ 			    break;
+ 			}
+ 			if (iquad1 != IHDOT) {
+@@ -886,7 +889,7 @@
+     if ((game.quadrant.x == nq.x &amp;&amp; game.quadrant.y == nq.y) ||
+ 	game.damage[DRADIO] == 0 ||
+ 	game.condit == IHDOCKED)
+-	game.state.galaxy[nq.x][nq.y].supernova = TRUE;
++	game.state.galaxy[nq.x][nq.y].supernova = true;
+     /* If supernova destroys last klingons give special message */
+     if (KLINGREM==0 &amp;&amp; (nq.x != game.quadrant.x || nq.y != game.quadrant.y)) {
+ 	skip(2);
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/finish.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -61,7 +61,7 @@
+ 	int l=1;
+ 	while (l &lt;= game.nenhere) {
+ 	    if (game.kpower[l]*game.kdist[l] &lt;= whammo) 
+-		deadkl(game.ks[l].x,game.ks[l].x, game.quad[game.ks[l].x][game.ks[l].y], game.ks[l].x, game.ks[l].y);
++		deadkl(game.ks[l], game.quad[game.ks[l].x][game.ks[l].y], game.ks[l].x, game.ks[l].y);
+ 	    l++;
+ 	}
+     }
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/io.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -303,7 +303,7 @@
+     }
+ }
+  
+-void commandhook(char *cmd, int before) {
++void commandhook(char *cmd, bool before) {
+ }
+ 
+ /*
+@@ -430,7 +430,7 @@
+ void setpassword(void) 
+ {
+     if (!(game.options &amp; OPTION_CURSES)) {
+-	while (TRUE) {
++	for (;;) {
+ 	    scan();
+ 	    strcpy(game.passwd, citem);
+ 	    chew();
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/moving.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -2,7 +2,7 @@
+ #include &quot;sstlinux.h&quot;
+ #include &quot;sst.h&quot;
+ 
+-static void getcd(int, int);
++static void getcd(bool, int);
+ 
+ void imove(void) 
+ {
+@@ -14,7 +14,7 @@
+     w.x = w.y = 0;
+     if (game.inorbit) {
+ 	prout(&quot;Helmsman Sulu- \&quot;Leaving standard orbit.\&quot;&quot;);
+-	game.inorbit = FALSE;
++	game.inorbit = false;
+     }
+ 
+     angle = ((15.0 - game.direc) * 0.5235988);
+@@ -246,7 +246,7 @@
+     }
+ }
+ 
+-static void getcd(int isprobe, int akey) {
++static void getcd(bool isprobe, int akey) {
+ 	/* This program originally required input in terms of a (clock)
+ 	   direction and distance. Somewhere in history, it was changed to
+ 	   cartesian coordinates. So we need to convert. I think
+@@ -446,7 +446,7 @@
+     }
+ 
+     if (game.energy &gt; 30.0) {
+-	getcd(FALSE, 0);
++	getcd(false, 0);
+ 	if (game.direc == -1.0) return;
+ 	power = 20.0 + 100.0*game.dist;
+     }
+@@ -511,7 +511,7 @@
+ 	}
+ 			
+ 	/* Read in course and distance */
+-	getcd(FALSE, 0);
++	getcd(false, 0);
+ 	if (game.direc == -1.0) return;
+ 
+ 	/* Make sure starship has enough energy for the trip */
+@@ -734,7 +734,7 @@
+ 	skip(1);
+ 	prout(&quot;safely out of quadrant.&quot;);
+ 	if (game.damage[DRADIO] == 0.0)
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = TRUE;
++	    game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = true;
+ 	/* Try to use warp engines */
+ 	if (game.damage[DWARPEN]) {
+ 	    skip(1);
+@@ -869,16 +869,16 @@
+ 	if (ja()==0) return;
+     }
+ 
+-    game.isarmed = FALSE;
++    game.isarmed = false;
+     if (key == IHALPHA &amp;&amp; strcmp(citem,&quot;armed&quot;) == 0) {
+-	game.isarmed = TRUE;
++	game.isarmed = true;
+ 	key = scan();
+     }
+     else if (key == IHEOL) {
+ 	proutn(&quot;Arm NOVAMAX warhead? &quot;);
+ 	game.isarmed = ja();
+     }
+-    getcd(TRUE, key);
++    getcd(true, key);
+     if (game.direc == -1.0) return;
+     game.nprobes--;
+     angle = ((15.0 - game.direc) * 0.5235988);
+@@ -943,8 +943,7 @@
+ 	    }
+ 	}
+ 	/* Since starbase not in quadrant, set up new quadrant */
+-	game.quadrant.x = game.state.baseq[line].x;
+-	game.quadrant.y = game.state.baseq[line].y;
++	game.quadrant = game.state.baseq[line];
+ 	newqad(1);
+     }
+     /* dematerialize starship */
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/planets.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -443,7 +443,7 @@
+ 	prouts(&quot;Sulu- \&quot;Captain!  It's working!\&quot;&quot;);
+ 	skip(2);
+ 	while (game.nenhere &gt; 0)
+-	    deadkl(game.ks[1].x,game.ks[1].y,game.quad[game.ks[1].x][game.ks[1].y],game.ks[1].x,game.ks[1].y);
++	    deadkl(game.ks[1], game.quad[game.ks[1].x][game.ks[1].y],game.ks[1].x,game.ks[1].y);
+ 	prout(&quot;Ensign Chekov-  \&quot;Congratulations, Captain!\&quot;&quot;);
+ 	if (KLINGREM == 0) finish(FWON);
+ 	if ((game.options &amp; OPTION_PLAIN) == 0) {
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/reports.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -135,7 +135,7 @@
+ 		proutn(&quot;  -1&quot;);
+ 	    else {
+ 		if (!game.damage[DRADIO])
+-		    game.state.galaxy[x][y].charted = TRUE;
++		    game.state.galaxy[x][y].charted = true;
+ 		game.state.chart[x][y].klingons = game.state.galaxy[x][y].klingons;
+ 		game.state.chart[x][y].starbase = game.state.galaxy[x][y].starbase;
+ 		game.state.chart[x][y].stars = game.state.galaxy[x][y].stars;
+@@ -151,7 +151,8 @@
+ 
+ void dreprt(void) 
+ {
+-    int jdam = FALSE, i;
++    bool jdam = false;
++    int i;
+     chew();
+ 
+     for (i = 0; i &lt; NDEVICES; i++) {
+@@ -159,7 +160,7 @@
+ 	    if (!jdam) {
+ 		prout(&quot;DEVICE            -REPAIR TIMES-&quot;);
+ 		prout(&quot;                IN FLIGHT   DOCKED&quot;);
+-		jdam = TRUE;
++		jdam = true;
+ 	    }
+ 	    prout(&quot;  %16s %8.2f  %8.2f&quot;, 
+ 		  device[i],
+@@ -334,15 +335,16 @@
+     /* the &quot;sy&quot; request is undocumented */
+     static char requests[][3] =
+ 	{&quot;&quot;,&quot;da&quot;,&quot;co&quot;,&quot;po&quot;,&quot;ls&quot;,&quot;wa&quot;,&quot;en&quot;,&quot;to&quot;,&quot;sh&quot;,&quot;kl&quot;,&quot;sy&quot;, &quot;ti&quot;};
+-    int leftside=TRUE, rightside=TRUE, i, j, jj, req=0, nn=FALSE;
+-    int goodScan=TRUE;
++    
++    int i, j, jj, req=0;
++    int goodScan=true, leftside=true, rightside=true, nn=false; 
+     switch (l) {
+     case SCAN_FULL: // SRSCAN
+ 	if (game.damage[DSRSENS] != 0) {
+ 	    /* Allow base's sensors if docked */
+ 	    if (game.condit != IHDOCKED) {
+ 		prout(&quot;   S.R. SENSORS DAMAGED!&quot;);
+-		goodScan=FALSE;
++		goodScan=false;
+ 	    }
+ 	    else
+ 		prout(&quot;  [Using Base's sensors]&quot;);
+@@ -352,11 +354,11 @@
+ 	    game.state.chart[game.quadrant.x][game.quadrant.y].klingons = game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons;
+ 	    game.state.chart[game.quadrant.x][game.quadrant.y].starbase = game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase;
+ 	    game.state.chart[game.quadrant.x][game.quadrant.y].stars = game.state.galaxy[game.quadrant.x][game.quadrant.y].stars;
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = TRUE;
++	    game.state.galaxy[game.quadrant.x][game.quadrant.y].charted = true;
+ 	}
+ 	scan();
+-	if (isit(&quot;chart&quot;)) nn = TRUE;
+-	if (isit(&quot;no&quot;)) rightside = FALSE;
++	if (isit(&quot;chart&quot;)) nn = true;
++	if (isit(&quot;no&quot;)) rightside = false;
+ 	chew();
+ 	prout(&quot;    1 2 3 4 5 6 7 8 9 10&quot;);
+ 	break;
+@@ -371,16 +373,16 @@
+ 	    prout(&quot;UNRECOGNIZED REQUEST. Legal requests are:&quot;);
+ 	    prout(&quot;  date, condition, position, lsupport, warpfactor,&quot;);
+ 	    prout(&quot;  energy, torpedoes, shields, klingons, time, system, bases.&quot;);
+-	    return FALSE;
++	    return false;
+ 	}
+ 	// no break
+     case SCAN_STATUS: // STATUS
+ 	chew();
+-	leftside = FALSE;
++	leftside = false;
+ 	skip(1);
+ 	// no break
+     case SCAN_NO_LEFTSIDE: // REQUEST
+-	leftside=FALSE;
++	leftside=false;
+ 	break;
+     }
+     if (game.condit != IHDOCKED) newcnd();
+@@ -405,8 +407,8 @@
+ 			
+ void eta(void)
+ {
+-    int ix1, ix2, iy1, iy2, prompt=FALSE;
+-    int wfl;
++    int ix1, ix2, iy1, iy2;
++    bool wfl, prompt = false;
+     double ttime, twarp, tpower;
+     if (game.damage[DCOMPTR] != 0.0) {
+ 	prout(&quot;COMPUTER DAMAGED, USE A POCKET CALCULATOR.&quot;);
+@@ -414,7 +416,7 @@
+ 	return;
+     }
+     if (scan() != IHREAL) {
+-	prompt = TRUE;
++	prompt = true;
+ 	chew();
+ 	proutn(&quot;Destination quadrant and/or sector? &quot;);
+ 	if (scan()!=IHREAL) {
+@@ -449,10 +451,10 @@
+     }
+     game.dist = sqrt(square(iy1-game.quadrant.x+0.1*(iy2-game.sector.x))+
+ 		square(ix1-game.quadrant.y+0.1*(ix2-game.sector.y)));
+-    wfl = FALSE;
++    wfl = false;
+ 
+     if (prompt) prout(&quot;Answer \&quot;no\&quot; if you don't know the value:&quot;);
+-    while (TRUE) {
++    for (;;) {
+ 	chew();
+ 	proutn(&quot;Time or arrival date? &quot;);
+ 	if (scan()==IHREAL) {
+@@ -470,7 +472,7 @@
+ 	chew();
+ 	proutn(&quot;Warp factor? &quot;);
+ 	if (scan()== IHREAL) {
+-	    wfl = TRUE;
++	    wfl = true;
+ 	    twarp = aaitem;
+ 	    if (twarp&lt;1.0 || twarp &gt; 10.0) {
+ 		huh();
+@@ -480,7 +482,7 @@
+ 	}
+ 	prout(&quot;Captain, certainly you can give me one of these.&quot;);
+     }
+-    while (TRUE) {
++    for (;;) {
+ 	chew();
+ 	ttime = (10.0*game.dist)/square(twarp);
+ 	tpower = game.dist*twarp*twarp*twarp*(game.shldup+1);
+@@ -490,7 +492,7 @@
+ 		if (!wfl) return;
+ 		proutn(&quot;New warp factor to try? &quot;);
+ 		if (scan() == IHREAL) {
+-		    wfl = TRUE;
++		    wfl = true;
+ 		    twarp = aaitem;
+ 		    if (twarp&lt;1.0 || twarp &gt; 10.0) {
+ 			huh();
+@@ -532,7 +534,7 @@
+ 	    prout(&quot;The starbase there will be destroyed by then.&quot;);
+ 	proutn(&quot;New warp factor to try? &quot;);
+ 	if (scan() == IHREAL) {
+-	    wfl = TRUE;
++	    wfl = true;
+ 	    twarp = aaitem;
+ 	    if (twarp&lt;1.0 || twarp &gt; 10.0) {
+ 		huh();
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/setup.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -19,7 +19,7 @@
+ #endif /* __HISTORICAL__ */
+ }
+ 
+-void freeze(int boss) 
++void freeze(bool boss) 
+ {
+     FILE *fp;
+     int key;
+@@ -220,7 +220,8 @@
+     game.battle.x = game.battle.y = 0;
+     game.state.date = game.indate = 100.0*(int)(31.0*Rand()+20.0);
+     game.nkinks = game.nhelp = game.resting = game.casual = 0;
+-    game.isatb = game.iscate = game.imine = game.icrystl = game.icraft = game.state.nplankl = 0;
++    game.isatb = game.iscate = true;
++    game.imine = game.icrystl = game.icraft = game.state.nplankl = 0;
+     game.state.starkl = game.state.basekl = 0;
+     game.iscraft = 1;
+     game.landed = -1;
+@@ -269,16 +270,16 @@
+ 	}
+     // Locate star bases in galaxy
+     for (i = 1; i &lt;= game.inbase; i++) {
+-	int contflag;
++	bool contflag;
+ 	do {
+ 	    do iran(GALSIZE, &amp;ix, &amp;iy);
+ 	    while (game.state.galaxy[ix][iy].starbase);
+-	    contflag = FALSE;
++	    contflag = false;
+ 	    for (j = i-1; j &gt; 0; j--) {
+ 		/* Improved placement algorithm to spread out bases */
+ 		double distq = square(ix-game.state.baseq[j].x) + square(iy-game.state.baseq[j].y);
+ 		if (distq &lt; 6.0*(BASEMAX+1-game.inbase) &amp;&amp; Rand() &lt; 0.75) {
+-		    contflag = TRUE;
++		    contflag = true;
+ #ifdef DEBUG
+ 		    prout(&quot;DEBUG: Abandoning base #%d at %d-%d&quot;, i, ix, iy);
+ #endif
+@@ -423,9 +424,9 @@
+     if (game.neutz) attack(0);	// bad luck to start in a Romulan Neutral Zone
+ }
+ 
+-int choose(int needprompt) 
++bool choose(bool needprompt) 
+ {
+-    while (TRUE) {
++    for(;;) {
+ 	game.tourn = 0;
+ 	game.thawed = 0;
+ 	game.skill = SKILL_NONE;
+@@ -454,7 +455,7 @@
+ 	    if (!game.alldone) game.thawed = 1; // No plaque if not finished
+ 	    report();
+ 	    waitfor();
+-	    return TRUE;
++	    return true;
+ 	}
+ 	if (isit(&quot;regular&quot;)) break;
+ 	proutn(&quot;What is \&quot;&quot;);
+@@ -531,7 +532,7 @@
+     if (game.inkling &gt; 50) {
+ 	game.inbase = (game.state.rembase += 1);
+     }
+-    return FALSE;
++    return false;
+ }
+ 
+ void dropin(int iquad, coord *w) 
+@@ -730,17 +731,18 @@
+ void sortkl(void) 
+ {
+     double t;
+-    int sw, j, k;
++    int j, k;
++    bool sw;
+ 
+     // The author liked bubble sort. So we will use it. :-(
+ 
+     if (game.nenhere-iqhere-game.ithere &lt; 2) return;
+ 
+     do {
+-	sw = FALSE;
++	sw = false;
+ 	for (j = 1; j &lt; game.nenhere; j++)
+ 	    if (game.kdist[j] &gt; game.kdist[j+1]) {
+-		sw = TRUE;
++		sw = true;
+ 		t = game.kdist[j];
+ 		game.kdist[j] = game.kdist[j+1];
+ 		game.kdist[j+1] = t;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/sst.c	2006-09-18 05:16:40 UTC (rev 585)
+@@ -298,7 +298,7 @@
+     /* Give help on commands */
+     int key;
+     key = scan();
+-    while (TRUE) {
++    for(;;) {
+ 	if (key == IHEOL) {
+ 	    setwnd(prompt_window);
+ 	    proutn(&quot;Help on what command? &quot;);
+@@ -375,13 +375,14 @@
+ 
+ static void makemoves(void) 
+ {
+-    int i, v = 0, hitme;
++    int i, v = 0;
++    bool hitme;
+     clrscr();
+     setwnd(message_window);
+-    while (TRUE) { /* command loop */
++    for(;;) { /* command loop */
+ 	drawmaps(1);
+-	while (TRUE)  { /* get a command */
+-	    hitme = FALSE;
++	for(;;)  { /* get a command */
++	    hitme = false;
+ 	    game.justin = 0;
+ 	    game.optime = 0.0;
+ 	    i = -1;
+@@ -413,7 +414,7 @@
+ 		break;
+ 	    listCommands();
+ 	}
+-	commandhook(commands[i].name, TRUE);
++	commandhook(commands[i].name, true);
+ 	switch (v) { /* command switch */
+ 	case SRSCAN:                 // srscan
+ 	    srscan(SCAN_FULL);
+@@ -429,11 +430,11 @@
+ 	    break;
+ 	case PHASERS:			// phasers
+ 	    phasers();
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case TORPEDO:			// photons
+ 	    photon();
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case MOVE:			// move
+ 	    warp(1);
+@@ -441,7 +442,7 @@
+ 	case SHIELDS:			// shields
+ 	    doshield(1);
+ 	    if (game.ididit) {
+-		hitme=TRUE;
++		hitme=true;
+ 		game.shldchg = 0;
+ 	    }
+ 	    break;
+@@ -460,7 +461,7 @@
+ 	    break;
+ 	case REST:			// rest
+ 	    wait();
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case WARP:			// warp
+ 	    setwrp();
+@@ -473,22 +474,22 @@
+ 	    break;
+ 	case ORBIT:			// orbit
+ 	    orbit();
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case TRANSPORT:			// transport &quot;beam&quot;
+ 	    beam();
+ 	    break;
+ 	case MINE:			// mine
+ 	    mine();
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case CRYSTALS:			// crystals
+ 	    usecrystals();
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case SHUTTLE:			// shuttle
+ 	    shuttle();
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case PLANETS:			// Planet list
+ 	    preport();
+@@ -504,12 +505,12 @@
+ 	    break;
+ 	case EMEXIT:			// Emergency exit
+ 	    clrscr();			// Hide screen
+-	    freeze(TRUE);		// forced save
++	    freeze(true);		// forced save
+ 	    exit(1);			// And quick exit
+ 	    break;
+ 	case PROBE:
+ 	    probe();			// Launch probe
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case ABANDON:			// Abandon Ship
+ 	    abandn();
+@@ -518,14 +519,14 @@
+ 	    dstrct();
+ 	    break;
+ 	case SAVE:			// Save Game
+-	    freeze(FALSE);
++	    freeze(false);
+ 	    clrscr();
+ 	    if (game.skill &gt; SKILL_GOOD)
+ 		prout(&quot;WARNING--Saved games produce no plaques!&quot;);
+ 	    break;
+ 	case DEATHRAY:			// Try a desparation measure
+ 	    deathray();
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case DEBUGCMD:			// What do we want for debug???
+ #ifdef DEBUG
+@@ -534,7 +535,7 @@
+ 	    break;
+ 	case MAYDAY:			// Call for help
+ 	    mayday();
+-	    if (game.ididit) hitme = TRUE;
++	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case QUIT:
+ 	    game.alldone = 1;		// quit the game
+@@ -546,7 +547,7 @@
+ 	    helpme();	// get help
+ 	    break;
+ 	}
+-	commandhook(commands[i].name, FALSE);
++	commandhook(commands[i].name, false);
+ 	for (;;) {
+ 	    if (game.alldone) break;		// Game has ended
+ #ifdef DEBUG
+@@ -565,7 +566,7 @@
+ 		if (game.alldone) break;
+ 		if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova) {	// went NOVA! 
+ 		    atover(0);
+-		    hitme = TRUE;
++		    hitme = true;
+ 		    continue;
+ 		}
+ 	    }
+@@ -606,7 +607,7 @@
+ 	strcat(line, argv[i]);
+ 	strcat(line, &quot; &quot;);
+     }
+-    while (TRUE) { /* Play a game */
++    for(;;) { /* Play a game */
+ 	setwnd(fullscreen_window);
+ #ifdef DEBUG
+ 	prout(&quot;INITIAL OPTIONS: %0lx&quot;, game.options);
+@@ -627,7 +628,7 @@
+ 	    proutn(&quot;Do you want your score recorded?&quot;);
+ 	    if (ja()) {
+ 		chew2();
+-		freeze(FALSE);
++		freeze(false);
+ 	    }
+ 	}
+ 	proutn(&quot;Do you want to play again? &quot;);
+@@ -779,14 +780,14 @@
+     return IHALPHA;
+ }
+ 
+-int ja(void) 
++bool ja(void) 
+ {
+     chew();
+-    while (TRUE) {
++    for(;;) {
+ 	scan();
+ 	chew();
+-	if (*citem == 'y') return TRUE;
+-	if (*citem == 'n') return FALSE;
++	if (*citem == 'y') return true;
++	if (*citem == 'n') return false;
+ 	proutn(&quot;Please answer with \&quot;Y\&quot; or \&quot;N\&quot;: &quot;);
+     }
+ }
+@@ -871,7 +872,7 @@
+     }
+     proutn(&quot;Induce supernova here? &quot;);
+     if (ja() != 0) {
+-	game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova = TRUE;
++	game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova = true;
+ 	atover(1);
+     }
+ }
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-18 03:49:33 UTC (rev 584)
++++ trunk/src/sst.h	2006-09-18 05:16:40 UTC (rev 585)
+@@ -7,6 +7,7 @@
+ #include &lt;locale.h&gt;
+ #include &lt;libintl.h&gt;
+ #include &lt;curses.h&gt;
++#include &lt;stdbool.h&gt;
+ 
+ #ifdef DATA_DIR
+ #define SSTDOC DATA_DIR&quot;/&quot;DOC_NAME
+@@ -77,16 +78,16 @@
+     struct quadrant {
+ 	int stars;
+ 	planet *planet;
+-	int starbase;
++	bool starbase;
+ 	int klingons;
+ 	int romulans;
+-	int supernova;
+-	int charted;
++	bool supernova;
++	bool charted;
+ #ifdef EXPERIMENTAL
+ 	enum {secure, distressed, enslaved} status;
+ #endif /* EXPERIMENTAL */
+     } galaxy[GALSIZE+1][GALSIZE+1]; 	// The Galaxy (subscript 0 not used)
+-    struct {
++    struct page {
+ 	int stars;
+ 	int starbase;
+ 	int klingons;
+@@ -201,6 +202,16 @@
+     coord battle;		// base coordinates being attacked
+     coord plnet;		// location of planet in quadrant
+     coord probec;	// current probe quadrant
++    bool gamewon,	// Finished!
++	ididit,		// Action taken -- allows enemy to attack
++	alive,		// We are alive (not killed)
++	justin,		// just entered quadrant
++	alldone,	// game is now finished
++	neutz,		// Romulan Neutral Zone
++	isatb,		// =1 if super commander is attacking base
++	isarmed,	// probe is armed
++	thawed,		// thawed game
++	iscate;		// super commander is here
+     int inkling,	// Initial number of klingons
+ 	inbase,		// Initial number of bases
+ 	incom,		// Initial number of commanders
+@@ -218,11 +229,6 @@
+ 	casual,		// causalties
+ 	nhelp,		// calls for help
+ 	nkinks,		// count of energy-barrier crossings
+-	ididit,		// Action taken -- allows enemy to attack
+-	gamewon,	// Finished!
+-	alive,		// We are alive (not killed)
+-	justin,		// just entered quadrant
+-	alldone,	// game is now finished
+ 	shldchg,	// shield is changing (affects efficiency)
+ 	inorbit,	// orbiting
+ 	landed,		// party on planet (1), on ship (-1)
+@@ -231,27 +237,22 @@
+ 	inplan,		// initial planets
+ 	nenhere,	// number of enemies in quadrant
+ 	ishere,		// super-commander in quandrant
+-	neutz,		// Romulan Neutral Zone
+ 	irhere,		// Romulans in quadrant
+ 	icraft,		// Kirk in Galileo
+ 	ientesc,	// attempted escape from supercommander
+ 	iscraft,	// =1 if craft on ship, -1 if removed from game
+-	isatb,		// =1 if super commander is attacking base
+-	iscate,		// super commander is here
+ #ifdef DEBUG
+ 	idebug,		// debug mode
+ #endif
+ 	iattak,		// attack recursion elimination (was cracks[4])
+ 	icrystl,	// dilithium crystals aboard
+ 	tourn,		// tournament number
+-	thawed,		// thawed game
+ 	ithere,		// Tholian is here 
+ 	iseenit,	// seen base attack report
+ #ifdef EXPERIMENTAL
+ 	ndistr,		//* count of distress calls */ 
+ #endif /* EXPERIMENTAL */
+ 	proben,		// number of moves for probe
+-	isarmed,	// probe is armed
+ 	nprobes;	// number of probes available
+     double inresor,	// initial resources
+ 	intime,		// initial time
+@@ -299,11 +300,6 @@
+ 			  FHOLE} FINTYPE ;
+ enum loctype {neither, quadrant, sector};
+ 
+-#ifndef TRUE
+-#define TRUE (1)
+-#define FALSE (0)
+-#endif
+-
+ #define IHR 'R'
+ #define IHK 'K'
+ #define IHC 'C'
+@@ -332,7 +328,7 @@
+ /* Function prototypes */
+ void prelim(void);
+ void attack(int);
+-int choose(int);
++bool choose(bool);
+ void setup(int);
+ void score(void);
+ void atover(int);
+@@ -357,7 +353,7 @@
+ void finish(FINTYPE);
+ void dstrct(void);
+ void kaboom(void);
+-void freeze(int);
++void freeze(bool);
+ int thaw(void);
+ void plaque(void);
+ int scan(void);
+@@ -371,7 +367,7 @@
+ void proutn(char *, ...);
+ void stars(void);
+ void newqad(int);
+-int ja(void);
++bool ja(void);
+ void cramen(int);
+ void crmshp(void);
+ char *cramlc(enum loctype, coord w);
+@@ -385,7 +381,7 @@
+ void imove(void);
+ void ram(int, int, coord);
+ void crmena(int, int, int, coord w);
+-void deadkl(int, int, int, int, int);
++void deadkl(coord, int, int, int);
+ void timwrp(void);
+ void movcom(void);
+ void torpedo(double, double, int, int, double *, int, int);
+@@ -418,7 +414,7 @@
+ void cgetline(char *, int);
+ void waitfor(void);
+ void setpassword(void);
+-void commandhook(char *, int);
++void commandhook(char *, bool);
+ void makechart(void);
+ void enqueue(char *);
+ char *systemname(planet *);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000051.html">[Sst-commit-watch] r584 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000053.html">[Sst-commit-watch] r586 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#52">[ date ]</a>
+              <a href="thread.html#52">[ thread ]</a>
+              <a href="subject.html#52">[ subject ]</a>
+              <a href="author.html#52">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

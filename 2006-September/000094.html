@@ -1,0 +1,186 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r627 - trunk/doc
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r627%20-%20trunk/doc&In-Reply-To=%3C200609221411.k8MEBibT010425%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000093.html">
+   <LINK REL="Next"  HREF="000095.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r627 - trunk/doc</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r627%20-%20trunk/doc&In-Reply-To=%3C200609221411.k8MEBibT010425%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r627 - trunk/doc">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 22 16:11:44 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000093.html">[Sst-commit-watch] r626 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000095.html">[Sst-commit-watch] r628 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#94">[ date ]</a>
+              <a href="thread.html#94">[ thread ]</a>
+              <a href="subject.html#94">[ subject ]</a>
+              <a href="author.html#94">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-22 16:11:43 +0200 (Fri, 22 Sep 2006)
+New Revision: 627
+
+Modified:
+   trunk/doc/sst-doc.xml
+Log:
+Added appending on development timeline.
+
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2006-09-22 11:38:54 UTC (rev 626)
++++ trunk/doc/sst-doc.xml	2006-09-22 14:11:43 UTC (rev 627)
+@@ -341,7 +341,7 @@
+ &lt;/orderedlist&gt;
+ 
+ &lt;para&gt;If you are part way through entering a command and you change your
+-minde, you can cancel the command by typing -1 as one of the
++mind, you can cancel the command by typing -1 as one of the
+ parameters, with the exception of the manual move command.&lt;/para&gt;
+ 
+ &lt;para&gt;If anything is not clear to you, experiment.  The worst you can do is
+@@ -1685,6 +1685,10 @@
+ BASIC, in that it used used polar coordinates (a clockface angle
+ and a distance) for manual navigation.&lt;/para&gt;
+ 
++&lt;para&gt;Tom Almy writes: &quot;I've received further information that the
++black holes, Tholian web, Super Commander, and Emeritus mode were
++added by Marc Newman.&quot;&lt;/para&gt;
++
+ &lt;para&gt;At the time the UT FORTRAN source was last translated to C it emitted
+ the message &quot;Latest update-21 Sept 78&quot;.  Thus, it actually predated
+ (and may have influenced) the best-known BASIC version, the &quot;Super
+@@ -1950,6 +1954,9 @@
+ &lt;/sect1&gt;
+ &lt;sect1&gt;&lt;title&gt;References&lt;/title&gt;
+ 
++&lt;para&gt;These are the original references by Dave Matuszek and Paul
++Reynolds:&lt;/para&gt;
++
+ &lt;orderedlist&gt;
+ &lt;listitem&gt;&lt;para&gt;&lt;citetitle&gt;Star Trek&lt;/citetitle&gt; (the original television
+ series), produced and directed by Gene Rodenberry.&lt;/para&gt;&lt;/listitem&gt;
+@@ -1969,9 +1976,9 @@
+ David Gerrold.  Similiar in scope to the above book.
+ (Bantam)&lt;/para&gt;&lt;/listitem&gt;
+ 
+-&lt;listitem&gt;&lt;para&gt;&lt;citetitle&gt;The Star Trek Guide&lt;/citetitle&gt;, third revision 4/17/67, by Gene
+-Roddenberry.  The original writer's guide for the television
+-series, but less comprehensive than (3) above.
++&lt;listitem&gt;&lt;para&gt;&lt;citetitle&gt;The Star Trek Guide&lt;/citetitle&gt;, third
++revision 4/17/67, by Gene Roddenberry.  The original writer's guide
++for the television series, but less comprehensive than (3) above.
+ (Norway Productions)&lt;/para&gt;&lt;/listitem&gt;
+ 
+ &lt;listitem&gt;&lt;para&gt;&lt;citetitle&gt;The Trouble With Tribbles&lt;/citetitle&gt;, by
+@@ -1994,4 +2001,66 @@
+ 
+ &lt;/sect1&gt;
+ &lt;/chapter&gt;
++
++&lt;appendix&gt;&lt;title&gt;Setting the Wayback Machine&lt;/title&gt;
++
++&lt;para&gt;SSTK and its ancestors have a long history.  One of the
++objectives of this project is to make that history available.
++Accordingly, here is a timeline of the development of SST2K and
++its ancestors, as closely as we can reconstruct it.  Someday this
++may become the basis for a &quot;wayback machine&quot; switch that enables
++feature sets by year.&lt;/para&gt;
++
++&lt;itemizedlist&gt;
++&lt;listitem&gt;&lt;para&gt;1971 &mdash; Mike Mayfield's original BASIC Star
++Trek.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;5 April 1973 &mdash; Grady Hicks's BASIC version fot
++the Taurus.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;Summer 1973 &mdash; Dave Matuszek, Paul Reynolds, and
++the Austin crew begin work on the UT FORTRAN version.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;1974 &mdash; Dave Matuszek gets distracted by other
++things, notably a job change and the birth of his first
++child.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;c.1977 &mdash; Tom Almy translates the UT FORTAN
++version to PDP-11 FORTRAN.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;21 September 1978 &mdash; This was the date on the
++first version Tom Almy saw, on which he based his C
++translation.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;1979 &mdash; Marc Newman adds Tholians, black holes,
++super-commanders, and Emeritus mode.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;1995-1996 &mdash; Tom Almy translates his FORTRAN
++port to ANSI C.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;1997 &mdash; Tom Almy finds the sources for the UT
++FORTRAN on the Web and merges in features new since the 1978 version:
++EMEXIT, Tholian Web, improved death ray.  He adds deep-space probes
++from the DECUS version.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;10 October 2004 &mdash; ESR starts hacking on Almy's C
++translation, de-FORTRANIZING the code. HELP/CALL/SOS becomes MAYDAY.
++&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;30 October 2004 &mdash; SST2K project started on
++Berlios.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;18 January 2005 &mdash; First changes merged in from Stas
++Sergeev. The curses interface is added.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;September 2006 &mdash; BSD features merged
++in. Inhabited-worlds features and weighted critical hits date from
++this time.&lt;/para&gt;&lt;/listitem&gt;
++&lt;/itemizedlist&gt;
++
++&lt;para&gt;One as-yet unanswered question is when the code changed from
++distance/direction navigation to coordinate offsets.  Dave Matuszek
++believes it must have been after he stopped working on the game in
++1974.&lt;/para&gt;
++&lt;/appendix&gt;
+ &lt;/book&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000093.html">[Sst-commit-watch] r626 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000095.html">[Sst-commit-watch] r628 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#94">[ date ]</a>
+              <a href="thread.html#94">[ thread ]</a>
+              <a href="subject.html#94">[ subject ]</a>
+              <a href="author.html#94">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

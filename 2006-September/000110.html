@@ -1,0 +1,490 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r643 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r643%20-%20trunk/src&In-Reply-To=%3C200609281052.k8SAq9Sh005929%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000109.html">
+   <LINK REL="Next"  HREF="000111.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r643 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r643%20-%20trunk/src&In-Reply-To=%3C200609281052.k8SAq9Sh005929%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r643 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 28 12:52:09 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000109.html">[Sst-commit-watch] r642 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000111.html">[Sst-commit-watch] r644 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#110">[ date ]</a>
+              <a href="thread.html#110">[ thread ]</a>
+              <a href="subject.html#110">[ subject ]</a>
+              <a href="author.html#110">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-28 12:52:08 +0200 (Thu, 28 Sep 2006)
+New Revision: 643
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+Clean up uglyFORTRANISH names.  It's been years since C public names had a 
+6-character significance limit.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-28 10:18:52 UTC (rev 642)
++++ trunk/src/ai.c	2006-09-28 10:52:08 UTC (rev 643)
+@@ -273,7 +273,7 @@
+ }
+ 
+ void moveklings(void) 
+-/* move a commander */
++/* Klingon tactical movement */
+ {
+     coord w; 
+     int i;
+@@ -309,7 +309,7 @@
+ 		movebaddy(w, i, game.quad[w.x][w.y]);
+ 	}
+ 
+-    sortkl();
++    sortklings();
+ }
+ 
+ static bool movescom(coord iq, bool flag) 
+@@ -352,7 +352,7 @@
+ 	game.nenhere--;
+ 	if (game.condition!=docked)
+ 	    newcnd();
+-	sortkl();
++	sortklings();
+     }
+     /* check for a helpful planet */
+     for (i = 0; i &lt; game.inplan; i++) {
+@@ -375,7 +375,7 @@
+     return false; /* looks good! */
+ }
+ 			
+-void scom(void)
++void supercommander(void)
+ /* move the Super Commander */
+ {
+     int i, i2, j, ideltax, ideltay, ifindit, iwhichb;
+@@ -385,7 +385,7 @@
+     bool flag;
+ 
+     if (idebug)
+-	prout(&quot;== SCOM&quot;);
++	prout(&quot;== SUPERCOMMANDER&quot;);
+ 
+     /* Decide on being active or passive */
+     flag = ((NKILLC+NKILLK)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) ||
+@@ -555,11 +555,10 @@
+     return;
+ }
+ 
+-void movetho(void)
++void movetholian(void)
+ /* move the Tholian */
+ {
+     int idx, idy, im, i;
+-    /* Move the Tholian */
+     if (!game.ithere || game.justin)
+ 	return;
+ 
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-28 10:18:52 UTC (rev 642)
++++ trunk/src/battle.c	2006-09-28 10:52:08 UTC (rev 643)
+@@ -241,7 +241,7 @@
+     prout(_(&quot;***Shields are down.&quot;));
+     if (KLINGREM) {
+ 	pause_game(true);
+-	dreprt();
++	damagereport();
+     }
+     else
+ 	finish(FWON);
+@@ -503,7 +503,7 @@
+ 	prout(_(&quot; displaced by blast to %s &quot;), cramlc(sector, jw));
+ 	for_local_enemies(ll)
+ 	    game.kdist[ll] = game.kavgd[ll] = distance(game.sector,game.ks[ll]);
+-	sortkl();
++	sortklings();
+ 	return;
+     }
+     skip(1);
+@@ -570,7 +570,7 @@
+ 
+     /* Tholian gewts to move before attacking */
+     if (game.ithere) 
+-	movetho();
++	movetholian();
+ 
+     /* if you have just entered the RNZ, you'll get a warning */
+     if (game.neutz) { /* The one chance not to be attacked */
+@@ -724,7 +724,7 @@
+     /* After attack, reset average distance to enemies */
+     for_local_enemies(loop)
+ 	game.kavgd[loop] = game.kdist[loop];
+-    sortkl();
++    sortklings();
+     return;
+ }
+ 		
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-28 10:18:52 UTC (rev 642)
++++ trunk/src/events.c	2006-09-28 10:52:08 UTC (rev 643)
+@@ -147,7 +147,7 @@
+ 	    prout(_(&quot;   surveillance reports are coming in.&quot;));
+ 	    skip(1);
+ 	    if (!game.iseenit) {
+-		attakreport(false);
++		attackreport(false);
+ 		game.iseenit = true;
+ 	    }
+ 	    rechart();
+@@ -159,7 +159,7 @@
+ 	switch (evcode) {
+ 	case FSNOVA: /* Supernova */
+ 	    pause_game(true);
+-	    snova(false, NULL);
++	    supernova(false, NULL);
+ 	    schedule(FSNOVA, expran(0.5*game.intime));
+ 	    if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+ 		return;
+@@ -374,7 +374,7 @@
+ 	    schedule(FSCMOVE, 0.2777);
+ 	    if (!game.ientesc &amp;&amp; !istract &amp;&amp; game.isatb != 1 &amp;&amp;
+ 			(!game.iscate || !game.justin)) 
+-		scom();
++		supercommander();
+ 	    break;
+ 	case FDSPROB: /* Move deep space probe */
+ 	    schedule(FDSPROB, 0.01);
+@@ -423,7 +423,7 @@
+ 	    game.proben--; // One less to travel
+ 	    if (game.proben == 0 &amp;&amp; game.isarmed &amp;&amp; pdest-&gt;stars) {
+ 		/* lets blow the sucker! */
+-		snova(true, &amp;game.probec);
++		supernova(true, &amp;game.probec);
+ 		unschedule(FDSPROB);
+ 		if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova) 
+ 		    return;
+@@ -635,7 +635,7 @@
+ 
+     if (Rand() &lt; 0.05) {
+ 	/* Wow! We've supernova'ed */
+-	snova(false, &amp;nov);
++	supernova(false, &amp;nov);
+ 	return;
+     }
+ 
+@@ -674,7 +674,7 @@
+ 		    case IHSTAR: /* Affect another star */
+ 			if (Rand() &lt; 0.05) {
+ 			    /* This star supernovas */
+-			    snova(false, &amp;scratch);
++			    supernova(false, &amp;scratch);
+ 			    return;
+ 			}
+ 			top2++;
+@@ -814,7 +814,7 @@
+ }
+ 	
+ 	
+-void snova(bool induced, coord *w) 
++void supernova(bool induced, coord *w) 
+ /* star goes supernova */
+ {
+     int num = 0, nrmdead, npdead, kldead;
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-28 10:18:52 UTC (rev 642)
++++ trunk/src/moving.c	2006-09-28 10:52:08 UTC (rev 643)
+@@ -200,7 +200,7 @@
+ 	    game.kavgd[m] = 0.5 * (finald+game.kdist[m]);
+ 	    game.kdist[m] = finald;
+ 	}
+-	sortkl();
++	sortklings();
+ 	if (!game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+ 	    attack(false);
+ 	for_local_enemies(m) game.kavgd[m] = game.kdist[m];
+@@ -242,7 +242,7 @@
+ 	(is_scheduled(FCDBAS) || game.isatb == 1) &amp;&amp; !game.iseenit) {
+ 	/* get attack report from base */
+ 	prout(_(&quot;Lt. Uhura- \&quot;Captain, an important message from the starbase:\&quot;&quot;));
+-	attakreport(false);
++	attackreport(false);
+ 	game.iseenit = true;
+     }
+ }
+@@ -438,7 +438,7 @@
+ 		
+ 
+ 
+-void impuls(void) 
++void impulse(void) 
+ /* move under impulse power */
+ {
+     double power;
+@@ -646,7 +646,7 @@
+ 
+ 
+ 
+-void setwrp(void) 
++void setwarp(void) 
+ /* change the warp factor */
+ {
+     int key;
+@@ -1086,7 +1086,7 @@
+ **
+ */
+ 
+-void abandn(void) 
++void abandon(void) 
+ /* abandon ship */
+ {
+     int nb, l;
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-28 10:18:52 UTC (rev 642)
++++ trunk/src/planets.c	2006-09-28 10:52:08 UTC (rev 643)
+@@ -12,7 +12,7 @@
+     return false;
+ }
+ 
+-void preport(void) 
++void survey(void) 
+ /* report on (uninhabited) planets in the galaxy */
+ {
+     bool iknow = false;
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-28 10:18:52 UTC (rev 642)
++++ trunk/src/reports.c	2006-09-28 10:52:08 UTC (rev 643)
+@@ -3,7 +3,7 @@
+ #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+ 
+-void attakreport(bool curt)
++void attackreport(bool curt)
+ /* report status of bases under attack */
+ {
+     if (!curt) {
+@@ -84,7 +84,7 @@
+     if (!damaged(DRADIO) || game.condition == docked || game.iseenit) {
+ 	/* Don't report this if not seen and
+ 	   either the radio is dead or not at base! */
+-	attakreport(false);
++	attackreport(false);
+ 	game.iseenit = true;
+     }
+     if (game.casual) 
+@@ -166,7 +166,7 @@
+     }
+ }
+ 
+-void dreprt(void) 
++void damagereport(void) 
+ /* damage report */
+ {
+     bool jdam = false;
+@@ -358,7 +358,7 @@
+     );
+ 
+     RQ(11,
+-	attakreport(!req);
++	attackreport(!req);
+     );
+ 
+ #undef RQ
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-28 10:18:52 UTC (rev 642)
++++ trunk/src/setup.c	2006-09-28 10:52:08 UTC (rev 643)
+@@ -731,7 +731,7 @@
+ 	}
+     }
+ 
+-    sortkl();
++    sortklings();
+ 
+     // Put in a few black holes
+     for (i = 1; i &lt;= 3; i++)
+@@ -751,7 +751,7 @@
+     }		
+ }
+ 
+-void sortkl(void) 
++void sortklings(void) 
+ /* sort Klingons by distance from us */
+ {
+     double t;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-28 10:18:52 UTC (rev 642)
++++ trunk/src/sst.c	2006-09-28 10:52:08 UTC (rev 643)
+@@ -472,13 +472,13 @@
+ 		attack(false);		
+ 	    break;
+ 	case DAMAGES:			// damages
+-	    dreprt();
++	    damagereport();
+ 	    break;
+ 	case CHART:			// chart
+ 	    makechart();
+ 	    break;
+ 	case IMPULSE:			// impulse
+-	    impuls();
++	    impulse();
+ 	    break;
+ 	case REST:			// rest
+ 	    wait();
+@@ -486,7 +486,7 @@
+ 		hitme = true;
+ 	    break;
+ 	case WARP:			// warp
+-	    setwrp();
++	    setwarp();
+ 	    break;
+ 	case SCORE:           	 	// score
+ 	    score();
+@@ -518,7 +518,7 @@
+ 		hitme = true;
+ 	    break;
+ 	case PLANETS:			// Planet list
+-	    preport();
++	    survey();
+ 	    break;
+ 	case REPORT:			// Game Report 
+ 	    report();
+@@ -540,7 +540,7 @@
+ 		hitme = true;
+ 	    break;
+ 	case ABANDON:			// Abandon Ship
+-	    abandn();
++	    abandon();
+ 	    break;
+ 	case DESTRUCT:			// Self Destruct
+ 	    selfdestruct();
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-28 10:18:52 UTC (rev 642)
++++ trunk/src/sst.h	2006-09-28 10:52:08 UTC (rev 643)
+@@ -354,17 +354,17 @@
+ extern void warp(bool);
+ extern void doshield(bool);
+ extern void dock(bool);
+-extern void dreprt(void);
++extern void damagereport(void);
+ extern void chart(void);
+ extern void rechart(void);
+-extern void impuls(void);
++extern void impulse(void);
+ extern void wait(void);
+-extern void setwrp(void);
++extern void setwarp(void);
+ extern void events(void);
+ extern void report(void);
+ extern void eta(void);
+ extern void mayday(void);
+-extern void abandn(void);
++extern void abandon(void);
+ extern void finish(FINTYPE);
+ extern void selfdestruct(void);
+ extern void kaboom(void);
+@@ -396,7 +396,7 @@
+ extern coord randplace(int);
+ extern coord dropin(feature);
+ extern void newcnd(void);
+-extern void sortkl(void);
++extern void sortklings(void);
+ extern void imove(bool);
+ extern void ram(bool, feature, coord);
+ extern void crmena(bool, feature, enum loctype, coord w);
+@@ -408,11 +408,11 @@
+ extern void pause_reset(void);
+ extern void pause_game(bool);
+ extern void nova(coord);
+-extern void snova(bool, coord *);
+-extern void scom(void);
++extern void supernova(bool, coord *);
++extern void supercommander(void);
+ extern void hittem(double *);
+ extern bool isit(char *);
+-extern void preport(void);
++extern void survey(void);
+ extern void orbit(void);
+ extern void sensor(void);
+ extern void drawmaps(int);
+@@ -422,8 +422,8 @@
+ extern void shuttle(void);
+ extern void deathray(void);
+ extern void debugme(void);
+-extern void attakreport(bool);
+-extern void movetho(void);
++extern void attackreport(bool);
++extern void movetholian(void);
+ extern void probe(void);
+ extern void iostart(void);
+ extern void setwnd(WINDOW *);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000109.html">[Sst-commit-watch] r642 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000111.html">[Sst-commit-watch] r644 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#110">[ date ]</a>
+              <a href="thread.html#110">[ thread ]</a>
+              <a href="subject.html#110">[ subject ]</a>
+              <a href="author.html#110">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

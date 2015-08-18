@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r682 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r682%20-%20trunk/src&In-Reply-To=%3C200610060216.k962GhIv011023%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000148.html">
+   <LINK REL="Next"  HREF="000150.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r682 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r682%20-%20trunk/src&In-Reply-To=%3C200610060216.k962GhIv011023%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r682 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct  6 04:16:43 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000148.html">[Sst-commit-watch] r681 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000150.html">[Sst-commit-watch] r683 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#149">[ date ]</a>
+              <a href="thread.html#149">[ thread ]</a>
+              <a href="subject.html#149">[ subject ]</a>
+              <a href="author.html#149">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-06 04:16:43 +0200 (Fri, 06 Oct 2006)
+New Revision: 682
+
+Modified:
+   trunk/src/sst.py
+Log:
+Minor bug fixes, preparatory to finding out why replay doesn't work.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-06 01:19:43 UTC (rev 681)
++++ trunk/src/sst.py	2006-10-06 02:16:43 UTC (rev 682)
+@@ -3620,8 +3620,11 @@
+     else:
+ 	if replayfp and not replayfp.closed:
+ 	    line = replayfp.readline()
++            if line == '':
++                prout(&quot;*** Replay finished&quot;)
++                replayfp.close()
+ 	else:
+-	    line = raw_input()
++	    line = raw_input(&quot;COMMAND&gt; &quot;)
+     if logfp:
+ 	logfp.write(line + &quot;\n&quot;)
+     return line
+@@ -6505,7 +6508,6 @@
+ 	    chew()
+ 	    setwnd(prompt_window)
+ 	    clrscr()
+-	    proutn(&quot;COMMAND&gt; &quot;)
+ 	    if scan() == IHEOL:
+ 		if game.options &amp; OPTION_CURSES:
+ 		    makechart()
+@@ -6624,10 +6626,6 @@
+ 	    game.alldone = True		# quit the game
+ 	elif cmd == &quot;HELP&quot;:
+ 	    helpme()			# get help
+-	elif cmd == &quot;SEED&quot;:		# set random-number seed
+-	    key = scan()
+-	    if key == IHREAL:
+-		seed = int(round(aaitem))
+ #ifdef BSD_BUG_FOR_BUG
+ #	elif cmd == &quot;VISUAL&quot;:
+ #	    visual()			# perform visual scan
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000148.html">[Sst-commit-watch] r681 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000150.html">[Sst-commit-watch] r683 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#149">[ date ]</a>
+              <a href="thread.html#149">[ thread ]</a>
+              <a href="subject.html#149">[ subject ]</a>
+              <a href="author.html#149">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

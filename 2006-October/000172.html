@@ -1,0 +1,1551 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r705 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r705%20-%20trunk/src&In-Reply-To=%3C200610080619.k986JTXw009174%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000171.html">
+   <LINK REL="Next"  HREF="000173.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r705 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r705%20-%20trunk/src&In-Reply-To=%3C200610080619.k986JTXw009174%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r705 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Sun Oct  8 08:19:29 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000171.html">[Sst-commit-watch] r704 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000173.html">[Sst-commit-watch] r706 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#172">[ date ]</a>
+              <a href="thread.html#172">[ thread ]</a>
+              <a href="subject.html#172">[ subject ]</a>
+              <a href="author.html#172">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-08 08:19:28 +0200 (Sun, 08 Oct 2006)
+New Revision: 705
+
+Modified:
+   trunk/src/sst.py
+Log:
+Refactored lexical analyzer into a scanner class.   This will nmake it
+easier to replace the patser, when we need to do that.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-08 05:49:11 UTC (rev 704)
++++ trunk/src/sst.py	2006-10-08 06:19:28 UTC (rev 705)
+@@ -1109,18 +1109,18 @@
+     if shraise:
+ 	action = &quot;SHUP&quot;
+     else:
+-	key = scan()
++	key = scanner.next()
+ 	if key == IHALPHA:
+-	    if isit(&quot;transfer&quot;):
++	    if scanner.sees(&quot;transfer&quot;):
+ 		action = &quot;NRG&quot;
+ 	    else:
+-		chew()
++		scanner.chew()
+ 		if damaged(DSHIELD):
+ 		    prout(_(&quot;Shields damaged and down.&quot;))
+ 		    return
+-		if isit(&quot;up&quot;):
++		if scanner.sees(&quot;up&quot;):
+ 		    action = &quot;SHUP&quot;
+-		elif isit(&quot;down&quot;):
++		elif scanner.sees(&quot;down&quot;):
+ 		    action = &quot;SHDN&quot;
+ 	if action==&quot;NONE&quot;:
+ 	    proutn(_(&quot;Do you wish to change shield energy? &quot;))
+@@ -1135,14 +1135,14 @@
+ 		if ja() == True:
+ 		    action = &quot;SHDN&quot;
+ 		else:
+-		    chew()
++		    scanner.chew()
+ 		    return
+ 	    else:
+ 		proutn(_(&quot;Shields are down. Do you want them up? &quot;))
+ 		if ja() == True:
+ 		    action = &quot;SHUP&quot;
+ 		else:
+-		    chew()
++		    scanner.chew()
+ 		    return    
+     if action == &quot;SHUP&quot;: # raise shields 
+ 	if game.shldup:
+@@ -1170,24 +1170,24 @@
+ 	game.ididit = True
+ 	return
+     elif action == &quot;NRG&quot;:
+-	while scan() != IHREAL:
+-	    chew()
++	while scanner.next() != IHREAL:
++	    scanner.chew()
+ 	    proutn(_(&quot;Energy to transfer to shields- &quot;))
+-	chew()
+-	if aaitem == 0:
++	scanner.chew()
++	if scanner.real == 0:
+ 	    return
+-	if aaitem &gt; game.energy:
++	if scanner.real &gt; game.energy:
+ 	    prout(_(&quot;Insufficient ship energy.&quot;))
+ 	    return
+ 	game.ididit = True
+-	if game.shield+aaitem &gt;= game.inshld:
++	if game.shield+scanner.real &gt;= game.inshld:
+ 	    prout(_(&quot;Shield energy maximized.&quot;))
+-	    if game.shield+aaitem &gt; game.inshld:
++	    if game.shield+scanner.real &gt; game.inshld:
+ 		prout(_(&quot;Excess energy requested returned to ship energy&quot;))
+ 	    game.energy -= game.inshld-game.shield
+ 	    game.shield = game.inshld
+ 	    return
+-	if aaitem &lt; 0.0 and game.energy-aaitem &gt; game.inenrg:
++	if scanner.real &lt; 0.0 and game.energy-scanner.real &gt; game.inenrg:
+ 	    # Prevent shield drain loophole 
+ 	    skip(1)
+ 	    prout(_(&quot;Engineering to bridge--&quot;))
+@@ -1195,18 +1195,18 @@
+ 	    prout(_(&quot;  I can't drain the shields.&quot;))
+ 	    game.ididit = False
+ 	    return
+-	if game.shield+aaitem &lt; 0:
++	if game.shield+scanner.real &lt; 0:
+ 	    prout(_(&quot;All shield energy transferred to ship.&quot;))
+ 	    game.energy += game.shield
+ 	    game.shield = 0.0
+ 	    return
+ 	proutn(_(&quot;Scotty- \&quot;&quot;))
+-	if aaitem &gt; 0:
++	if scanner.real &gt; 0:
+ 	    prout(_(&quot;Transferring energy to shields.\&quot;&quot;))
+ 	else:
+ 	    prout(_(&quot;Draining energy from shields.\&quot;&quot;))
+-	game.shield += aaitem
+-	game.energy -= aaitem
++	game.shield += scanner.real
++	game.energy -= scanner.real
+ 	return
+ 
+ def randdevice():
+@@ -1787,7 +1787,7 @@
+ 	prout(_(&quot;Spock-  \&quot;Bridge to sickbay.  Dr. McCoy,&quot;))
+ 	prout(_(&quot;  I recommend an immediate review of&quot;))
+ 	prout(_(&quot;  the Captain's psychological profile.\&quot;&quot;))
+-	chew()
++	scanner.chew()
+ 	return None
+     return 1.90985932*math.atan2(deltx, delty)
+ 
+@@ -1797,41 +1797,41 @@
+     game.ididit = False
+     if damaged(DPHOTON):
+ 	prout(_(&quot;Photon tubes damaged.&quot;))
+-	chew()
++	scanner.chew()
+ 	return
+     if game.torps == 0:
+ 	prout(_(&quot;No torpedoes left.&quot;))
+-	chew()
++	scanner.chew()
+ 	return
+-    key = scan()
++    key = scanner.next()
+     while True:
+ 	if key == IHALPHA:
+ 	    huh()
+ 	    return
+ 	elif key == IHEOL:
+ 	    prout(_(&quot;%d torpedoes left.&quot;) % game.torps)
+-            chew()
++            scanner.chew()
+ 	    proutn(_(&quot;Number of torpedoes to fire- &quot;))
+-	    key = scan()
+-	else: # key == IHREAL  {
+-	    n = int(round(aaitem + 0.5))
++	    key = scanner.next()
++	else: # key == IHREAL
++	    n = scanner.int()
+ 	    if n &lt;= 0: # abort command 
+-		chew()
++		scanner.chew()
+ 		return
+ 	    if n &gt; MAXBURST:
+-		chew()
++		scanner.chew()
+ 		prout(_(&quot;Maximum of %d torpedoes per burst.&quot;) % MAXBURST)
+ 		key = IHEOL
+ 		return
+ 	    if n &lt;= game.torps:
+ 		break
+-	    chew()
++	    scanner.chew()
+ 	    key = IHEOL
+     targ = []
+     for i in range(MAXBURST):
+         targ.append(coord())
+     for i in range(n):
+-	key = scan()
++	key = scanner.next()
+ 	if i==0 and key == IHEOL:
+ 	    break;	# we will try prompting 
+ 	if i==1 and key == IHEOL:
+@@ -1844,31 +1844,31 @@
+ 	if key != IHREAL:
+ 	    huh()
+ 	    return
+-	targ[i].x = aaitem
+-	key = scan()
++	targ[i].x = scanner.real
++	key = scanner.next()
+ 	if key != IHREAL:
+ 	    huh()
+ 	    return
+-	targ[i].y = aaitem
++	targ[i].y = scanner.real
+ 	course[i] = targetcheck(targ[i])
+         if course[i] == None:
+ 	    return
+-    chew()
++    scanner.chew()
+     if i == 1 and key == IHEOL:
+ 	# prompt for each one 
+ 	for i in range(n):
+ 	    proutn(_(&quot;Target sector for torpedo number %d- &quot;) % (i+1))
+-	    key = scan()
++	    key = scanner.next()
+ 	    if key != IHREAL:
+ 		huh()
+ 		return
+-	    targ[i].x = int(aaitem-0.5)
+-	    key = scan()
++	    targ[i].x = int(scanner.real-0.5)
++	    key = scanner.next()
+ 	    if key != IHREAL:
+ 		huh()
+ 		return
+-	    targ[i].y = int(aaitem-0.5)
+-	    chew()
++	    targ[i].y = int(scanner.real-0.5)
++	    scanner.chew()
+             course[i] = targetcheck(targ[i])
+             if course[i] == None:
+                 return
+@@ -2004,46 +2004,46 @@
+ 	itarg = False
+     if game.condition == &quot;docked&quot;:
+ 	prout(_(&quot;Phasers can't be fired through base shields.&quot;))
+-	chew()
++	scanner.chew()
+ 	return
+     if damaged(DPHASER):
+ 	prout(_(&quot;Phaser control damaged.&quot;))
+-	chew()
++	scanner.chew()
+ 	return
+     if game.shldup:
+ 	if damaged(DSHCTRL):
+ 	    prout(_(&quot;High speed shield control damaged.&quot;))
+-	    chew()
++	    scanner.chew()
+ 	    return
+ 	if game.energy &lt;= 200.0:
+ 	    prout(_(&quot;Insufficient energy to activate high-speed shield control.&quot;))
+-	    chew()
++	    scanner.chew()
+ 	    return
+ 	prout(_(&quot;Weapons Officer Sulu-  \&quot;High-speed shield control enabled, sir.\&quot;&quot;))
+ 	ifast = True
+     # Original code so convoluted, I re-did it all
+     # (That was Tom Almy talking about the C code, I think -- ESR)
+     while automode==&quot;NOTSET&quot;:
+-	key=scan()
++	key=scanner.next()
+ 	if key == IHALPHA:
+-	    if isit(&quot;manual&quot;):
++	    if scanner.sees(&quot;manual&quot;):
+ 		if len(game.enemies)==0:
+ 		    prout(_(&quot;There is no enemy present to select.&quot;))
+-		    chew()
++		    scanner.chew()
+ 		    key = IHEOL
+ 		    automode=&quot;AUTOMATIC&quot;
+ 		else:
+ 		    automode = &quot;MANUAL&quot;
+-		    key = scan()
+-	    elif isit(&quot;automatic&quot;):
++		    key = scanner.next()
++	    elif scanner.sees(&quot;automatic&quot;):
+ 		if (not itarg) and len(game.enemies) != 0:
+ 		    automode = &quot;FORCEMAN&quot;
+ 		else:
+ 		    if len(game.enemies)==0:
+ 			prout(_(&quot;Energy will be expended into space.&quot;))
+ 		    automode = &quot;AUTOMATIC&quot;
+-		    key = scan()
+-	    elif isit(&quot;no&quot;):
++		    key = scanner.next()
++	    elif scanner.sees(&quot;no&quot;):
+ 		no = True
+ 	    else:
+ 		huh()
+@@ -2065,30 +2065,30 @@
+ 		automode = &quot;FORCEMAN&quot;
+ 	    else: 
+ 		proutn(_(&quot;Manual or automatic? &quot;))
+-                chew()
++                scanner.chew()
+     avail = game.energy
+     if ifast:
+         avail -= 200.0
+     if automode == &quot;AUTOMATIC&quot;:
+-	if key == IHALPHA and isit(&quot;no&quot;):
++	if key == IHALPHA and scanner.sees(&quot;no&quot;):
+ 	    no = True
+-	    key = scan()
++	    key = scanner.next()
+ 	if key != IHREAL and len(game.enemies) != 0:
+ 	    prout(_(&quot;Phasers locked on target. Energy available: %.2f&quot;)%avail)
+ 	irec=0
+         while True:
+-	    chew()
++	    scanner.chew()
+ 	    if not kz:
+ 		for i in range(len(game.enemies)):
+ 		    irec += math.fabs(game.enemies[i].kpower)/(PHASEFAC*math.pow(0.90,game.enemies[i].kdist))*randreal(1.01, 1.06) + 1.0
+ 	    kz=1
+ 	    proutn(_(&quot;%d units required. &quot;) % irec)
+-	    chew()
++	    scanner.chew()
+ 	    proutn(_(&quot;Units to fire= &quot;))
+-	    key = scan()
++	    key = scanner.next()
+ 	    if key!=IHREAL:
+ 		return
+-	    rpow = aaitem
++	    rpow = scanner.real
+ 	    if rpow &gt; avail:
+ 		proutn(_(&quot;Energy available= %.2f&quot;) % avail)
+ 		skip(1)
+@@ -2097,16 +2097,16 @@
+                 break
+ 	if rpow&lt;=0:
+ 	    # chicken out 
+-	    chew()
++	    scanner.chew()
+ 	    return
+-        key=scan()
+-	if key == IHALPHA and isit(&quot;no&quot;):
++        key=scanner.next()
++	if key == IHALPHA and scanner.sees(&quot;no&quot;):
+ 	    no = True
+ 	if ifast:
+ 	    game.energy -= 200; # Go and do it! 
+ 	    if checkshctrl(rpow):
+ 		return
+-	chew()
++	scanner.chew()
+ 	game.energy -= rpow
+ 	extra = rpow
+ 	if len(game.enemies):
+@@ -2138,7 +2138,7 @@
+ 	    else:
+ 		prout(_(&quot;%d expended on empty space.&quot;) % int(extra))
+     elif automode == &quot;FORCEMAN&quot;:
+-	chew()
++	scanner.chew()
+ 	key = IHEOL
+ 	if damaged(DCOMPTR):
+ 	    prout(_(&quot;Battle computer damaged, manual fire only.&quot;))
+@@ -2164,13 +2164,13 @@
+                not game.sector.distance(aim)&lt;2**0.5 and ienm in (IHC, IHS):
+ 		cramen(ienm)
+ 		prout(_(&quot; can't be located without short range scan.&quot;))
+-		chew()
++		scanner.chew()
+ 		key = IHEOL
+ 		hits[k] = 0; # prevent overflow -- thanks to Alexei Voitenko 
+ 		k += 1
+ 		continue
+ 	    if key == IHEOL:
+-		chew()
++		scanner.chew()
+ 		if itarg and k &gt; kz:
+ 		    irec=(abs(game.enemies[k].kpower)/(PHASEFAC*math.pow(0.9,game.enemies[k].kdist))) *	randreal(1.01, 1.06) + 1.0
+ 		kz = k
+@@ -2183,10 +2183,10 @@
+ 		proutn(_(&quot;units to fire at &quot;))
+ 		crmena(False, ienm, &quot;sector&quot;, aim)
+ 		proutn(&quot;-  &quot;)
+-		key = scan()
+-	    if key == IHALPHA and isit(&quot;no&quot;):
++		key = scanner.next()
++	    if key == IHALPHA and scanner.sees(&quot;no&quot;):
+ 		no = True
+-		key = scan()
++		key = scanner.next()
+ 		continue
+ 	    if key == IHALPHA:
+ 		huh()
+@@ -2195,27 +2195,27 @@
+ 		if k==1: # Let me say I'm baffled by this 
+ 		    msgflag = True
+ 		continue
+-	    if aaitem &lt; 0:
++	    if scanner.real &lt; 0:
+ 		# abort out 
+-		chew()
++		scanner.chew()
+ 		return
+-	    hits[k] = aaitem
+-	    rpow += aaitem
++	    hits[k] = scanner.real
++	    rpow += scanner.real
+ 	    # If total requested is too much, inform and start over 
+             if rpow &gt; avail:
+ 		prout(_(&quot;Available energy exceeded -- try again.&quot;))
+-		chew()
++		scanner.chew()
+ 		return
+-	    key = scan(); # scan for next value 
++	    key = scanner.next(); # scan for next value 
+ 	    k += 1
+ 	if rpow == 0.0:
+ 	    # zero energy -- abort 
+-	    chew()
++	    scanner.chew()
+ 	    return
+-	if key == IHALPHA and isit(&quot;no&quot;):
++	if key == IHALPHA and scanner.sees(&quot;no&quot;):
+ 	    no = True
+ 	game.energy -= rpow
+-	chew()
++	scanner.chew()
+ 	if ifast:
+ 	    game.energy -= 200.0
+ 	    if checkshctrl(rpow):
+@@ -2695,15 +2695,15 @@
+     # wait on events 
+     game.ididit = False
+     while True:
+-	key = scan()
++	key = scanner.next()
+ 	if key  != IHEOL:
+ 	    break
+ 	proutn(_(&quot;How long? &quot;))
+-    chew()
++    scanner.chew()
+     if key != IHREAL:
+ 	huh()
+ 	return
+-    origTime = delay = aaitem
++    origTime = delay = scanner.real
+     if delay &lt;= 0.0:
+ 	return
+     if delay &gt;= game.state.remtime or len(game.enemies) != 0:
+@@ -3008,7 +3008,7 @@
+ def selfdestruct():
+     # self-destruct maneuver 
+     # Finish with a BANG! 
+-    chew()
++    scanner.chew()
+     if damaged(DCOMPTR):
+ 	prout(_(&quot;Computer damaged; cannot execute destruct sequence.&quot;))
+ 	return
+@@ -3026,9 +3026,9 @@
+     skip(1)
+     prout(_(&quot;SELF-DESTRUCT-SEQUENCE-WILL-BE-ABORTED&quot;))
+     skip(1)
+-    scan()
+-    chew()
+-    if game.passwd != citem:
++    scanner.next()
++    scanner.chew()
++    if game.passwd != scanner.token:
+ 	prouts(_(&quot;PASSWORD-REJECTED;&quot;))
+ 	skip(1)
+ 	prouts(_(&quot;CONTINUITY-EFFECTED&quot;))
+@@ -3146,7 +3146,7 @@
+ 			prout(_(&quot;You cannot get a citation, so...&quot;))
+ 		    else:
+ 			proutn(_(&quot;Do you want your Commodore Emeritus Citation printed? &quot;))
+-			chew()
++			scanner.chew()
+ 			if ja() == True:
+ 			    igotit = True
+ 	    # Only grant long life if alive (original didn't!)
+@@ -3946,7 +3946,7 @@
+ 
+ def dock(verbose):
+     # dock our ship at a starbase 
+-    chew()
++    scanner.chew()
+     if game.condition == &quot;docked&quot; and verbose:
+ 	prout(_(&quot;Already docked.&quot;))
+ 	return
+@@ -3993,7 +3993,7 @@
+     if game.landed and not isprobe:
+ 	prout(_(&quot;Dummy! You can't leave standard orbit until you&quot;))
+ 	proutn(_(&quot;are back aboard the ship.&quot;))
+-	chew()
++	scanner.chew()
+ 	return False
+     while navmode == &quot;unspecified&quot;:
+ 	if damaged(DNAVSYS):
+@@ -4001,7 +4001,7 @@
+ 		prout(_(&quot;Computer damaged; manual navigation only&quot;))
+ 	    else:
+ 		prout(_(&quot;Computer damaged; manual movement only&quot;))
+-	    chew()
++	    scanner.chew()
+ 	    navmode = &quot;manual&quot;
+ 	    key = IHEOL
+ 	    break
+@@ -4010,23 +4010,23 @@
+ 	    key = akey
+ 	    akey = -1
+ 	else: 
+-	    key = scan()
++	    key = scanner.next()
+ 	if key == IHEOL:
+ 	    proutn(_(&quot;Manual or automatic- &quot;))
+ 	    iprompt = True
+-	    chew()
++	    scanner.chew()
+ 	elif key == IHALPHA:
+-            if isit(&quot;manual&quot;):
++            if scanner.sees(&quot;manual&quot;):
+ 		navmode = &quot;manual&quot;
+-		key = scan()
++		key = scanner.next()
+ 		break
+-            elif isit(&quot;automatic&quot;):
++            elif scanner.sees(&quot;automatic&quot;):
+ 		navmode = &quot;automatic&quot;
+-		key = scan()
++		key = scanner.next()
+ 		break
+ 	    else:
+ 		huh()
+-		chew()
++		scanner.chew()
+ 		return False
+ 	else: # numeric 
+ 	    if isprobe:
+@@ -4041,27 +4041,27 @@
+ 		proutn(_(&quot;Target quadrant or quadrant&amp;sector- &quot;))
+ 	    else:
+ 		proutn(_(&quot;Destination sector or quadrant&amp;sector- &quot;))
+-	    chew()
++	    scanner.chew()
+ 	    iprompt = True
+-	    key = scan()
++	    key = scanner.next()
+ 	if key != IHREAL:
+ 	    huh()
+ 	    return False
+-	xi = int(round(aaitem))-1
+-	key = scan()
++	xi = int(round(scanner.real))-1
++	key = scanner.next()
+ 	if key != IHREAL:
+ 	    huh()
+ 	    return False
+-	xj = int(round(aaitem))-1
+-	key = scan()
++	xj = int(round(scanner.real))-1
++	key = scanner.next()
+ 	if key == IHREAL:
+ 	    # both quadrant and sector specified 
+-	    xk = int(round(aaitem))-1
+-	    key = scan()
++	    xk = int(round(scanner.real))-1
++	    key = scanner.next()
+ 	    if key != IHREAL:
+ 		huh()
+ 		return False
+-	    xl = int(round(aaitem))-1
++	    xl = int(round(scanner.real))-1
+ 	    dquad.x = xi
+ 	    dquad.y = xj
+ 	    dsect.y = xk
+@@ -4094,22 +4094,22 @@
+     else: # manual 
+ 	while key == IHEOL:
+ 	    proutn(_(&quot;X and Y displacements- &quot;))
+-	    chew()
++	    scanner.chew()
+ 	    iprompt = True
+-	    key = scan()
++	    key = scanner.next()
+ 	itemp = &quot;verbose&quot;
+ 	if key != IHREAL:
+ 	    huh()
+ 	    return False
+-	deltax = aaitem
+-	key = scan()
++	deltax = scanner.real
++	key = scanner.next()
+ 	if key != IHREAL:
+ 	    huh()
+ 	    return False
+-	deltay = aaitem
++	deltay = scanner.real
+     # Check for zero movement 
+     if deltax == 0 and deltay == 0:
+-	chew()
++	scanner.chew()
+ 	return False
+     if itemp == &quot;verbose&quot; and not isprobe:
+ 	skip(1)
+@@ -4119,14 +4119,14 @@
+     game.direc = math.atan2(deltax, deltay)*1.90985932
+     if game.direc &lt; 0.0:
+ 	game.direc += 12.0
+-    chew()
++    scanner.chew()
+     return True
+ 
+ def impulse():
+     # move under impulse power 
+     game.ididit = False
+     if damaged(DIMPULS):
+-	chew()
++	scanner.chew()
+ 	skip(1)
+ 	prout(_(&quot;Engineer Scott- \&quot;The impulse engines are damaged, Sir.\&quot;&quot;))
+ 	return
+@@ -4147,7 +4147,7 @@
+ 	    prout(_(&quot; quadrants.\&quot;&quot;))
+ 	else:
+ 	    prout(_(&quot;quadrant.  They are, therefore, useless.\&quot;&quot;))
+-	chew()
++	scanner.chew()
+ 	return
+     # Make sure enough time is left for the trip 
+     game.optime = game.dist/0.095
+@@ -4175,12 +4175,12 @@
+     if not timewarp: # Not WARPX entry 
+ 	game.ididit = False
+ 	if game.damage[DWARPEN] &gt; 10.0:
+-	    chew()
++	    scanner.chew()
+ 	    skip(1)
+ 	    prout(_(&quot;Engineer Scott- \&quot;The impulse engines are damaged, Sir.\&quot;&quot;))
+ 	    return
+ 	if damaged(DWARPEN) and game.warpfac &gt; 4.0:
+-	    chew()
++	    scanner.chew()
+ 	    skip(1)
+ 	    prout(_(&quot;Engineer Scott- \&quot;Sorry, Captain. Until this damage&quot;))
+ 	    prout(_(&quot;  is repaired, I can only give you warp 4.\&quot;&quot;))
+@@ -4287,30 +4287,30 @@
+ def setwarp():
+     # change the warp factor 	
+     while True:
+-        key=scan()
++        key=scanner.next()
+         if key != IHEOL:
+             break
+-	chew()
++	scanner.chew()
+ 	proutn(_(&quot;Warp factor- &quot;))
+-    chew()
++    scanner.chew()
+     if key != IHREAL:
+ 	huh()
+ 	return
+     if game.damage[DWARPEN] &gt; 10.0:
+ 	prout(_(&quot;Warp engines inoperative.&quot;))
+ 	return
+-    if damaged(DWARPEN) and aaitem &gt; 4.0:
++    if damaged(DWARPEN) and scanner.real &gt; 4.0:
+ 	prout(_(&quot;Engineer Scott- \&quot;I'm doing my best, Captain,&quot;))
+ 	prout(_(&quot;  but right now we can only go warp 4.\&quot;&quot;))
+ 	return
+-    if aaitem &gt; 10.0:
++    if scanner.real &gt; 10.0:
+ 	prout(_(&quot;Helmsman Sulu- \&quot;Our top speed is warp 10, Captain.\&quot;&quot;))
+ 	return
+-    if aaitem &lt; 1.0:
++    if scanner.real &lt; 1.0:
+ 	prout(_(&quot;Helmsman Sulu- \&quot;We can't go below warp 1, Captain.\&quot;&quot;))
+ 	return
+     oldfac = game.warpfac
+-    game.warpfac = aaitem
++    game.warpfac = scanner.real
+     game.wfacsq=game.warpfac*game.warpfac
+     if game.warpfac &lt;= oldfac or game.warpfac &lt;= 6.0:
+ 	prout(_(&quot;Helmsman Sulu- \&quot;Warp factor %d, Captain.\&quot;&quot;) %
+@@ -4327,7 +4327,7 @@
+ 
+ def atover(igrab):
+     # cope with being tossed out of quadrant by supernova or yanked by beam 
+-    chew()
++    scanner.chew()
+     # is captain on planet? 
+     if game.landed:
+ 	if damaged(DTRANSP):
+@@ -4464,7 +4464,7 @@
+     # launch deep-space probe 
+     # New code to launch a deep space probe 
+     if game.nprobes == 0:
+-	chew()
++	scanner.chew()
+ 	skip(1)
+ 	if game.ship == IHE: 
+ 	    prout(_(&quot;Engineer Scott- \&quot;We have no more deep space probes, Sir.\&quot;&quot;))
+@@ -4472,12 +4472,12 @@
+ 	    prout(_(&quot;Ye Faerie Queene has no deep space probes.&quot;))
+ 	return
+     if damaged(DDSP):
+-	chew()
++	scanner.chew()
+ 	skip(1)
+ 	prout(_(&quot;Engineer Scott- \&quot;The probe launcher is damaged, Sir.\&quot;&quot;))
+ 	return
+     if is_scheduled(FDSPROB):
+-	chew()
++	scanner.chew()
+ 	skip(1)
+ 	if damaged(DRADIO) and game.condition != &quot;docked&quot;:
+ 	    prout(_(&quot;Spock-  \&quot;Records show the previous probe has not yet&quot;))
+@@ -4485,7 +4485,7 @@
+ 	else:
+ 	    prout(_(&quot;Uhura- \&quot;The previous probe is still reporting data, Sir.\&quot;&quot;))
+ 	return
+-    key = scan()
++    key = scanner.next()
+     if key == IHEOL:
+ 	# slow mode, so let Kirk know how many probes there are left
+         if game.nprobes == 1:
+@@ -4496,9 +4496,9 @@
+ 	if ja() == False:
+ 	    return
+     game.isarmed = False
+-    if key == IHALPHA and citem == &quot;armed&quot;:
++    if key == IHALPHA and scanner.token == &quot;armed&quot;:
+ 	game.isarmed = True
+-	key = scan()
++	key = scanner.next()
+     elif key == IHEOL:
+ 	proutn(_(&quot;Arm NOVAMAX warhead? &quot;))
+ 	game.isarmed = ja()
+@@ -4544,7 +4544,7 @@
+     # yell for help from nearest starbase 
+     # There's more than one way to move in this game! 
+     line = 0
+-    chew()
++    scanner.chew()
+     # Test for conditions which prevent calling for help 
+     if game.condition == &quot;docked&quot;:
+ 	prout(_(&quot;Lt. Uhura-  \&quot;But Captain, we're already docked.\&quot;&quot;))
+@@ -4642,7 +4642,7 @@
+ 
+ def abandon():
+     # abandon ship 
+-    chew()
++    scanner.chew()
+     if game.condition==&quot;docked&quot;:
+ 	if game.ship!=IHE:
+ 	    prout(_(&quot;You cannot abandon Ye Faerie Queene.&quot;))
+@@ -4752,7 +4752,7 @@
+     # report on (uninhabited) planets in the galaxy 
+     iknow = False
+     skip(1)
+-    chew()
++    scanner.chew()
+     prout(_(&quot;Spock-  \&quot;Planet report follows, Captain.\&quot;&quot;))
+     skip(1)
+     for i in range(game.inplan):
+@@ -4779,7 +4779,7 @@
+ def orbit():
+     # enter standard orbit 
+     skip(1)
+-    chew()
++    scanner.chew()
+     if game.inorbit:
+ 	prout(_(&quot;Already in standard orbit.&quot;))
+ 	return
+@@ -4831,7 +4831,7 @@
+ def beam():
+     # use the transporter 
+     nrgneed = 0
+-    chew()
++    scanner.chew()
+     skip(1)
+     if damaged(DTRANSP):
+ 	prout(_(&quot;Transporter damaged.&quot;))
+@@ -4858,7 +4858,7 @@
+ 	prout(_(&quot;  exploring a planet with no dilithium crystals.&quot;))
+ 	proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;))
+ 	if ja() == False:
+-	    chew()
++	    scanner.chew()
+ 	    return
+     if not (game.options &amp; OPTION_PLAIN):
+ 	nrgneed = 50 * game.skill + game.height / 100.0
+@@ -4874,14 +4874,14 @@
+ 		prout(_(&quot;  Although the Galileo shuttle craft may still be on a surface.&quot;))
+ 	    proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;))
+ 	    if ja() == False:
+-		chew()
++		scanner.chew()
+ 		return
+     if game.landed:
+ 	# Coming from planet 
+ 	if game.iplnet.known==&quot;shuttle_down&quot;:
+ 	    proutn(_(&quot;Spock-  \&quot;Wouldn't you rather take the Galileo?\&quot; &quot;))
+ 	    if ja() == True:
+-		chew()
++		scanner.chew()
+ 		return
+ 	    prout(_(&quot;Your crew hides the Galileo to prevent capture by aliens.&quot;))
+ 	prout(_(&quot;Landing party assembled, ready to beam up.&quot;))
+@@ -4923,7 +4923,7 @@
+ def mine():
+     # strip-mine a world for dilithium 
+     skip(1)
+-    chew()
++    scanner.chew()
+     if not game.landed:
+ 	prout(_(&quot;Mining party not on planet.&quot;))
+ 	return
+@@ -4953,7 +4953,7 @@
+     # use dilithium crystals 
+     game.ididit = False
+     skip(1)
+-    chew()
++    scanner.chew()
+     if not game.icrystl:
+ 	prout(_(&quot;No dilithium crystals available.&quot;))
+ 	return
+@@ -4966,7 +4966,7 @@
+     prout(_(&quot;  system may risk a severe explosion.&quot;))
+     proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;))
+     if ja() == False:
+-	chew()
++	scanner.chew()
+ 	return
+     skip(1)
+     prout(_(&quot;Engineering Officer Scott-  \&quot;(GULP) Aye Sir.&quot;))
+@@ -4997,7 +4997,7 @@
+ 
+ def shuttle():
+     # use shuttlecraft for planetary jaunt 
+-    chew()
++    scanner.chew()
+     skip(1)
+     if damaged(DSHUTTL):
+ 	if game.damage[DSHUTTL] == -1.0:
+@@ -5101,7 +5101,7 @@
+     # use the big zapper 
+     game.ididit = False
+     skip(1)
+-    chew()
++    scanner.chew()
+     if game.ship != IHE:
+ 	prout(_(&quot;Ye Faerie Queene has no death ray.&quot;))
+ 	return
+@@ -5222,7 +5222,7 @@
+ 
+ def report():
+     # report on general game status 
+-    chew()
++    scanner.chew()
+     s1 = &quot;&quot; and game.thawed and _(&quot;thawed &quot;)
+     s2 = {1:&quot;short&quot;, 2:&quot;medium&quot;, 4:&quot;long&quot;}[game.length]
+     s3 = (None, _(&quot;novice&quot;). _(&quot;fair&quot;),
+@@ -5324,7 +5324,7 @@
+ def damagereport():
+     # damage report 
+     jdam = False
+-    chew()
++    scanner.chew()
+ 
+     for i in range(NDEVICES):
+ 	if damaged(i):
+@@ -5350,7 +5350,7 @@
+ 
+ def chart():
+     # display the star chart  
+-    chew()
++    scanner.chew()
+     if (game.options &amp; OPTION_AUTOSCAN):
+         lrscan(silent=True)
+     if not damaged(DRADIO):
+@@ -5462,11 +5462,11 @@
+ 
+ def request():
+     requests = (&quot;da&quot;,&quot;co&quot;,&quot;po&quot;,&quot;ls&quot;,&quot;wa&quot;,&quot;en&quot;,&quot;to&quot;,&quot;sh&quot;,&quot;kl&quot;,&quot;sy&quot;, &quot;ti&quot;)
+-    while scan() == IHEOL:
++    while scanner.next() == IHEOL:
+ 	proutn(_(&quot;Information desired? &quot;))
+-    chew()
+-    if citem in requests:
+-        status(requests.index(citem))
++    scanner.chew()
++    if scanner.token in requests:
++        status(requests.index(scanner.token))
+     else:
+ 	prout(_(&quot;UNRECOGNIZED REQUEST. Legal requests are:&quot;))
+ 	prout((&quot;  date, condition, position, lsupport, warpfactor,&quot;))
+@@ -5506,24 +5506,24 @@
+ 	prout(_(&quot;COMPUTER DAMAGED, USE A POCKET CALCULATOR.&quot;))
+ 	skip(1)
+ 	return
+-    if scan() != IHREAL:
++    if scanner.next() != IHREAL:
+ 	prompt = True
+-	chew()
++	scanner.chew()
+ 	proutn(_(&quot;Destination quadrant and/or sector? &quot;))
+-	if scan()!=IHREAL:
++	if scanner.next()!=IHREAL:
+ 	    huh()
+ 	    return
+-    w1.y = int(aaitem-0.5)
+-    if scan() != IHREAL:
++    w1.y = int(scanner.real-0.5)
++    if scanner.next() != IHREAL:
+ 	huh()
+ 	return
+-    w1.x = int(aaitem-0.5)
+-    if scan() == IHREAL:
+-	w2.y = int(aaitem-0.5)
+-	if scan() != IHREAL:
++    w1.x = int(scanner.real-0.5)
++    if scanner.next() == IHREAL:
++	w2.y = int(scanner.real-0.5)
++	if scanner.next() != IHREAL:
+ 	    huh()
+ 	    return
+-	w2.x = int(aaitem-0.5)
++	w2.x = int(scanner.real-0.5)
+     else:
+ 	if game.quadrant.y&gt;w1.x:
+ 	    w2.x = 0
+@@ -5542,32 +5542,32 @@
+     if prompt:
+ 	prout(_(&quot;Answer \&quot;no\&quot; if you don't know the value:&quot;))
+     while True:
+-	chew()
++	scanner.chew()
+ 	proutn(_(&quot;Time or arrival date? &quot;))
+-	if scan()==IHREAL:
+-	    ttime = aaitem
++	if scanner.next()==IHREAL:
++	    ttime = scanner.real
+ 	    if ttime &gt; game.state.date:
+ 		ttime -= game.state.date # Actually a star date
+             twarp=(math.floor(math.sqrt((10.0*game.dist)/ttime)*10.0)+1.0)/10.0
+             if ttime &lt;= 1e-10 or twarp &gt; 10:
+ 		prout(_(&quot;We'll never make it, sir.&quot;))
+-		chew()
++		scanner.chew()
+ 		return
+ 	    if twarp &lt; 1.0:
+ 		twarp = 1.0
+ 	    break
+-	chew()
++	scanner.chew()
+ 	proutn(_(&quot;Warp factor? &quot;))
+-	if scan()== IHREAL:
++	if scanner.next()== IHREAL:
+ 	    wfl = True
+-	    twarp = aaitem
++	    twarp = scanner.real
+ 	    if twarp&lt;1.0 or twarp &gt; 10.0:
+ 		huh()
+ 		return
+ 	    break
+ 	prout(_(&quot;Captain, certainly you can give me one of these.&quot;))
+     while True:
+-	chew()
++	scanner.chew()
+ 	ttime = (10.0*game.dist)/square(twarp)
+ 	tpower = game.dist*twarp*twarp*twarp*(game.shldup+1)
+ 	if tpower &gt;= game.energy:
+@@ -5576,15 +5576,15 @@
+ 		if not wfl:
+ 		    return
+ 		proutn(_(&quot;New warp factor to try? &quot;))
+-		if scan() == IHREAL:
++		if scanner.next() == IHREAL:
+ 		    wfl = True
+-		    twarp = aaitem
++		    twarp = scanner.real
+ 		    if twarp&lt;1.0 or twarp &gt; 10.0:
+ 			huh()
+ 			return
+ 		    continue
+ 		else:
+-		    chew()
++		    scanner.chew()
+ 		    skip(1)
+ 		    return
+ 	    prout(_(&quot;But if you lower your shields,&quot;))
+@@ -5609,14 +5609,14 @@
+ 	    (scheduled(FCDBAS)&lt;ttime+game.state.date and game.battle == w1):
+ 	    prout(_(&quot;The starbase there will be destroyed by then.&quot;))
+ 	proutn(_(&quot;New warp factor to try? &quot;))
+-	if scan() == IHREAL:
++	if scanner.next() == IHREAL:
+ 	    wfl = True
+-	    twarp = aaitem
++	    twarp = scanner.real
+ 	    if twarp&lt;1.0 or twarp &gt; 10.0:
+ 		huh()
+ 		return
+ 	else:
+-	    chew()
++	    scanner.chew()
+ 	    skip(1)
+ 	    return
+ 			
+@@ -5635,22 +5635,22 @@
+ def freeze(boss):
+     # save game 
+     if boss:
+-	citem = &quot;emsave.trk&quot;
++	scanner.token = &quot;emsave.trk&quot;
+     else:
+-        key = scan()
++        key = scanner.next()
+ 	if key == IHEOL:
+ 	    proutn(_(&quot;File name: &quot;))
+-	    key = scan()
++	    key = scanner.next()
+ 	if key != IHALPHA:
+ 	    huh()
+ 	    return
+-	chew()
+-        if '.' not in citem:
+-	    citem += &quot;.trk&quot;
++	scanner.chew()
++        if '.' not in scanner.token:
++	    scanner.token += &quot;.trk&quot;
+     try:
+-        fp = open(citem, &quot;wb&quot;)
++        fp = open(scanner.token, &quot;wb&quot;)
+     except IOError:
+-	prout(_(&quot;Can't freeze game as file %s&quot;) % citem)
++	prout(_(&quot;Can't freeze game as file %s&quot;) % scanner.token)
+ 	return
+     cPickle.dump(game, fp)
+     fp.close()
+@@ -5658,20 +5658,20 @@
+ def thaw():
+     # retrieve saved game 
+     game.passwd[0] = '\0'
+-    key = scan()
++    key = scanner.next()
+     if key == IHEOL:
+ 	proutn(_(&quot;File name: &quot;))
+-	key = scan()
++	key = scanner.next()
+     if key != IHALPHA:
+ 	huh()
+ 	return True
+-    chew()
+-    if '.' not in citem:
+-        citem += &quot;.trk&quot;
++    scanner.chew()
++    if '.' not in scanner.token:
++        scanner.token += &quot;.trk&quot;
+     try:
+-        fp = open(citem, &quot;rb&quot;)
++        fp = open(scanner.token, &quot;rb&quot;)
+     except IOError:
+-	prout(_(&quot;Can't thaw game in %s&quot;) % citem)
++	prout(_(&quot;Can't thaw game in %s&quot;) % scanner.token)
+ 	return
+     game = cPickle.load(fp)
+     fp.close()
+@@ -5748,11 +5748,11 @@
+ 	_(&quot;D. S. Probe&quot;), \
+ )
+ 
+-def setup(needprompt):
++def setup():
+     # prepare to play, set up cosmos 
+     w = coord()
+     #  Decide how many of everything
+-    if choose(needprompt):
++    if choose():
+ 	return # frozen game
+     # Prepare the Enterprise
+     game.alldone = game.gamewon = False
+@@ -5953,7 +5953,7 @@
+     if game.neutz:	# bad luck to start in a Romulan Neutral Zone
+ 	attack(torps_ok=False)
+ 
+-def choose(needprompt):
++def choose():
+     # choose your game type
+     global thing
+     while True:
+@@ -5961,26 +5961,26 @@
+ 	game.thawed = False
+ 	game.skill = SKILL_NONE
+ 	game.length = 0
+-	if needprompt: # Can start with command line options 
++	if not scanner.inqueue: # Can start with command line options 
+ 	    proutn(_(&quot;Would you like a regular, tournament, or saved game? &quot;))
+-        scan()
+-	if len(citem)==0: # Try again
++        scanner.next()
++	if len(scanner.token)==0: # Try again
+ 	    continue
+-        if isit(&quot;tournament&quot;):
+-	    while scan() == IHEOL:
++        if scanner.sees(&quot;tournament&quot;):
++	    while scanner.next() == IHEOL:
+ 		proutn(_(&quot;Type in tournament number-&quot;))
+-	    if aaitem == 0:
+-		chew()
++	    if scanner.real == 0:
++		scanner.chew()
+ 		continue # We don't want a blank entry
+-	    game.tourn = int(round(aaitem))
+-	    random.seed(aaitem)
++	    game.tourn = int(round(scanner.real))
++	    random.seed(scanner.real)
+             if logfp:
+-                logfp.write(&quot;# random.seed(%d)\n&quot; % aaitem)
++                logfp.write(&quot;# random.seed(%d)\n&quot; % scanner.real)
+ 	    break
+-        if isit(&quot;saved&quot;) or isit(&quot;frozen&quot;):
++        if scanner.sees(&quot;saved&quot;) or scanner.sees(&quot;frozen&quot;):
+ 	    if thaw():
+ 		continue
+-	    chew()
++	    scanner.chew()
+ 	    if game.passwd == None:
+ 		continue
+ 	    if not game.alldone:
+@@ -5988,55 +5988,55 @@
+ 	    report()
+ 	    waitfor()
+ 	    return True
+-        if isit(&quot;regular&quot;):
++        if scanner.sees(&quot;regular&quot;):
+ 	    break
+-	proutn(_(&quot;What is \&quot;%s\&quot;?&quot;), citem)
+-	chew()
++	proutn(_(&quot;What is \&quot;%s\&quot;?&quot;), scanner.token)
++	scanner.chew()
+     while game.length==0 or game.skill==SKILL_NONE:
+-	if scan() == IHALPHA:
+-            if isit(&quot;short&quot;):
++	if scanner.next() == IHALPHA:
++            if scanner.sees(&quot;short&quot;):
+ 		game.length = 1
+-	    elif isit(&quot;medium&quot;):
++	    elif scanner.sees(&quot;medium&quot;):
+ 		game.length = 2
+-	    elif isit(&quot;long&quot;):
++	    elif scanner.sees(&quot;long&quot;):
+ 		game.length = 4
+-	    elif isit(&quot;novice&quot;):
++	    elif scanner.sees(&quot;novice&quot;):
+ 		game.skill = SKILL_NOVICE
+-	    elif isit(&quot;fair&quot;):
++	    elif scanner.sees(&quot;fair&quot;):
+ 		game.skill = SKILL_FAIR
+-	    elif isit(&quot;good&quot;):
++	    elif scanner.sees(&quot;good&quot;):
+ 		game.skill = SKILL_GOOD
+-	    elif isit(&quot;expert&quot;):
++	    elif scanner.sees(&quot;expert&quot;):
+ 		game.skill = SKILL_EXPERT
+-	    elif isit(&quot;emeritus&quot;):
++	    elif scanner.sees(&quot;emeritus&quot;):
+ 		game.skill = SKILL_EMERITUS
+ 	    else:
+ 		proutn(_(&quot;What is \&quot;&quot;))
+-		proutn(citem)
++		proutn(scanner.token)
+ 		prout(&quot;\&quot;?&quot;)
+ 	else:
+-	    chew()
++	    scanner.chew()
+ 	    if game.length==0:
+ 		proutn(_(&quot;Would you like a Short, Medium, or Long game? &quot;))
+ 	    elif game.skill == SKILL_NONE:
+ 		proutn(_(&quot;Are you a Novice, Fair, Good, Expert, or Emeritus player? &quot;))
+     # Choose game options -- added by ESR for SST2K
+-    if scan() != IHALPHA:
+-	chew()
++    if scanner.next() != IHALPHA:
++	scanner.chew()
+ 	proutn(_(&quot;Choose your game style (or just press enter): &quot;))
+-	scan()
+-    if isit(&quot;plain&quot;):
++	scanner.next()
++    if scanner.sees(&quot;plain&quot;):
+ 	# Approximates the UT FORTRAN version.
+ 	game.options &amp;=~ (OPTION_THOLIAN | OPTION_PLANETS | OPTION_THINGY | OPTION_PROBE | OPTION_RAMMING | OPTION_MVBADDY | OPTION_BLKHOLE | OPTION_BASE | OPTION_WORLDS)
+ 	game.options |= OPTION_PLAIN
+-    elif isit(&quot;almy&quot;):
++    elif scanner.sees(&quot;almy&quot;):
+ 	# Approximates Tom Almy's version.
+ 	game.options &amp;=~ (OPTION_THINGY | OPTION_BLKHOLE | OPTION_BASE | OPTION_WORLDS)
+ 	game.options |= OPTION_ALMY
+-    elif isit(&quot;fancy&quot;):
++    elif scanner.sees(&quot;fancy&quot;):
+ 	pass
+-    elif len(citem):
+-        proutn(_(&quot;What is \&quot;%s\&quot;?&quot;) % citem)
++    elif len(scanner.token):
++        proutn(_(&quot;What is \&quot;%s\&quot;?&quot;) % scanner.token)
+     setpassword()
+     if game.passwd == &quot;debug&quot;:
+ 	idebug = True
+@@ -6218,10 +6218,10 @@
+     # set the self-destruct password 
+     if game.options &amp; OPTION_PLAIN:
+ 	while True:
+-	    chew()
++	    scanner.chew()
+ 	    proutn(_(&quot;Please type in a secret password- &quot;))
+-	    scan()
+-	    game.passwd = citem
++	    scanner.next()
++	    game.passwd = scanner.token
+ 	    if game.passwd != None:
+ 		break
+     else:
+@@ -6292,23 +6292,23 @@
+ def helpme():
+     # browse on-line help 
+     # Give help on commands 
+-    key = scan()
++    key = scanner.next()
+     while True:
+ 	if key == IHEOL:
+ 	    setwnd(prompt_window)
+ 	    proutn(_(&quot;Help on what command? &quot;))
+-	    key = scan()
++	    key = scanner.next()
+ 	setwnd(message_window)
+ 	if key == IHEOL:
+ 	    return
+-        if citem in commands or citem == &quot;ABBREV&quot;:
++        if scanner.token in commands or scanner.token == &quot;ABBREV&quot;:
+ 	    break
+ 	skip(1)
+ 	listCommands()
+ 	key = IHEOL
+-	chew()
++	scanner.chew()
+ 	skip(1)
+-    cmd = citem.upper()
++    cmd = scanner.token.upper()
+     try:
+         fp = open(SSTDOC, &quot;r&quot;)
+     except IOError:
+@@ -6357,11 +6357,11 @@
+ 	    hitme = False
+ 	    game.justin = False
+ 	    game.optime = 0.0
+-	    chew()
++	    scanner.chew()
+ 	    setwnd(prompt_window)
+ 	    clrscr()
+ 	    proutn(&quot;COMMAND&gt; &quot;)
+-	    if scan() == IHEOL:
++	    if scanner.next() == IHEOL:
+ 		if game.options &amp; OPTION_CURSES:
+ 		    makechart()
+ 		continue
+@@ -6369,7 +6369,7 @@
+ 	    clrscr()
+ 	    setwnd(message_window)
+ 	    clrscr()
+-            candidates = filter(lambda x: x.startswith(citem.upper()),
++            candidates = filter(lambda x: x.startswith(scanner.token.upper()),
+                                 commands)
+             if len(candidates) == 1:
+                 cmd = candidates[0]
+@@ -6558,72 +6558,85 @@
+     w.y = randrange(size)
+     return w
+ 
+-def chew():
+-    # Demand input for next scan
+-    global inqueue
+-    inqueue = None
+-
+-def chew2():
+-    # return IHEOL next time 
+-    global inqueue
+-    inqueue = []
+-
+-def scan():
+-    # Get a token from the user
+-    global inqueue, line, citem, aaitem
+-    aaitem = 0.0
+-    citem = ''
+-
+-    # Read a line if nothing here
+-    if inqueue == None:
+-	line = cgetline()
+-	if curwnd==prompt_window:
+-	    clrscr()
+-	    setwnd(message_window)
+-	    clrscr()
+-        # Skip leading white space
+-        line = line.lstrip()
+-        if line:
+-            inqueue = line.split()
+-        else:
+-            inqueue = []
++class sstscanner:
++    def __init__(self):
++        self.type = None
++        self.token = None
++        self.real = 0.0
++        self.inqueue = []
++    def next(self):
++        # Get a token from the user
++        self.real = 0.0
++        self.token = ''
++        # Read a line if nothing here
++        if self.inqueue == None:
++            line = cgetline()
++            if curwnd==prompt_window:
++                clrscr()
++                setwnd(message_window)
++                clrscr()
++            # Skip leading white space
++            line = line.lstrip()
++            if line:
++                self.inqueue = line.split()
++            else:
++                self.inqueue = []
++                self.type = IHEOL
++                return IHEOL
++        elif not self.inqueue:
++            self.type = IHEOL
+             return IHEOL
+-    elif not inqueue:
+-        return IHEOL
+-    # From here on in it's all looking at the queue
+-    citem = inqueue.pop(0)
+-    if citem == IHEOL:
+-        return IHEOL
+-    try:
+-        aaitem = float(citem)
+-        return IHREAL
+-    except ValueError:
+-        pass
+-    # Treat as alpha
+-    citem = citem.lower()
+-    return IHALPHA
++        # From here on in it's all looking at the queue
++        self.token = self.inqueue.pop(0)
++        if self.token == IHEOL:
++            self.type = IHEOL
++            return IHEOL
++        try:
++            self.real = float(self.token)
++            self.type = IHREAL
++            return IHREAL
++        except ValueError:
++            pass
++        # Treat as alpha
++        self.token = self.token.lower()
++        self.type = IHALPHA
++        self.real = None
++        return IHALPHA
++    def push(self, toklist):
++        self.inqueue += toklist
++    def chew(self):
++        # Demand input for next scan
++        self.inqueue = None
++        self.real = self.token = None
++    def chew2(self):
++        # return IHEOL next time 
++        self.inqueue = []
++        self.real = self.token = None
++    def sees(self, s):
++        # compares s to item and returns true if it matches to the length of s
++        return s.startswith(self.token)
++    def int(self):
++        # Round token value to nearest integer
++        return int(round(scanner.real + 0.5))
+ 
+ def ja():
+     # yes-or-no confirmation 
+-    chew()
++    scanner.chew()
+     while True:
+-	scan()
+-	chew()
+-	if citem == 'y':
++	scanner.next()
++	scanner.chew()
++	if scanner.token == 'y':
+ 	    return True
+-	if citem == 'n':
++	if scanner.token == 'n':
+ 	    return False
+ 	proutn(_(&quot;Please answer with \&quot;y\&quot; or \&quot;n\&quot;: &quot;))
+ 
+ def huh():
+     # complain about unparseable input 
+-    chew()
++    scanner.chew()
+     skip(1)
+     prout(_(&quot;Beg your pardon, Captain?&quot;))
+ 
+-def isit(s):
+-    # compares s to citem and returns true if it matches to the length of s
+-    return s.startswith(citem)
+ 
+ def debugme():
+     # access to the internals for debugging 
+@@ -6652,9 +6665,9 @@
+ 	    proutn(&quot;Kill &quot;)
+ 	    proutn(device[i])
+ 	    proutn(&quot;? &quot;)
+-	    chew()
+-	    key = scan()
+-            if key == IHALPHA and isit(&quot;y&quot;):
++	    scanner.chew()
++	    key = scanner.next()
++            if key == IHALPHA and scanner.sees(&quot;y&quot;):
+ 		game.damage[i] = 10.0
+     proutn(&quot;Examine/change events? &quot;)
+     if ja() == True:
+@@ -6683,32 +6696,32 @@
+ 	    else:
+ 		proutn(&quot;never&quot;)
+ 	    proutn(&quot;? &quot;)
+-	    chew()
+-	    key = scan()
++	    scanner.chew()
++	    key = scanner.next()
+ 	    if key == 'n':
+ 		unschedule(i)
+-		chew()
++		scanner.chew()
+ 	    elif key == IHREAL:
+-		ev = schedule(i, aaitem)
++		ev = schedule(i, scanner.real)
+ 		if i == FENSLV or i == FREPRO:
+-		    chew()
++		    scanner.chew()
+ 		    proutn(&quot;In quadrant- &quot;)
+-		    key = scan()
++		    key = scanner.next()
+ 		    # IHEOL says to leave coordinates as they are 
+ 		    if key != IHEOL:
+ 			if key != IHREAL:
+ 			    prout(&quot;Event %d canceled, no x coordinate.&quot; % (i))
+ 			    unschedule(i)
+ 			    continue
+-			w.x = int(round(aaitem))
+-			key = scan()
++			w.x = int(round(scanner.real))
++			key = scanner.next()
+ 			if key != IHREAL:
+ 			    prout(&quot;Event %d canceled, no y coordinate.&quot; % (i))
+ 			    unschedule(i)
+ 			    continue
+-			w.y = int(round(aaitem))
++			w.y = int(round(scanner.real))
+ 			ev.quadrant = w
+-	chew()
++	scanner.chew()
+     proutn(&quot;Induce supernova here? &quot;)
+     if ja() == True:
+ 	game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova = True
+@@ -6717,8 +6730,7 @@
+ if __name__ == '__main__':
+     try:
+         global line, thing, game, idebug
+-        game = citem = aaitem = inqueue = None
+-        line = ''
++        game = None
+         thing = coord()
+         thing.angry = False
+         game = gamestate()
+@@ -6767,17 +6779,15 @@
+             logfp.write(&quot;# seed %s\n&quot; % seed)
+             logfp.write(&quot;# options %s\n&quot; % &quot; &quot;.join(arguments))
+         random.seed(seed)
+-        if arguments:
+-            inqueue = arguments
+-        else:
+-            inqueue = None
++        scanner = sstscanner()
++        scanner.push(arguments)
+         try:
+             iostart()
+             while True: # Play a game 
+                 setwnd(fullscreen_window)
+                 clrscr()
+                 prelim()
+-                setup(needprompt=not inqueue)
++                setup()
+                 if game.alldone:
+                     score()
+                     game.alldone = False
+@@ -6789,9 +6799,9 @@
+                 if game.tourn and game.alldone:
+                     proutn(_(&quot;Do you want your score recorded?&quot;))
+                     if ja() == True:
+-                        chew2()
++                        scanner.chew2()
+                         freeze(False)
+-                chew()
++                scanner.chew()
+                 proutn(_(&quot;Do you want to play again? &quot;))
+                 if not ja():
+                     break
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000171.html">[Sst-commit-watch] r704 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000173.html">[Sst-commit-watch] r706 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#172">[ date ]</a>
+              <a href="thread.html#172">[ thread ]</a>
+              <a href="subject.html#172">[ subject ]</a>
+              <a href="author.html#172">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

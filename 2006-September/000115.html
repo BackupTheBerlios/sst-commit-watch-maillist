@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r648 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r648%20-%20trunk/src&In-Reply-To=%3C200609290939.k8T9dOx3021281%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000114.html">
+   <LINK REL="Next"  HREF="000116.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r648 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r648%20-%20trunk/src&In-Reply-To=%3C200609290939.k8T9dOx3021281%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r648 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 29 11:39:24 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000114.html">[Sst-commit-watch] r647 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000116.html">[Sst-commit-watch] r649 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#115">[ date ]</a>
+              <a href="thread.html#115">[ thread ]</a>
+              <a href="subject.html#115">[ subject ]</a>
+              <a href="author.html#115">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-29 11:39:24 +0200 (Fri, 29 Sep 2006)
+New Revision: 648
+
+Modified:
+   trunk/src/sst.py
+Log:
+Create blank objects in all arrays during Python game state initialization.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-09-29 09:21:09 UTC (rev 647)
++++ trunk/src/sst.py	2006-09-29 09:39:24 UTC (rev 648)
+@@ -55,8 +55,8 @@
+ 
+ class planet:
+     def __init(self):
+-        self.name = None	# String-valued if inhabited
+-        self.w = None
++        self.name = None	# string-valued if inhabited
++        self.w = coord()	# quadrant located
+         self.pclass = None	# could be &quot;&quot;M&quot;, &quot;N&quot;, &quot;O&quot;, or &quot;destroyed&quot;
+         self.crystals = None	# could be &quot;mined&quot;, &quot;present&quot;, &quot;absent&quot;
+         self.known = None	# could be &quot;unknown&quot;, &quot;known&quot;, &quot;shuttle_down&quot;
+@@ -93,6 +93,12 @@
+ 	self.charted = None
+         self.status = None	# Could be &quot;secure&quot;, &quot;distressed&quot;, &quot;enslaved&quot;
+ 
++class page:
++    def __init(self):
++	self.stars = None
++	self.starbase = None
++	self.klingons = None
++
+ class snapshot:
+     def __init(self):
+         self.snap = False	# snapshot taken
+@@ -107,14 +113,28 @@
+ 	self.nplankl = None	# destroyed uninhabited planets
+ 	self.nworldkl = None	# destroyed inhabited planets
+         self.planets = []	# Planet information
++        for i in range(PLNETMAX):
++            self.planets.append(planet())
+         self.date = None	# stardate
+ 	self.remres = None	# remaining resources
+ 	self.remtime = None	# remaining time
+         self.baseq = [] 	# Base quadrant coordinates
++        for i in range(BASEMAX+1):
++            self.baseq.append(coord())
+         self.kcmdr = [] 	# Commander quadrant coordinates
+-	self.kscmdr = None	# Supercommander quadrant coordinates
+-        self.galaxy = None 	# The Galaxy (subscript 0 not used)
+-    	self.chart = None 	# the starchart (subscript 0 not used)
++        for i in range(QUADSIZE+1):
++            self.kcmdr.append(coord())
++	self.kscmdr = coord()	# Supercommander quadrant coordinates
++        self.galaxy = [] 	# The Galaxy (subscript 0 not used)
++        for i in range(GALSIZE+1):
++            self.chart.append([])
++            for j in range(GALSIZE+1):
++                self.galaxy[i].append(quadrant())
++    	self.chart = [] 	# the starchart (subscript 0 not used)
++        for i in range(GALSIZE+1):
++            self.chart.append([])
++            for j in range(GALSIZE+1):
++                self.chart[i].append(page())
+ 
+ class event:
+     def __init__(self):
+@@ -192,7 +212,9 @@
+         self.kdist = [[0 * (QUADSIZE+1)] * (QUADSIZE+1)]	# enemy distances
+         self.kavgd = [[0 * (QUADSIZE+1)] * (QUADSIZE+1)]	# average distances
+         self.damage = [0] * NDEVICES	# damage encountered
+-        self.future = [None] * NEVENTS	# future events
++        self.future = [0.0] * NEVENTS	# future events
++        for i in range(NEVENTS):
++            self.future.append(event())
+         self.passwd  = None;		# Self Destruct password
+         self.ks = [[None * (QUADSIZE+1)] * (QUADSIZE+1)]	# enemy sector locations
+         self.quadrant = None	# where we are in the large
+@@ -274,4 +296,3 @@
+         self.probeiny = 0.0	#
+         self.height = 0.0	# height of orbit around planet
+ 
+-
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000114.html">[Sst-commit-watch] r647 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000116.html">[Sst-commit-watch] r649 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#115">[ date ]</a>
+              <a href="thread.html#115">[ thread ]</a>
+              <a href="subject.html#115">[ subject ]</a>
+              <a href="author.html#115">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

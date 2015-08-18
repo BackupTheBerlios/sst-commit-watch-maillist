@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r620 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r620%20-%20trunk/src&In-Reply-To=%3C200609201810.k8KIASdi028744%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000086.html">
+   <LINK REL="Next"  HREF="000088.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r620 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r620%20-%20trunk/src&In-Reply-To=%3C200609201810.k8KIASdi028744%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r620 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 20:10:28 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000086.html">[Sst-commit-watch] r619 - trunk/po
+</A></li>
+        <LI>Next message: <A HREF="000088.html">[Sst-commit-watch] r621 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#87">[ date ]</a>
+              <a href="thread.html#87">[ thread ]</a>
+              <a href="subject.html#87">[ subject ]</a>
+              <a href="author.html#87">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 20:10:28 +0200 (Wed, 20 Sep 2006)
+New Revision: 620
+
+Modified:
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+Log:
+Clean up some boolean arguments.
+
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-20 17:02:59 UTC (rev 619)
++++ trunk/src/events.c	2006-09-20 18:10:28 UTC (rev 620)
+@@ -244,7 +244,7 @@
+ 	    newqad(false);
+ 	    /* Adjust finish time to time of tractor beaming */
+ 	    fintim = game.state.date+game.optime;
+-	    attack(0);
++	    attack(false);
+ 	    if (game.state.remcom &lt;= 0) unschedule(FTBEAM);
+ 	    else schedule(FTBEAM, game.optime+expran(1.5*game.intime/game.state.remcom));
+ 	    break;
+@@ -585,7 +585,7 @@
+ 	    if (rtime &lt; temp) temp = rtime;
+ 	    game.optime = temp;
+ 	}
+-	if (game.optime &lt; delay) attack(0);
++	if (game.optime &lt; delay) attack(false);
+ 	if (game.alldone) return;
+ 	events();
+ 	game.ididit = true;
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-20 17:02:59 UTC (rev 619)
++++ trunk/src/moving.c	2006-09-20 18:10:28 UTC (rev 620)
+@@ -63,7 +63,7 @@
+ 		     * are present and your skill is good.
+ 		     */
+ 		    if (game.skill &gt; SKILL_GOOD &amp;&amp; game.klhere &gt; 0 &amp;&amp; !game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+-			attack(0);
++			attack(false);
+ 		    if (game.alldone) return;
+ 		}
+ 		/* compute final position -- new quadrant and sector */
+@@ -116,7 +116,7 @@
+ 		prout(_(&quot;Entering %s.&quot;), cramlc(quadrant, game.quadrant));
+ 		game.quad[game.sector.x][game.sector.y] = game.ship;
+ 		newqad(false);
+-		if (game.skill&gt;SKILL_NOVICE) attack(0);
++		if (game.skill&gt;SKILL_NOVICE) attack(false);
+ 		return;
+ 	    }
+ 	    iquad = game.quad[w.x][w.y];
+@@ -198,7 +198,7 @@
+ 	}
+ 	sortkl();
+ 	if (!game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova &amp;&amp; game.iattak == 0)
+-	    attack(0);
++	    attack(false);
+ 	for_local_enemies(m) game.kavgd[m] = game.kdist[m];
+     }
+     newcnd();
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-20 17:02:59 UTC (rev 619)
++++ trunk/src/setup.c	2006-09-20 18:10:28 UTC (rev 620)
+@@ -407,7 +407,7 @@
+     waitfor();
+     newqad(false);
+     if (game.nenhere-iqhere-game.ithere) game.shldup = true;
+-    if (game.neutz) attack(0);	// bad luck to start in a Romulan Neutral Zone
++    if (game.neutz) attack(false);	// bad luck to start in a Romulan Neutral Zone
+ }
+ 
+ bool choose(bool needprompt) 
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-20 17:02:59 UTC (rev 619)
++++ trunk/src/sst.c	2006-09-20 18:10:28 UTC (rev 620)
+@@ -469,8 +469,8 @@
+ 	    }
+ 	    break;
+ 	case DOCK:			// dock
+-	    dock(1);
+-	    if (game.ididit) attack(0);
++	    dock(true);
++	    if (game.ididit) attack(false);
+ 	    break;
+ 	case DAMAGES:			// damages
+ 	    dreprt();
+@@ -586,7 +586,7 @@
+ 		continue;
+ 	    }
+ 	    if (hitme &amp;&amp; !game.justin) {
+-		attack(2);
++		attack(true);
+ 		if (game.alldone) break;
+ 		if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova) {	// went NOVA! 
+ 		    atover(false);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000086.html">[Sst-commit-watch] r619 - trunk/po
+</A></li>
+	<LI>Next message: <A HREF="000088.html">[Sst-commit-watch] r621 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#87">[ date ]</a>
+              <a href="thread.html#87">[ thread ]</a>
+              <a href="subject.html#87">[ subject ]</a>
+              <a href="author.html#87">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r550 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r550%20-%20trunk/src&In-Reply-To=%3C200609132024.k8DKOQ2j011907%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000016.html">
+   <LINK REL="Next"  HREF="000018.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r550 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r550%20-%20trunk/src&In-Reply-To=%3C200609132024.k8DKOQ2j011907%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r550 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 13 22:24:26 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000016.html">[Sst-commit-watch] r549 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000018.html">[Sst-commit-watch] r551 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#17">[ date ]</a>
+              <a href="thread.html#17">[ thread ]</a>
+              <a href="subject.html#17">[ subject ]</a>
+              <a href="author.html#17">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-13 22:24:26 +0200 (Wed, 13 Sep 2006)
+New Revision: 550
+
+Modified:
+   trunk/src/xio.c
+Log:
+Remove some dead code.
+
+
+Modified: trunk/src/xio.c
+===================================================================
+--- trunk/src/xio.c	2006-09-13 19:45:48 UTC (rev 549)
++++ trunk/src/xio.c	2006-09-13 20:24:26 UTC (rev 550)
+@@ -28,7 +28,7 @@
+     &quot;*Shields.fromHoriz: Torpedo&quot;,
+     &quot;*Damages.fromHoriz: Shields&quot;,
+     &quot;*Crystals.fromHoriz: Damages&quot;,
+-    &quot;*Deathray.fromHoriz: Damages&quot;,
++    &quot;*Deathray.fromHoriz: Crystals&quot;,
+     &quot;*Mayday.fromHoriz: Deathray&quot;,
+     &quot;*Abandon.fromHoriz: Mayday&quot;,
+     // Planet row
+@@ -109,7 +109,7 @@
+     /* the command window */
+     text = XtVaCreateManagedWidget(&quot;text&quot;, asciiTextWidgetClass, form, 
+ 				    NULL);
+-
++    XtVaSetValues(text, XtNeditType,XawtextRead, XtNdisplayCaret,False, NULL);
+     /* The button panel */
+     buttons  = XtVaCreateManagedWidget(&quot;form&quot;, 
+ 					formWidgetClass, form, 
+@@ -123,10 +123,6 @@
+ 	if (cp-&gt;callback)
+ 	    XtAddCallback (cp-&gt;widget, XtNcallback, cp-&gt;callback, NULL);
+     }
+-    /* sample text so the widget will be identifiable */
+-    XtVaSetValues(text, XtNtype, XawAsciiString, 
+-		       XtNstring, &quot;Command window&quot;, NULL); 
+-    XtVaSetValues(text, XtNeditType, XawtextRead, XtNdisplayCaret, False, NULL);
+     XtRealizeWidget(toplevel);
+     XtAppMainLoop(app_context);
+     /* loop may be interrupted */
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000016.html">[Sst-commit-watch] r549 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000018.html">[Sst-commit-watch] r551 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#17">[ date ]</a>
+              <a href="thread.html#17">[ thread ]</a>
+              <a href="subject.html#17">[ subject ]</a>
+              <a href="author.html#17">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

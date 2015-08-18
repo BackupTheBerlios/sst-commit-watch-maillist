@@ -1,0 +1,738 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r612 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r612%20-%20trunk/src&In-Reply-To=%3C200609200625.k8K6PwgR024725%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000078.html">
+   <LINK REL="Next"  HREF="000080.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r612 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r612%20-%20trunk/src&In-Reply-To=%3C200609200625.k8K6PwgR024725%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r612 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 08:25:58 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000078.html">[Sst-commit-watch] r611 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000080.html">[Sst-commit-watch] r613 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#79">[ date ]</a>
+              <a href="thread.html#79">[ thread ]</a>
+              <a href="subject.html#79">[ subject ]</a>
+              <a href="author.html#79">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 08:25:57 +0200 (Wed, 20 Sep 2006)
+New Revision: 612
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/io.c
+   trunk/src/moving.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+Replace more #defines with enums.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-20 05:31:21 UTC (rev 611)
++++ trunk/src/ai.c	2006-09-20 06:25:57 UTC (rev 612)
+@@ -28,7 +28,7 @@
+        We know this if either short or long range sensors are working */
+     if (!damaged(DSRSENS) || !damaged(DLRSENS) ||
+ 	game.condition == docked) {
+-	crmena(1, ienm, sector, game.ks[loccom]);
++	crmena(true, ienm, sector, game.ks[loccom]);
+ 	prout(_(&quot; escapes to %s (and regains strength).&quot;),
+ 	      cramlc(quadrant, iq));
+     }
+@@ -66,7 +66,7 @@
+ }
+ 
+ 
+-static void movebaddy(coord com, int loccom, int ienm)
++static void movebaddy(coord com, int loccom, feature ienm)
+ /* tactical movement for the bad guys */
+ {
+     int motion, mdist, nsteps, mx, my, ll;
+@@ -335,7 +335,7 @@
+ 	    DESTROY(&amp;game.state.plnets[i]);
+ 	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET;
+ 	    if (!damaged(DRADIO) || game.condition == docked) {
+-		if (*ipage==0) pause_game(1);
++		if (*ipage==0) pause_game(true);
+ 		*ipage = 1;
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;));
+ 		proutn(_(&quot;   a planet in &quot;));
+@@ -490,7 +490,7 @@
+ 	    if (damaged(DRADIO) &amp;&amp; game.condition != docked)
+ 		return; /* no warning */
+ 	    game.iseenit = true;
+-	    if (*ipage == 0)  pause_game(1);
++	    if (*ipage == 0)  pause_game(true);
+ 	    *ipage=1;
+ 	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
+ 	    proutn(cramlc(quadrant, game.state.kscmdr));
+@@ -513,7 +513,7 @@
+ 	 (damaged(DRADIO) &amp;&amp; game.condition != docked) ||
+ 	 !game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].charted))
+ 	return;
+-    if (*ipage==0) pause_game(1);
++    if (*ipage==0) pause_game(true);
+     *ipage = 1;
+     prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;));
+     proutn(_(&quot;   the Super-commander is in &quot;));
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-20 05:31:21 UTC (rev 611)
++++ trunk/src/battle.c	2006-09-20 06:25:57 UTC (rev 612)
+@@ -1,6 +1,6 @@
+ #include &quot;sst.h&quot;
+ 
+-void doshield(int i) 
++void doshield(bool raise) 
+ /* change shield status */
+ {
+     int key;
+@@ -8,7 +8,8 @@
+ 
+     game.ididit = false;
+ 
+-    if (i == 2) action = SHUP;
++    if (raise) 
++	action = SHUP;
+     else {
+ 	key = scan();
+ 	if (key == IHALPHA) {
+@@ -130,10 +131,10 @@
+     }
+ }
+ 
+-void ram(bool ibumpd, int ienm, coord w)
++void ram(bool ibumpd, feature ienm, coord w)
+ /* make our ship ram something */
+ {
+-    double type = 1.0, extradm;
++    double hardness, extradm;
+     int icas, m;
+ 	
+     prouts(_(&quot;***RED ALERT!  RED ALERT!&quot;));
+@@ -143,11 +144,12 @@
+     proutn(&quot;***&quot;);
+     crmshp();
+     switch (ienm) {
+-    case IHR: type = 1.5; break;
+-    case IHC: type = 2.0; break;
+-    case IHS: type = 2.5; break;
+-    case IHT: type = 0.5; break;
+-    case IHQUEST: type = 4.0; break;
++    case IHR: hardness = 1.5; break;
++    case IHC: hardness = 2.0; break;
++    case IHS: hardness = 2.5; break;
++    case IHT: hardness = 0.5; break;
++    case IHQUEST: hardness = 4.0; break;
++    default: hardness = 1.0; break;
+     }
+     proutn(ibumpd ? _(&quot; rammed by &quot;) : _(&quot; rams &quot;));
+     crmena(false, ienm, sector, w);
+@@ -166,12 +168,12 @@
+ 	    continue; // Don't damage deathray 
+ 	if (game.damage[m] &lt; 0) 
+ 	    continue;
+-	extradm = (10.0*type*Rand()+1.0)*game.damfac;
++	extradm = (10.0*hardness*Rand()+1.0)*game.damfac;
+ 	game.damage[m] += game.optime + extradm; /* Damage for at least time of travel! */
+     }
+     game.shldup = false;
+     if (KLINGREM) {
+-	pause_game(2);
++	pause_game(true);
+ 	dreprt();
+     }
+     else finish(FWON);
+@@ -613,7 +615,7 @@
+     return;
+ }
+ 		
+-void deadkl(coord w, int type, coord mv)
++void deadkl(coord w, feature type, coord mv)
+ /* kill a Klingon, Tholian, Romulan, or Thingy */
+ {
+     /* Added mv to allow enemy to &quot;move&quot; before dying */
+@@ -664,6 +666,9 @@
+ 	    unschedule(FSCMOVE);
+ 	    unschedule(FSCDBAS);
+ 	    break;
++	default:	/* avoids a gcc warning */
++	    prout(&quot;*** Internal error, deadkl() called on %c\n&quot;, type);
++	    break;
+ 	}
+     }
+ 
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-20 05:31:21 UTC (rev 611)
++++ trunk/src/events.c	2006-09-20 06:25:57 UTC (rev 612)
+@@ -153,7 +153,7 @@
+ 	game.optime -= xtime;
+ 	switch (evcode) {
+ 	case FSNOVA: /* Supernova */
+-	    if (!ipage) pause_game(1);
++	    if (!ipage) pause_game(true);
+ 	    ipage=true;
+ 	    snova(false, NULL);
+ 	    schedule(FSNOVA, expran(0.5*game.intime));
+@@ -192,7 +192,7 @@
+ 	    }
+ 	    /* tractor beaming cases merge here */
+ 	    yank = sqrt(yank);
+-	    if (!ipage) pause_game(1);
++	    if (!ipage) pause_game(true);
+ 	    ipage=true;
+ 	    game.optime = (10.0/(7.5*7.5))*yank; /* 7.5 is yank rate (warp 7.5) */
+ 	    ictbeam = 1;
+@@ -224,7 +224,7 @@
+ 		game.quadrant = game.state.kscmdr;
+ 	    else
+ 		game.quadrant = game.state.kcmdr[i];
+-	    game.sector = iran(QUADSIZE);
++	    game.sector = randplace(QUADSIZE);
+ 	    crmshp();
+ 	    proutn(_(&quot; is pulled to &quot;));
+ 	    proutn(cramlc(quadrant, game.quadrant));
+@@ -236,7 +236,7 @@
+ 	    }
+ 	    if (!game.shldup) {
+ 		if (!damaged(DSHIELD) &amp;&amp; game.shield &gt; 0) {
+-		    doshield(2); /* Shldsup */
++		    doshield(true); /* raise shields */
+ 		    game.shldchg=0;
+ 		}
+ 		else prout(_(&quot;(Shields not currently useable.)&quot;));
+@@ -287,7 +287,7 @@
+ 	    if (!damaged(DRADIO) &amp;&amp; game.condition != docked) 
+ 		break; /* No warning :-( */
+ 	    game.iseenit = true;
+-	    if (!ipage) pause_game(1);
++	    if (!ipage) pause_game(true);
+ 	    ipage = true;
+ 	    skip(1);
+ 	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
+@@ -335,7 +335,7 @@
+ 	    else if (game.state.rembase != 1 &amp;&amp;
+ 		     (!damaged(DRADIO) || game.condition == docked)) {
+ 		/* Get word via subspace radio */
+-		if (!ipage) pause_game(1);
++		if (!ipage) pause_game(true);
+ 		ipage = true;
+ 		skip(1);
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Command reports that&quot;));
+@@ -381,7 +381,7 @@
+ 		    game.state.galaxy[game.probec.x][game.probec.y].supernova) {
+ 		    // Left galaxy or ran into supernova
+ 		    if (!damaged(DRADIO) || game.condition == docked) {
+-			if (ipage==0) pause_game(1);
++			if (ipage==0) pause_game(true);
+ 			ipage = 1;
+ 			skip(1);
+ 			proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe &quot;));
+@@ -395,7 +395,7 @@
+ 		    break;
+ 		}
+ 		if (!damaged(DRADIO) || game.condition == docked) {
+-		    if (ipage==0) pause_game(1);
++		    if (ipage==0) pause_game(true);
+ 		    ipage = 1;
+ 		    skip(1);
+ 		    proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe is now in &quot;));
+@@ -432,7 +432,7 @@
+ 		   which has some stars which are inhabited and
+ 		   not already under attack, which is not
+ 		   supernova'ed, and which has some Klingons in it */
+-		w = iran(GALSIZE);
++		w = randplace(GALSIZE);
+ 		q = &amp;game.state.galaxy[w.x][w.y];
+ 	    } while (--i &amp;&amp;
+ 		     (same(game.quadrant, w) || q-&gt;planet == NOPLANET ||
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-20 05:31:21 UTC (rev 611)
++++ trunk/src/io.c	2006-09-20 06:25:57 UTC (rev 612)
+@@ -85,11 +85,11 @@
+ 	getch();
+ }
+ 
+-void pause_game(int i) 
++void pause_game(bool announcement) 
+ {
+     char *prompt;
+     char buf[BUFSIZ];
+-    if (i==1) {
++    if (announcement) {
+ 	if (game.skill &gt; SKILL_FAIR)
+ 	    prompt = _(&quot;[ANOUNCEMENT ARRIVING...]&quot;);
+ 	else
+@@ -115,7 +115,7 @@
+ 	putchar('\n');
+ 	proutn(prompt);
+ 	fgets(buf, sizeof(buf), stdin);
+-	if (i != 0) {
++	if (announcement) {
+ 	    int j;
+ 	    for (j = 0; j &lt; rows; j++)
+ 		putchar('\n');
+@@ -130,7 +130,7 @@
+     while (i-- &gt; 0) {
+ 	if (game.options &amp; OPTION_CURSES) {
+ 	    if (curwnd == message_window &amp;&amp; linecount &gt;= getmaxy(curwnd) - 3) {
+-		pause_game(0);
++		pause_game(false);
+ 		clrscr();
+ 	    } else {
+ 		proutn(&quot;\n&quot;);
+@@ -140,7 +140,7 @@
+ 	} else {
+ 	    linecount++;
+ 	    if (linecount &gt;= rows)
+-		pause_game(0);
++		pause_game(false);
+ 	    else
+ 		putchar('\n');
+ 	}
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-20 05:31:21 UTC (rev 611)
++++ trunk/src/moving.c	2006-09-20 06:25:57 UTC (rev 612)
+@@ -9,7 +9,8 @@
+ {
+     double angle, deltax, deltay, bigger, x, y,
+         finald, stopegy, probf;
+-    int n, m, kink, kinks, iquad;
++    int n, m, kink, kinks;
++    feature iquad;
+     coord w, final;
+     bool trbeam = false;
+ 
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-20 05:31:21 UTC (rev 611)
++++ trunk/src/reports.c	2006-09-20 06:25:57 UTC (rev 612)
+@@ -337,7 +337,7 @@
+     }
+ }
+ 		
+-int srscan(int l)
++void srscan(scantype type)
+ /* short-range scan */
+ {
+     /* the &quot;sy&quot; request is undocumented */
+@@ -346,7 +346,7 @@
+     
+     int i, j, jj, req=0;
+     int goodScan=true, leftside=true, rightside=true, title=false; 
+-    switch (l) {
++    switch (type) {
+     case SCAN_FULL: // SRSCAN
+ 	if (damaged(DSRSENS)) {
+ 	    /* Allow base's sensors if docked */
+@@ -381,7 +381,7 @@
+ 	    prout(_(&quot;UNRECOGNIZED REQUEST. Legal requests are:&quot;));
+ 	    prout(_(&quot;  date, condition, position, lsupport, warpfactor,&quot;));
+ 	    prout(_(&quot;  energy, torpedoes, shields, klingons, time, system, bases.&quot;));
+-	    return false;
++	    return;
+ 	}
+ 	// no break
+     case SCAN_STATUS: // STATUS
+@@ -405,11 +405,10 @@
+ 	if (rightside)
+ 	    status(jj);
+ 	if (i&lt;sizeof(requests)/sizeof(requests[0])) skip(1);
+-	if (req!=0) return(goodScan);
++	if (req!=0) return;
+     }
+     prout(&quot;&quot;);
+     if (title) chart(true);
+-    return(goodScan);
+ }
+ 			
+ 			
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-20 05:31:21 UTC (rev 611)
++++ trunk/src/setup.c	2006-09-20 06:25:57 UTC (rev 612)
+@@ -244,8 +244,8 @@
+     game.shldup = false;
+     game.inlsr = 4.0;
+     game.lsupres = 4.0;
+-    game.quadrant = iran(GALSIZE);
+-    game.sector = iran(QUADSIZE);
++    game.quadrant = randplace(GALSIZE);
++    game.sector = randplace(QUADSIZE);
+     game.torps = game.intorps = 10;
+     game.nprobes = (int)(3.0*Rand() + 2.0);	/* Give them 2-4 of these wonders */
+     game.warpfac = 5.0;
+@@ -306,7 +306,7 @@
+     for (i = 1; i &lt;= game.inbase; i++) {
+ 	bool contflag;
+ 	do {
+-	    do w = iran(GALSIZE);
++	    do w = randplace(GALSIZE);
+ 	    while (game.state.galaxy[w.x][w.y].starbase);
+ 	    contflag = false;
+ 	    for (j = i-1; j &gt; 0; j--) {
+@@ -339,7 +339,7 @@
+ 	int klump = (1.0 - r*r)*klumper;
+ 	if (klump &gt; krem) klump = krem;
+ 	krem -= klump;
+-	do w = iran(GALSIZE);
++	do w = randplace(GALSIZE);
+ 	while (game.state.galaxy[w.x][w.y].supernova ||
+ 		game.state.galaxy[w.x][w.y].klingons + klump &gt; 9);
+ 	game.state.galaxy[w.x][w.y].klingons += klump;
+@@ -358,7 +358,7 @@
+ 		}
+ 		else
+ #endif /* ODEBUG */
+-		    w = iran(GALSIZE);
++		    w = randplace(GALSIZE);
+ 	    }
+ 	    while ((!game.state.galaxy[w.x][w.y].klingons &amp;&amp; Rand() &lt; 0.75)||
+ 		   game.state.galaxy[w.x][w.y].supernova||
+@@ -372,7 +372,7 @@
+     }
+     // Locate planets in galaxy
+     for (i = 0; i &lt; game.inplan; i++) {
+-	do w = iran(GALSIZE); 
++	do w = randplace(GALSIZE); 
+ 	while (game.state.galaxy[w.x][w.y].planet != NOPLANET);
+ 	game.state.plnets[i].w = w;
+ 	if (i &lt; NINHAB) {
+@@ -391,19 +391,19 @@
+     }
+     // Locate Romulans
+     for (i = 1; i &lt;= game.state.nromrem; i++) {
+-	w = iran(GALSIZE);
++	w = randplace(GALSIZE);
+ 	game.state.galaxy[w.x][w.y].romulans = 1;
+     }
+     // Locate the Super Commander
+     if (game.state.nscrem &gt; 0) {
+-	do w = iran(GALSIZE);
++	do w = randplace(GALSIZE);
+ 	while (game.state.galaxy[w.x][w.y].supernova || game.state.galaxy[w.x][w.y].klingons &gt; 8);
+ 	game.state.kscmdr = w;
+ 	game.state.galaxy[w.x][w.y].klingons++;
+     }
+     // Place thing (in tournament game, thingx == -1, don't want one!)
+     if (thing.x != -1) {
+-	thing = iran(GALSIZE);
++	thing = randplace(GALSIZE);
+     }
+     else {
+ 	thing.x = thing.y = 0;
+@@ -566,11 +566,11 @@
+     return false;
+ }
+ 
+-coord dropin(int iquad)
++coord dropin(feature iquad)
+ /* drop a feature on a random dot in the current quadrant */
+ {
+     coord w;
+-    do w = iran(QUADSIZE);
++    do w = randplace(QUADSIZE);
+     while (game.quad[w.x][w.y] != IHDOT);
+     game.quad[w.x][w.y] = iquad;
+     return w;
+@@ -707,7 +707,7 @@
+ 	// Put in THING if needed
+ 	if (same(thing, game.quadrant)) {
+ 	    w = dropin(IHQUEST);
+-	    thing = iran(GALSIZE);
++	    thing = randplace(GALSIZE);
+ 	    game.nenhere++;
+ 	    iqhere=1;
+ 	    game.ks[game.nenhere] = w;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-20 05:31:21 UTC (rev 611)
++++ trunk/src/sst.c	2006-09-20 06:25:57 UTC (rev 612)
+@@ -460,7 +460,7 @@
+ 	    warp(false);
+ 	    break;
+ 	case SHIELDS:			// shields
+-	    doshield(1);
++	    doshield(false);
+ 	    if (game.ididit) {
+ 		hitme=true;
+ 		game.shldchg = 0;
+@@ -675,7 +675,7 @@
+ }
+ 
+ 
+-void cramen(int i) 
++void cramen(feature i) 
+ /* print the name of an enemy */
+ {
+     /* return an enemy */
+@@ -709,7 +709,7 @@
+     return buf;
+ }
+ 
+-void crmena(bool stars, int enemy, enum loctype key, coord w) 
++void crmena(bool stars, feature enemy, enum loctype key, coord w) 
+ /* print an enemy and his location */
+ {
+     if (stars) proutn(&quot;***&quot;);
+@@ -747,7 +747,7 @@
+     return rand()/(1.0 + (double)RAND_MAX);
+ }
+ 
+-coord iran(int size)
++coord randplace(int size)
+ /* choose a random location */ 
+ {
+     coord w;
+@@ -845,7 +845,7 @@
+     prout(&quot;Beg your pardon, Captain?&quot;);
+ }
+ 
+-int isit(char *s) 
++bool isit(char *s) 
+ /* compares s to citem and returns true if it matches to the length of s */
+ {
+     return strncasecmp(s, citem, max(1, strlen(citem))) == 0;
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-20 05:31:21 UTC (rev 611)
++++ trunk/src/sst.h	2006-09-20 06:25:57 UTC (rev 612)
+@@ -58,6 +58,27 @@
+ 
+ #define DESTROY(pl)	memset(pl, '\0', sizeof(planet))
+ 
++typedef enum {
++    IHR = 'R',
++    IHK = 'K',
++    IHC = 'C',
++    IHS = 'S',
++    IHSTAR = '*',
++    IHP = 'P',
++    IHW = '@',
++    IHB = 'B',
++    IHBLANK = ' ',
++    IHDOT = '.',
++    IHQUEST = '?',
++    IHE = 'E',
++    IHF = 'F',
++    IHT = 'T',
++    IHWEB = '#',
++    IHMATER0 = '-',
++    IHMATER1 = 'o',
++    IHMATER2 = '0',
++} feature;
++
+ typedef struct {
+     int snap,		// snapshot taken
+ 	crew,		// crew complement
+@@ -193,7 +214,7 @@
+     unsigned long options;
+     snapshot state;
+     snapshot snapsht;
+-    char quad[QUADSIZE+1][QUADSIZE+1];		// contents of our quadrant
++    feature quad[QUADSIZE+1][QUADSIZE+1];		// contents of our quadrant
+     double kpower[(QUADSIZE+1)*(QUADSIZE+1)];		// enemy energy levels
+     double kdist[(QUADSIZE+1)*(QUADSIZE+1)];		// enemy distances
+     double kavgd[(QUADSIZE+1)*(QUADSIZE+1)];		// average distances
+@@ -227,11 +248,11 @@
+ 	iseenit,	// seen base attack report
+ 	thawed;		// thawed game
+     enum {
+-	green = 'G',
+-	yellow = 'Y',
+-	red = 'R',
+-	docked = 'D',
+-	dead = 'Z',
++	green,
++	yellow,
++	red,
++	docked,
++	dead,
+     } condition;		// condition (red/yellow/green/docked)
+     int inkling,	// initial number of klingons
+ 	inbase,		// initial number of bases
+@@ -302,31 +323,22 @@
+ extern coord thing;
+ extern bool iqhere, iqengry;
+ 
+-typedef enum {FWON, FDEPLETE, FLIFESUP, FNRG, FBATTLE,
+-              FNEG3, FNOVA, FSNOVAED, FABANDN, FDILITHIUM,
+-			  FMATERIALIZE, FPHASER, FLOST, FMINING, FDPLANET,
+-			  FPNOVA, FSSC, FSTRACTOR, FDRAY, FTRIBBLE,
+-	      FHOLE, FCREW} FINTYPE ;
++typedef enum {
++    FWON, FDEPLETE, FLIFESUP, FNRG, FBATTLE,
++    FNEG3, FNOVA, FSNOVAED, FABANDN, FDILITHIUM,
++    FMATERIALIZE, FPHASER, FLOST, FMINING, FDPLANET,
++    FPNOVA, FSSC, FSTRACTOR, FDRAY, FTRIBBLE,
++    FHOLE, FCREW
++} FINTYPE ;
++
+ enum loctype {neither, quadrant, sector};
+ 
+-#define IHR 'R'
+-#define IHK 'K'
+-#define IHC 'C'
+-#define IHS 'S'
+-#define IHSTAR '*'
+-#define IHP 'P'
+-#define IHW '@'
+-#define IHB 'B'
+-#define IHBLANK ' '
+-#define IHDOT '.'
+-#define IHQUEST '?'
+-#define IHE 'E'
+-#define IHF 'F'
+-#define IHT 'T'
+-#define IHWEB '#'
+-#define IHMATER0 '-'
+-#define IHMATER1 'o'
+-#define IHMATER2 '0'
++typedef enum {
++    SCAN_FULL,
++    SCAN_REQUEST,
++    SCAN_STATUS,
++    SCAN_NO_LEFTSIDE,
++} scantype;
+ 
+ /* Function prototypes */
+ void prelim(void);
+@@ -335,12 +347,12 @@
+ void setup(bool);
+ void score(void);
+ void atover(bool);
+-int srscan(int);
++void srscan(scantype);
+ void lrscan(void);
+ void phasers(void);
+ void photon(void);
+ void warp(bool);
+-void doshield(int);
++void doshield(bool);
+ void dock(bool);
+ void dreprt(void);
+ void chart(bool);
+@@ -371,30 +383,30 @@
+ void stars(void);
+ void newqad(bool);
+ bool ja(void);
+-void cramen(int);
++void cramen(feature);
+ void crmshp(void);
+ char *cramlc(enum loctype, coord w);
+ double expran(double);
+ double Rand(void);
+-coord iran(int);
+-coord dropin(int);
++coord randplace(int);
++coord dropin(feature);
+ void newcnd(void);
+ void sortkl(void);
+ void imove(void);
+-void ram(bool, int, coord);
+-void crmena(bool, int, enum loctype, coord w);
+-void deadkl(coord, int, coord);
++void ram(bool, feature, coord);
++void crmena(bool, feature, enum loctype, coord w);
++void deadkl(coord, feature, coord);
+ void timwrp(void);
+ void movcom(void);
+ void torpedo(double, double, coord, double *, int, int);
+ void huh(void);
+-void pause_game(int);
++void pause_game(bool);
+ void nova(coord);
+ void snova(bool, coord *);
+ void scom(bool *);
+ void hittem(double *);
+ void prouts(char *, ...);
+-int isit(char *);
++bool isit(char *);
+ void preport(void);
+ void orbit(void);
+ void sensor(void);
+@@ -422,12 +434,6 @@
+ char *systemname(int);
+ coord newkling(int);
+ 
+-/* mode arguments for srscan() */
+-#define SCAN_FULL		1
+-#define SCAN_REQUEST		2
+-#define SCAN_STATUS		3
+-#define SCAN_NO_LEFTSIDE	4
+-
+ extern WINDOW *curwnd;
+ extern WINDOW *fullscreen_window;
+ extern WINDOW *srscan_window;
+@@ -438,7 +444,7 @@
+ 
+ extern void clreol(void);
+ extern void clrscr(void);
+-extern void textcolor(int color);
++extern void textcolor(int);
+ extern void highvideo(void);
+ 
+ enum COLORS {
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000078.html">[Sst-commit-watch] r611 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000080.html">[Sst-commit-watch] r613 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#79">[ date ]</a>
+              <a href="thread.html#79">[ thread ]</a>
+              <a href="subject.html#79">[ subject ]</a>
+              <a href="author.html#79">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

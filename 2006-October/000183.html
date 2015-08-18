@@ -1,0 +1,655 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r716 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r716%20-%20trunk/src&In-Reply-To=%3C200610091331.k99DVVRJ006591%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000182.html">
+   <LINK REL="Next"  HREF="000184.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r716 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r716%20-%20trunk/src&In-Reply-To=%3C200610091331.k99DVVRJ006591%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r716 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Oct  9 15:31:31 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000182.html">[Sst-commit-watch] r715 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000184.html">[Sst-commit-watch] r717 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#183">[ date ]</a>
+              <a href="thread.html#183">[ thread ]</a>
+              <a href="subject.html#183">[ subject ]</a>
+              <a href="author.html#183">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-09 15:31:30 +0200 (Mon, 09 Oct 2006)
+New Revision: 716
+
+Modified:
+   trunk/src/sst.py
+Log:
+More code slimming in the Python version.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-09 12:55:21 UTC (rev 715)
++++ trunk/src/sst.py	2006-10-09 13:31:30 UTC (rev 716)
+@@ -643,8 +643,8 @@
+     # we know this if either short or long range sensors are working
+     if not damaged(DSRSENS) or not damaged(DLRSENS) or \
+ 	game.condition == &quot;docked&quot;:
+-	crmena(True, enemy.type, &quot;sector&quot;, enemy.kloc)
+-	prout(_(&quot; escapes to Quadrant %s (and regains strength).&quot;) % q)
++	prout(crmena(True, enemy.type, &quot;sector&quot;, enemy.kloc) + \
++              (_(&quot; escapes to Quadrant %s (and regains strength).&quot;) % q))
+     # handle local matters related to escape
+     enemy.move(None)
+     game.klhere -= 1
+@@ -847,9 +847,7 @@
+ 	skip(1)
+     if enemy.move(next):
+ 	if not damaged(DSRSENS) or game.condition == &quot;docked&quot;:
+-	    proutn(&quot;***&quot;)
+-	    cramen(enemy.type)
+-	    proutn(_(&quot; from Sector %s&quot;) % enemy.kloc)
++	    proutn(_(&quot;*** %s from Sector %s&quot;) % (cramen(enemy.type), enemy.kloc))
+ 	    if enemy.kdist &lt; dist1:
+ 		proutn(_(&quot; advances to &quot;))
+ 	    else:
+@@ -1085,8 +1083,7 @@
+     # All plugged up -- Tholian splits 
+     game.quad[game.tholian.kloc.x][game.tholian.kloc.y]=IHWEB
+     dropin(IHBLANK)
+-    crmena(True, IHT, &quot;sector&quot;, game.tholian)
+-    prout(_(&quot; completes web.&quot;))
++    prout(crmena(True, IHT, &quot;sector&quot;, game.tholian) + _(&quot; completes web.&quot;))
+     game.tholian.move(None)
+     return
+ 
+@@ -1257,20 +1254,18 @@
+     prout(_(&quot;***COLLISION IMMINENT.&quot;))
+     skip(2)
+     proutn(&quot;***&quot;)
+-    crmshp()
++    proutn(crmshp())
+     hardness = {IHR:1.5, IHC:2.0, IHS:2.5, IHT:0.5, IHQUEST:4.0}.get(enemy.type, 1.0)
+     if rammed:
+         proutn(_(&quot; rammed by &quot;))
+     else:
+         proutn(_(&quot; rams &quot;))
+-    crmena(False, enemy.type, &quot;sector&quot;, enemy.kloc)
++    proutn(crmena(False, enemy.type, &quot;sector&quot;, enemy.kloc))
+     if rammed:
+ 	proutn(_(&quot; (original position)&quot;))
+     skip(1)
+     deadkl(enemy.kloc, enemy.type, game.sector)
+-    proutn(&quot;***&quot;)
+-    crmshp()
+-    prout(_(&quot; heavily damaged.&quot;))
++    proutn(&quot;***&quot; + crmship() + &quot; heavily damaged.&quot;)
+     icas = randrange(10, 30)
+     prout(_(&quot;***Sickbay reports %d casualties&quot;), icas)
+     game.casual += icas
+@@ -1307,8 +1302,7 @@
+     deltax = -math.sin(angle);
+     deltay = math.cos(angle);
+     x = origin.x; y = origin.y
+-    w = coord(); jw = coord()
+-    w.x = w.y = jw.x = jw.y = 0
++    w = coord(0, 0); jw = coord(0, 0)
+     bigger = max(math.fabs(deltax), math.fabs(deltay))
+     deltax /= bigger
+     deltay /= bigger
+@@ -1334,9 +1328,7 @@
+ 	    skip(1);	# start new line after text track 
+ 	if iquad in (IHE, IHF): # Hit our ship 
+ 	    skip(1)
+-	    proutn(_(&quot;Torpedo hits &quot;))
+-	    crmshp()
+-	    prout(&quot;.&quot;)
++	    prout(_(&quot;Torpedo hits %s.&quot;) % crmshp())
+ 	    hit = 700.0 + randreal(100) - \
+ 		1000.0 * (w-origin).distance() * math.fabs(math.sin(bullseye-angle))
+ 	    newcnd(); # we're blown out of dock 
+@@ -1360,12 +1352,11 @@
+ 		# can't move into object 
+ 		return hit
+ 	    game.sector = jw
+-	    crmshp()
++	    proutn(crmshp())
+ 	    shoved = True
+ 	elif iquad in (IHC, IHS): # Hit a commander 
+ 	    if withprob(0.05):
+-		crmena(True, iquad, &quot;sector&quot;, w)
+-		prout(_(&quot; uses anti-photon device;&quot;))
++		prout(crmena(True, iquad, &quot;sector&quot;, w) + _(&quot; uses anti-photon device;&quot;))
+ 		prout(_(&quot;   torpedo neutralized.&quot;))
+ 		return None
+ 	elif iquad in (IHR, IHK): # Hit a regular enemy 
+@@ -1386,7 +1377,7 @@
+ 	    if enemy.kpower == 0:
+ 		deadkl(w, iquad, w)
+ 		return None
+-	    crmena(True, iquad, &quot;sector&quot;, w)
++	    proutn(crmena(True, iquad, &quot;sector&quot;, w))
+ 	    # If enemy damaged but not destroyed, try to displace 
+ 	    ang = angle + 2.5*(randreal()-0.5)
+ 	    temp = math.fabs(math.sin(ang))
+@@ -1423,8 +1414,7 @@
+ 	    newcnd()
+ 	    return None
+ 	elif iquad == IHP: # Hit a planet 
+-	    crmena(True, iquad, &quot;sector&quot;, w)
+-	    prout(_(&quot; destroyed.&quot;))
++	    prout(crmena(True, iquad, &quot;sector&quot;, w) + _(&quot; destroyed.&quot;))
+ 	    game.state.nplankl += 1
+ 	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = None
+ 	    game.iplnet.pclass = &quot;destroyed&quot;
+@@ -1436,8 +1426,7 @@
+ 		finish(FDPLANET)
+ 	    return None
+ 	elif iquad == IHW: # Hit an inhabited world -- very bad! 
+-	    crmena(True, iquad, &quot;sector&quot;, w)
+-	    prout(_(&quot; destroyed.&quot;))
++	    prout(crmena(True, iquad, &quot;sector&quot;, w) + _(&quot; destroyed.&quot;))
+ 	    game.state.nworldkl += 1
+ 	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = None
+ 	    game.iplnet.pclass = &quot;destroyed&quot;
+@@ -1454,8 +1443,7 @@
+ 	    if withprob(0.9):
+ 		nova(w)
+             else:
+-                crmena(True, IHSTAR, &quot;sector&quot;, w)
+-                prout(_(&quot; unaffected by photon blast.&quot;))
++                prout(crmena(True, IHSTAR, &quot;sector&quot;, w) + _(&quot; unaffected by photon blast.&quot;))
+ 	    return None
+ 	elif iquad == IHQUEST: # Hit a thingy 
+ 	    if not (game.options &amp; OPTION_THINGY) or withprob(0.3):
+@@ -1479,8 +1467,7 @@
+ 	    return None
+ 	elif iquad == IHBLANK: # Black hole 
+ 	    skip(1)
+-	    crmena(True, IHBLANK, &quot;sector&quot;, w)
+-	    prout(_(&quot; swallows torpedo.&quot;))
++	    prout(crmena(True, IHBLANK, &quot;sector&quot;, w) + _(&quot; swallows torpedo.&quot;))
+ 	    return None
+ 	elif iquad == IHWEB: # hit the web 
+ 	    skip(1)
+@@ -1496,7 +1483,7 @@
+ 		game.tholian = None
+ 		return None
+ 	    skip(1)
+-	    crmena(True, IHT, &quot;sector&quot;, w)
++	    proutn(crmena(True, IHT, &quot;sector&quot;, w))
+ 	    if withprob(0.05):
+ 		prout(_(&quot; survives photon blast.&quot;))
+ 		return None
+@@ -1508,7 +1495,7 @@
+         else: # Problem!
+ 	    skip(1)
+ 	    proutn(&quot;Don't know how to handle torpedo collision with &quot;)
+-	    crmena(True, iquad, &quot;sector&quot;, w)
++	    proutn(crmena(True, iquad, &quot;sector&quot;, w))
+ 	    skip(1)
+ 	    return None
+ 	break
+@@ -1620,8 +1607,7 @@
+ 	    hit = 0
+ 	    proutn(_(&quot;***TORPEDO INCOMING&quot;))
+ 	    if not damaged(DSRSENS):
+-		proutn(_(&quot; From &quot;))
+-		crmena(False, enemy.type, where, enemy.kloc)
++		proutn(_(&quot; From &quot;) + crmena(False, enemy.type, where, enemy.kloc))
+ 	    attempt = True
+ 	    prout(&quot;  &quot;)
+ 	    dispersion = (randreal()+randreal())*0.5 - 0.5
+@@ -1657,11 +1643,9 @@
+ 	ihurt = True
+ 	proutn(_(&quot;%d unit hit&quot;) % int(hit))
+ 	if (damaged(DSRSENS) and usephasers) or game.skill&lt;=SKILL_FAIR:
+-	    proutn(_(&quot; on the &quot;))
+-	    crmshp()
++	    proutn(_(&quot; on the &quot;) + crmshp())
+ 	if not damaged(DSRSENS) and usephasers:
+-	    proutn(_(&quot; from &quot;))
+-	    crmena(False, enemy.type, where, enemy.kloc)
++	    prout(_(&quot; from &quot;) + crmena(False, enemy.type, where, enemy.kloc))
+ 	skip(1)
+ 	# Decide if hit is critical 
+ 	if hit &gt; hitmax:
+@@ -1708,7 +1692,7 @@
+ def deadkl(w, type, mv):
+     &quot;Kill a Klingon, Tholian, Romulan, or Thingy.&quot; 
+     # Added mv to allow enemy to &quot;move&quot; before dying 
+-    crmena(True, type, &quot;sector&quot;, mv)
++    proutn(crmena(True, type, &quot;sector&quot;, mv))
+     # Decide what kind of enemy it is and update appropriately 
+     if type == IHR:
+         # chalk up a Romulan 
+@@ -1938,7 +1922,7 @@
+ 	ienm = game.quad[w.x][w.y]
+ 	if ienm==IHQUEST:
+ 	    thing.angry = True
+-	crmena(False, ienm, &quot;sector&quot;, w)
++	proutn(crmena(False, ienm, &quot;sector&quot;, w))
+ 	skip(1)
+ 	if kpow == 0:
+ 	    deadkl(w, ienm, w)
+@@ -2127,8 +2111,7 @@
+ 		rpow = 0.0
+ 	    if damaged(DSRSENS) and \
+                not game.sector.distance(aim)&lt;2**0.5 and ienm in (IHC, IHS):
+-		cramen(ienm)
+-		prout(_(&quot; can't be located without short range scan.&quot;))
++		prout(cramen(ienm) + _(&quot; can't be located without short range scan.&quot;))
+ 		scanner.chew()
+ 		key = IHEOL
+ 		hits[k] = 0; # prevent overflow -- thanks to Alexei Voitenko 
+@@ -2145,9 +2128,8 @@
+ 		else:
+ 		    proutn(&quot;??&quot;)
+ 		proutn(&quot;)  &quot;)
+-		proutn(_(&quot;units to fire at &quot;))
+-		crmena(False, ienm, &quot;sector&quot;, aim)
+-		proutn(&quot;-  &quot;)
++		proutn(_(&quot;units to fire at %s-  &quot;) % crmena(False, ienm, &quot;sector&quot;, aim))
++		
+ 		key = scanner.next()
+ 	    if key == IHALPHA and scanner.sees(&quot;no&quot;):
+ 		no = True
+@@ -2257,9 +2239,7 @@
+         announce()
+         game.optime = (10.0/(7.5*7.5))*yank # 7.5 is yank rate (warp 7.5) 
+         skip(1)
+-        proutn(&quot;***&quot;)
+-        crmshp()
+-        prout(_(&quot; caught in long range tractor beam--&quot;))
++        prout(&quot;***&quot; + crmshp() + _(&quot; caught in long range tractor beam--&quot;))
+         # If Kirk &amp; Co. screwing around on planet, handle 
+         atover(True) # atover(true) is Grab 
+         if game.alldone:
+@@ -2282,8 +2262,7 @@
+         else:
+             game.quadrant = game.state.kcmdr[i]
+         game.sector = randplace(QUADSIZE)
+-        crmshp()
+-        prout(_(&quot; is pulled to Quadrant %s, Sector %s&quot;) \
++        prout(crmshp() + _(&quot; is pulled to Quadrant %s, Sector %s&quot;) \
+                % (game.quadrant, game.sector))
+         if game.resting:
+             prout(_(&quot;(Remainder of rest/repair period cancelled.)&quot;))
+@@ -2718,8 +2697,7 @@
+ 	return
+     # handle initial nova 
+     game.quad[nov.x][nov.y] = IHDOT
+-    crmena(False, IHSTAR, &quot;sector&quot;, nov)
+-    prout(_(&quot; novas.&quot;))
++    prout(crmena(False, IHSTAR, &quot;sector&quot;, nov) + _(&quot; novas.&quot;))
+     game.state.galaxy[game.quadrant.x][game.quadrant.y].stars -= 1
+     game.state.starkl += 1
+     # Set up queue to recursively trigger adjacent stars 
+@@ -2748,7 +2726,7 @@
+                         hits.append(neighbor)
+ 			game.state.galaxy[game.quadrant.x][game.quadrant.y].stars -= 1
+ 			game.state.starkl += 1
+-			crmena(True, IHSTAR, &quot;sector&quot;, neighbor)
++			proutn(crmena(True, IHSTAR, &quot;sector&quot;, neighbor))
+ 			prout(_(&quot; novas.&quot;))
+                         game.quad[neighbor.x][neighbor.y] = IHDOT
+                         kount += 1
+@@ -2758,8 +2736,7 @@
+                         game.state.nplankl += 1
+                     else:
+                         game.state.worldkl += 1
+-                    crmena(True, iquad, &quot;sector&quot;, neighbor)
+-                    prout(_(&quot; destroyed.&quot;))
++                    prout(crmena(True, IHB, &quot;sector&quot;, neighbor) + _(&quot; destroyed.&quot;))
+                     game.iplnet.pclass = &quot;destroyed&quot;
+                     game.iplnet = None
+                     game.plnet.invalidate()
+@@ -2773,8 +2750,7 @@
+                     game.base.invalidate()
+                     game.state.basekl += 1
+                     newcnd()
+-                    crmena(True, IHB, &quot;sector&quot;, neighbor)
+-                    prout(_(&quot; destroyed.&quot;))
++                    prout(crmena(True, IHB, &quot;sector&quot;, neighbor) + _(&quot; destroyed.&quot;))
+                     game.quad[neighbor.x][neighbor.y] = IHDOT
+                 elif iquad in (IHE, IHF): # Buffet ship 
+                     prout(_(&quot;***Starship buffeted by nova.&quot;))
+@@ -2806,16 +2782,14 @@
+                         deadkl(neighbor, iquad, neighbor)
+                         break
+                     newc = neighbor + neighbor - hits[mm]
+-                    crmena(True, iquad, &quot;sector&quot;, neighbor)
+-                    proutn(_(&quot; damaged&quot;))
++                    proutn(crmena(True, iquad, &quot;sector&quot;, neighbor) + _(&quot; damaged&quot;))
+                     if not VALID_SECTOR(newc.x, newc.y):
+                         # can't leave quadrant 
+                         skip(1)
+                         break
+                     iquad1 = game.quad[newc.x][newc.y]
+                     if iquad1 == IHBLANK:
+-                        proutn(_(&quot;, blasted into &quot;))
+-                        crmena(False, IHBLANK, &quot;sector&quot;, newc)
++                        proutn(_(&quot;, blasted into &quot;) + crmena(False, IHBLANK, &quot;sector&quot;, newc))
+                         skip(1)
+                         deadkl(neighbor, iquad, newc)
+                         break
+@@ -2990,9 +2964,7 @@
+     stars()
+     if game.ship==IHE:
+ 	prouts(&quot;***&quot;)
+-    prouts(_(&quot;********* Entropy of &quot;))
+-    crmshp()
+-    prouts(_(&quot; maximized *********&quot;))
++    prouts(_(&quot;********* Entropy of %s maximized *********&quot;) % crmshp())
+     skip(1)
+     stars()
+     skip(1)
+@@ -3121,9 +3093,7 @@
+ 	skip(1)
+ 	prout(_(&quot;Your starship is a derelict in space.&quot;))
+     elif ifin == FBATTLE:
+-	proutn(_(&quot;The &quot;))
+-	crmshp()
+-	prout(_(&quot; has been destroyed in battle.&quot;))
++	prout(_(&quot;The %s has been destroyed in battle.&quot;) % crmshp())
+ 	skip(1)
+ 	prout(_(&quot;Dulce et decorum est pro patria mori.&quot;))
+     elif ifin == FNEG3:
+@@ -3137,9 +3107,7 @@
+ 	prout(_(&quot;That was a great shot.&quot;))
+ 	skip(1)
+     elif ifin == FSNOVAED:
+-	proutn(_(&quot;The &quot;))
+-	crmshp()
+-	prout(_(&quot; has been fried by a supernova.&quot;))
++	prout(_(&quot;The %s has been fried by a supernova.&quot;) % crmshp())
+ 	prout(_(&quot;...Not even cinders remain...&quot;))
+     elif ifin == FABANDN:
+ 	prout(_(&quot;You have been captured by the Klingons. If you still&quot;))
+@@ -3152,9 +3120,7 @@
+ 	prout(_(&quot;Starbase was unable to re-materialize your starship.&quot;))
+ 	prout(_(&quot;Sic transit gloria mundi&quot;))
+     elif ifin == FPHASER:
+-	proutn(_(&quot;The &quot;))
+-	crmshp()
+-	prout(_(&quot; has been cremated by its own phasers.&quot;))
++	prout(_(&quot;The %s has been cremated by its own phasers.&quot;) % crmshp())
+     elif ifin == FLOST:
+ 	prout(_(&quot;You and your landing party have been&quot;))
+ 	prout(_(&quot;converted to energy, disipating through space.&quot;))
+@@ -3164,9 +3130,7 @@
+ 	skip(1)
+ 	prout(_(&quot;They are very fond of \&quot;Captain Kirk\&quot; soup.&quot;))
+ 	skip(1)
+-	proutn(_(&quot;Without your leadership, the &quot;))
+-	crmshp()
+-	prout(_(&quot; is destroyed.&quot;))
++	prout(_(&quot;Without your leadership, the %s is destroyed.&quot;) % crmshp())
+     elif ifin == FDPLANET:
+ 	prout(_(&quot;You and your mining party perish.&quot;))
+ 	skip(1)
+@@ -3176,25 +3140,19 @@
+ 	prout(_(&quot;The Galileo is instantly annihilated by the supernova.&quot;))
+ 	prout(_(&quot;You and your mining party are atomized.&quot;))
+ 	skip(1)
+-	proutn(_(&quot;Mr. Spock takes command of the &quot;))
+-	crmshp()
+-	prout(_(&quot; and&quot;))
+-	prout(_(&quot;joins the Romulans, reigning terror on the Federation.&quot;))
++	prout(_(&quot;Mr. Spock takes command of the %s and&quot;) % crmshp())
++	prout(_(&quot;joins the Romulans, wreaking terror on the Federation.&quot;))
+     elif ifin == FPNOVA:
+ 	prout(_(&quot;You and your mining party are atomized.&quot;))
+ 	skip(1)
+-	proutn(_(&quot;Mr. Spock takes command of the &quot;))
+-	crmshp()
+-	prout(_(&quot; and&quot;))
+-	prout(_(&quot;joins the Romulans, reigning terror on the Federation.&quot;))
++	prout(_(&quot;Mr. Spock takes command of the %s and&quot;) % crmshp())
++	prout(_(&quot;joins the Romulans, wreaking terror on the Federation.&quot;))
+     elif ifin == FSTRACTOR:
+ 	prout(_(&quot;The shuttle craft Galileo is also caught,&quot;))
+ 	prout(_(&quot;and breaks up under the strain.&quot;))
+ 	skip(1)
+ 	prout(_(&quot;Your debris is scattered for millions of miles.&quot;))
+-	proutn(_(&quot;Without your leadership, the &quot;))
+-	crmshp()
+-	prout(_(&quot; is destroyed.&quot;))
++	prout(_(&quot;Without your leadership, the %s is destroyed.&quot;) % crmshp())
+     elif ifin == FDRAY:
+ 	prout(_(&quot;The mutants attack and kill Spock.&quot;))
+ 	prout(_(&quot;Your ship is captured by Klingons, and&quot;))
+@@ -3841,8 +3799,7 @@
+ 		    skip(1)
+ 		    prouts(_(&quot;***RED ALERT!  RED ALERT!&quot;))
+ 		    skip(1)
+-		    proutn(&quot;***&quot;)
+-		    crmshp()
++		    proutn(&quot;***&quot; + crmshp())
+ 		    proutn(_(&quot; pulled into black hole at Sector %s&quot;) % w)
+ 		    #
+ 		    # Getting pulled into a black hole was certain
+@@ -3862,7 +3819,7 @@
+ 		else:
+ 		    # something else 
+ 		    skip(1)
+-		    crmshp()
++		    proutn(crmshp())
+ 		    if iquad == IHWEB:
+ 			prout(_(&quot; encounters Tholian web at %s;&quot;) % w)
+ 		    else:
+@@ -3895,8 +3852,7 @@
+ 	prout(_(&quot;You must first leave standard orbit.&quot;))
+ 	return
+     if not game.base.is_valid() or abs(game.sector.x-game.base.x) &gt; 1 or abs(game.sector.y-game.base.y) &gt; 1:
+-	crmshp()
+-	prout(_(&quot; not adjacent to base.&quot;))
++	prout(crmshp() + _(&quot; not adjacent to base.&quot;))
+ 	return
+     game.condition = &quot;docked&quot;
+     if &quot;verbose&quot;:
+@@ -4306,13 +4262,10 @@
+ 	if game.justin:
+ 	    prouts(_(&quot;***RED ALERT!  RED ALERT!&quot;))
+ 	    skip(1)
+-	    proutn(_(&quot;The &quot;))
+-	    crmshp()
+-	    prout(_(&quot; has stopped in a quadrant containing&quot;))
++	    proutn(_(&quot;The %s has stopped in a quadrant containing&quot;) % crmshp())
+ 	    prouts(_(&quot;   a supernova.&quot;))
+ 	    skip(2)
+-	proutn(_(&quot;***Emergency automatic override attempts to hurl &quot;))
+-	crmshp()
++	prout(_(&quot;***Emergency automatic override attempts to hurl &quot;)+crmshp())
+ 	skip(1)
+ 	prout(_(&quot;safely out of quadrant.&quot;))
+ 	if not damaged(DRADIO):
+@@ -4495,9 +4448,7 @@
+ 	prout(_(&quot;Lt. Uhura-  \&quot;Captain, I'm not getting any response from Starbase.\&quot;&quot;))
+ 	return
+     if game.landed:
+-	proutn(_(&quot;You must be aboard the &quot;))
+-	crmshp()
+-	prout(&quot;.&quot;)
++	prout(_(&quot;You must be aboard the %s.&quot;) % crmshp())
+ 	return
+     # OK -- call for help from nearest starbase 
+     game.nhelp += 1
+@@ -4515,13 +4466,12 @@
+ 	newqad(True)
+     # dematerialize starship 
+     game.quad[game.sector.x][game.sector.y]=IHDOT
+-    proutn(_(&quot;Starbase in Quadrant %s responds--&quot;) % game.quadrant)
+-    crmshp()
+-    prout(_(&quot; dematerializes.&quot;))
+-    game.sector.x=0
++    proutn(_(&quot;Starbase in Quadrant %s responds--%s dematerializes&quot;) \
++           % (game.quadrant, crmshp()))
++    game.sector.invalidate()
+     for m in range(1, 5+1):
+         w = game.base.scatter() 
+-	if VALID_SECTOR(ix,iy) and game.quad[ix][iy]==IHDOT:
++	if VALID_SECTOR(w.x,w.y) and game.quad[w.x][w.y]==IHDOT:
+ 	    # found one -- finish up 
+             game.sector = w
+ 	    break
+@@ -4535,8 +4485,7 @@
+ 	if m == 1: proutn(_(&quot;1st&quot;))
+ 	elif m == 2: proutn(_(&quot;2nd&quot;))
+ 	elif m == 3: proutn(_(&quot;3rd&quot;))
+-	proutn(_(&quot; attempt to re-materialize &quot;))
+-	crmshp()
++	proutn(_(&quot; attempt to re-materialize &quot;) + crmshp())
+ 	game.quad[ix][iy]=(IHMATER0,IHMATER1,IHMATER2)[m-1]
+ 	textcolor(&quot;red&quot;)
+ 	warble()
+@@ -4728,8 +4677,7 @@
+         prout(&quot;There is no planet in this sector.&quot;)
+         return
+     if abs(game.sector.x-game.plnet.x)&gt;1 or abs(game.sector.y-game.plnet.y)&gt;1:
+-	crmshp()
+-	prout(_(&quot; not adjacent to planet.&quot;))
++	prout(crmshp() + _(&quot; not adjacent to planet.&quot;))
+ 	skip(1)
+ 	return
+     game.optime = randreal(0.02, 0.05)
+@@ -4783,8 +4731,7 @@
+ 		shuttle()
+ 	return
+     if not game.inorbit:
+-	crmshp()
+-	prout(_(&quot; not in standard orbit.&quot;))
++	prout(crmshp() + _(&quot; not in standard orbit.&quot;))
+ 	return
+     if game.shldup:
+ 	prout(_(&quot;Impossible to transport through shields.&quot;))
+@@ -4878,9 +4825,7 @@
+ 	prout(_(&quot;You've already mined enough crystals for this trip.&quot;))
+ 	return
+     if game.icrystl and game.cryprob == 0.05:
+-	proutn(_(&quot;With all those fresh crystals aboard the &quot;))
+-	crmshp()
+-	skip(1)
++	prout(_(&quot;With all those fresh crystals aboard the &quot;) + crmshp())
+ 	prout(_(&quot;there's no reason to mine more at this time.&quot;))
+ 	return
+     game.optime = randreal(0.1, 0.3)*(ord(game.iplnet.pclass)-ord(&quot;L&quot;))
+@@ -4952,8 +4897,7 @@
+ 	    prout(_(&quot;Shuttle craft is now serving Big Macs.&quot;))
+ 	return
+     if not game.inorbit:
+-	crmshp()
+-	prout(_(&quot; not in standard orbit.&quot;))
++	prout(crmshp() + _(&quot; not in standard orbit.&quot;))
+ 	return
+     if (game.iplnet.known != &quot;shuttle_down&quot;) and game.iscraft != &quot;onship&quot;:
+ 	prout(_(&quot;Shuttle craft not currently available.&quot;))
+@@ -6420,35 +6364,34 @@
+     if idebug:
+ 	prout(&quot;=== Ending&quot;)
+ 
+-def cramen(cmd):
++def cramen(type):
+     &quot;Emit the name of an enemy or feature.&quot; 
+-    if   cmd == IHR: s = _(&quot;Romulan&quot;)
+-    elif cmd == IHK: s = _(&quot;Klingon&quot;)
+-    elif cmd == IHC: s = _(&quot;Commander&quot;)
+-    elif cmd == IHS: s = _(&quot;Super-commander&quot;)
+-    elif cmd == IHSTAR: s = _(&quot;Star&quot;)
+-    elif cmd == IHP: s = _(&quot;Planet&quot;)
+-    elif cmd == IHB: s = _(&quot;Starbase&quot;)
+-    elif cmd == IHBLANK: s = _(&quot;Black hole&quot;)
+-    elif cmd == IHT: s = _(&quot;Tholian&quot;)
+-    elif cmd == IHWEB: s = _(&quot;Tholian web&quot;)
+-    elif cmd == IHQUEST: s = _(&quot;Stranger&quot;)
+-    elif cmd == IHW: s = _(&quot;Inhabited World&quot;)
++    if   type == IHR: s = _(&quot;Romulan&quot;)
++    elif type == IHK: s = _(&quot;Klingon&quot;)
++    elif type == IHC: s = _(&quot;Commander&quot;)
++    elif type == IHS: s = _(&quot;Super-commander&quot;)
++    elif type == IHSTAR: s = _(&quot;Star&quot;)
++    elif type == IHP: s = _(&quot;Planet&quot;)
++    elif type == IHB: s = _(&quot;Starbase&quot;)
++    elif type == IHBLANK: s = _(&quot;Black hole&quot;)
++    elif type == IHT: s = _(&quot;Tholian&quot;)
++    elif type == IHWEB: s = _(&quot;Tholian web&quot;)
++    elif type == IHQUEST: s = _(&quot;Stranger&quot;)
++    elif type == IHW: s = _(&quot;Inhabited World&quot;)
+     else: s = &quot;Unknown??&quot;
+-    proutn(s)
++    return s
+ 
+ def crmena(stars, enemy, loctype, w):
+-    &quot;Emit the name of an enemy and his location.&quot; 
+-    if stars:
+-	proutn(&quot;***&quot;)
+-    cramen(enemy)
+-    proutn(_(&quot; at &quot;))
++    &quot;Emit the name of an enemy and his location.&quot;
+     buf = &quot;&quot;
++    if stars:
++	buf += &quot;***&quot;
++    buf += cramen(enemy) + _(&quot; at &quot;)
+     if loctype == &quot;quadrant&quot;:
+-	buf = _(&quot;Quadrant &quot;)
++	buf += _(&quot;Quadrant &quot;)
+     elif loctype == &quot;sector&quot;:
+-	buf = _(&quot;Sector &quot;)
+-    proutn(buf + `w`)
++	buf += _(&quot;Sector &quot;)
++    return buf + `w`
+ 
+ def crmshp():
+     &quot;Emit our ship name.&quot; 
+@@ -6458,7 +6401,7 @@
+         s = _(&quot;Faerie Queene&quot;)
+     else:
+         s = &quot;Ship???&quot;
+-    proutn(s)
++    return s
+ 
+ def stars():
+     &quot;Emit a line of stars&quot; 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000182.html">[Sst-commit-watch] r715 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000184.html">[Sst-commit-watch] r717 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#183">[ date ]</a>
+              <a href="thread.html#183">[ thread ]</a>
+              <a href="subject.html#183">[ subject ]</a>
+              <a href="author.html#183">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

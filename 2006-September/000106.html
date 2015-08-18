@@ -1,0 +1,428 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r639 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r639%20-%20trunk/src&In-Reply-To=%3C200609280919.k8S9JHwO019434%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000105.html">
+   <LINK REL="Next"  HREF="000107.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r639 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r639%20-%20trunk/src&In-Reply-To=%3C200609280919.k8S9JHwO019434%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r639 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 28 11:19:17 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000105.html">[Sst-commit-watch] r638 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000107.html">[Sst-commit-watch] r640 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#106">[ date ]</a>
+              <a href="thread.html#106">[ thread ]</a>
+              <a href="subject.html#106">[ subject ]</a>
+              <a href="author.html#106">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-28 11:19:16 +0200 (Thu, 28 Sep 2006)
+New Revision: 639
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/events.c
+   trunk/src/io.c
+   trunk/src/sst.h
+   trunk/src/sst.py
+Log:
+Get rid of obnoxioous visible &quot;have we paused?&quot; state.  This change shouldn't
+make any behavioral difference, but it simplifies the call sequence and code 
+of a couple of functions.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-28 08:20:52 UTC (rev 638)
++++ trunk/src/ai.c	2006-09-28 09:19:16 UTC (rev 639)
+@@ -307,7 +307,7 @@
+     sortkl();
+ }
+ 
+-static bool movescom(coord iq, bool flag, bool *ipage) 
++static bool movescom(coord iq, bool flag) 
+ /* commander movement helper */
+ {
+     int i;
+@@ -357,9 +357,7 @@
+ 	    DESTROY(&amp;game.state.planets[i]);
+ 	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET;
+ 	    if (!damaged(DRADIO) || game.condition == docked) {
+-		if (!*ipage)
+-		    pause_game(true);
+-		*ipage = true;
++		pause_game(true);
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;));
+ 		proutn(_(&quot;   a planet in &quot;));
+ 		proutn(cramlc(quadrant, game.state.kscmdr));
+@@ -372,7 +370,7 @@
+     return false; /* looks good! */
+ }
+ 			
+-void scom(bool *ipage)
++void scom(void)
+ /* move the Super Commander */
+ {
+     int i, i2, j, ideltax, ideltay, ifindit, iwhichb;
+@@ -472,32 +470,32 @@
+     /* try moving in both x and y directions */
+     iq.x = game.state.kscmdr.x + ideltax;
+     iq.y = game.state.kscmdr.y + ideltax;
+-    if (movescom(iq, flag, ipage)) {
++    if (movescom(iq, flag)) {
+ 	/* failed -- try some other maneuvers */
+ 	if (ideltax==0 || ideltay==0) {
+ 	    /* attempt angle move */
+ 	    if (ideltax != 0) {
+ 		iq.y = game.state.kscmdr.y + 1;
+-		if (movescom(iq, flag, ipage)) {
++		if (movescom(iq, flag)) {
+ 		    iq.y = game.state.kscmdr.y - 1;
+-		    movescom(iq, flag, ipage);
++		    movescom(iq, flag);
+ 		}
+ 	    }
+ 	    else {
+ 		iq.x = game.state.kscmdr.x + 1;
+-		if (movescom(iq, flag, ipage)) {
++		if (movescom(iq, flag)) {
+ 		    iq.x = game.state.kscmdr.x - 1;
+-		    movescom(iq, flag, ipage);
++		    movescom(iq, flag);
+ 		}
+ 	    }
+ 	}
+ 	else {
+ 	    /* try moving just in x or y */
+ 	    iq.y = game.state.kscmdr.y;
+-	    if (movescom(iq, flag, ipage)) {
++	    if (movescom(iq, flag)) {
+ 		iq.y = game.state.kscmdr.y + ideltay;
+ 		iq.x = game.state.kscmdr.x;
+-		movescom(iq, flag, ipage);
++		movescom(iq, flag);
+ 	    }
+ 	}
+     }
+@@ -518,9 +516,7 @@
+ 	    if (damaged(DRADIO) &amp;&amp; game.condition != docked)
+ 		return; /* no warning */
+ 	    game.iseenit = true;
+-	    if (!*ipage)
+-		pause_game(true);
+-	    *ipage = true;
++	    pause_game(true);
+ 	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
+ 	    proutn(cramlc(quadrant, game.state.kscmdr));
+ 	    skip(1);
+@@ -544,9 +540,7 @@
+ 	 (damaged(DRADIO) &amp;&amp; game.condition != docked) ||
+ 	 !game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].charted))
+ 	return;
+-    if (!*ipage)
+-	pause_game(true);
+-    *ipage = true;
++    pause_game(true);
+     prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;));
+     proutn(_(&quot;   the Super-commander is in &quot;));
+     proutn(cramlc(quadrant, game.state.kscmdr));
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-28 08:20:52 UTC (rev 638)
++++ trunk/src/events.c	2006-09-28 09:19:16 UTC (rev 639)
+@@ -62,11 +62,13 @@
+ {
+     int evcode, i=0, j, k, l;
+     double fintim = game.state.date + game.optime, datemin, xtime, repair, yank=0;
+-    bool radio_was_broken, ictbeam = false, ipage = false, istract = false;
++    bool radio_was_broken, ictbeam = false, istract = false;
+     struct quadrant *pdest, *q;
+     coord w, hold;
+     event *ev, *ev2;
+ 
++    pause_reset();
++
+     if (idebug) {
+ 	prout(&quot;=== EVENTS from %.2f to %.2f:&quot;, game.state.date, fintim);
+ 	for (i = 1; i &lt; NEVENTS; i++) {
+@@ -156,9 +158,7 @@
+ 	game.optime -= xtime;
+ 	switch (evcode) {
+ 	case FSNOVA: /* Supernova */
+-	    if (!ipage)
+-		pause_game(true);
+-	    ipage=true;
++	    pause_game(true);
+ 	    snova(false, NULL);
+ 	    schedule(FSNOVA, expran(0.5*game.intime));
+ 	    if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+@@ -198,9 +198,7 @@
+ 	    }
+ 	    /* tractor beaming cases merge here */
+ 	    yank = sqrt(yank);
+-	    if (!ipage)
+-		pause_game(true);
+-	    ipage=true;
++	    pause_game(true);
+ 	    game.optime = (10.0/(7.5*7.5))*yank; /* 7.5 is yank rate (warp 7.5) */
+ 	    ictbeam = true;
+ 	    skip(1);
+@@ -299,9 +297,7 @@
+ 	    if (!damaged(DRADIO) &amp;&amp; game.condition != docked) 
+ 		break; /* No warning :-( */
+ 	    game.iseenit = true;
+-	    if (!ipage)
+-		pause_game(true);
+-	    ipage = true;
++	    pause_game(true);
+ 	    skip(1);
+ 	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
+ 	    prout(cramlc(quadrant, game.battle));
+@@ -348,9 +344,7 @@
+ 	    else if (game.state.rembase != 1 &amp;&amp;
+ 		     (!damaged(DRADIO) || game.condition == docked)) {
+ 		/* Get word via subspace radio */
+-		if (!ipage)
+-		    pause_game(true);		    
+-		ipage = true;
++		pause_game(true);		    
+ 		skip(1);
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Command reports that&quot;));
+ 		proutn(_(&quot;   the starbase in &quot;));
+@@ -380,7 +374,7 @@
+ 	    schedule(FSCMOVE, 0.2777);
+ 	    if (!game.ientesc &amp;&amp; !istract &amp;&amp; game.isatb != 1 &amp;&amp;
+ 			(!game.iscate || !game.justin)) 
+-		scom(&amp;ipage);
++		scom();
+ 	    break;
+ 	case FDSPROB: /* Move deep space probe */
+ 	    schedule(FDSPROB, 0.01);
+@@ -395,9 +389,7 @@
+ 		    game.state.galaxy[game.probec.x][game.probec.y].supernova) {
+ 		    // Left galaxy or ran into supernova
+ 		    if (!damaged(DRADIO) || game.condition == docked) {
+-			if (!ipage)
+-			    pause_game(true);
+-			ipage = true;
++			pause_game(true);
+ 			skip(1);
+ 			proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe &quot;));
+ 			if (!VALID_QUADRANT(j, i))
+@@ -410,9 +402,7 @@
+ 		    break;
+ 		}
+ 		if (!damaged(DRADIO) || game.condition == docked) {
+-		    if (!ipage)
+-			pause_game(true);
+-		    ipage = true;
++		    pause_game(true);
+ 		    skip(1);
+ 		    proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe is now in &quot;));
+ 		    proutn(cramlc(quadrant, game.probec));
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-28 08:20:52 UTC (rev 638)
++++ trunk/src/io.c	2006-09-28 09:19:16 UTC (rev 639)
+@@ -7,6 +7,7 @@
+ #include &quot;sstlinux.h&quot;
+ 
+ static int rows, linecount;	/* for paging */
++static bool pause_latch;
+ 
+ WINDOW *curwnd;
+ WINDOW *fullscreen_window;
+@@ -89,42 +90,52 @@
+ 	getch();
+ }
+ 
++void pause_reset(void)
++{
++    pause_latch = false;
++}
++
+ void pause_game(bool announcement) 
+ {
+-    char *prompt;
+-    char buf[BUFSIZ];
+-    if (announcement) {
+-	if (game.skill &gt; SKILL_FAIR)
+-	    prompt = _(&quot;[ANOUNCEMENT ARRIVING...]&quot;);
+-	else
+-	    prompt = _(&quot;[IMPORTANT ANNOUNCEMENT ARRIVING -- PRESS ENTER TO CONTINUE]&quot;);
+-    }
++    if (pause_latch)
++	return;
+     else {
+-	if (game.skill &gt; SKILL_FAIR)
+-	    prompt = _(&quot;[CONTINUE?]&quot;);
+-	else
+-	    prompt = _(&quot;[PRESS ENTER TO CONTINUE]&quot;);
+-
+-    }
+-    if (game.options &amp; OPTION_CURSES) {
+-	drawmaps(0);
+-	setwnd(prompt_window);
+-	wclear(prompt_window);
+-	waddstr(prompt_window, prompt);
+-	wgetnstr(prompt_window, buf, sizeof(buf));
+-	wclear(prompt_window);
+-	wrefresh(prompt_window);
+-	setwnd(message_window);
+-    } else {
+-	putchar('\n');
+-	proutn(prompt);
+-	fgets(buf, sizeof(buf), stdin);
++	char *prompt;
++	char buf[BUFSIZ];
+ 	if (announcement) {
+-	    int j;
+-	    for (j = 0; j &lt; rows; j++)
+-		putchar('\n');
++	    if (game.skill &gt; SKILL_FAIR)
++		prompt = _(&quot;[ANOUNCEMENT ARRIVING...]&quot;);
++	    else
++		prompt = _(&quot;[IMPORTANT ANNOUNCEMENT ARRIVING -- PRESS ENTER TO CONTINUE]&quot;);
+ 	}
+-	linecount = 0;
++	else {
++	    if (game.skill &gt; SKILL_FAIR)
++		prompt = _(&quot;[CONTINUE?]&quot;);
++	    else
++		prompt = _(&quot;[PRESS ENTER TO CONTINUE]&quot;);
++
++	}
++	if (game.options &amp; OPTION_CURSES) {
++	    drawmaps(0);
++	    setwnd(prompt_window);
++	    wclear(prompt_window);
++	    waddstr(prompt_window, prompt);
++	    wgetnstr(prompt_window, buf, sizeof(buf));
++	    wclear(prompt_window);
++	    wrefresh(prompt_window);
++	    setwnd(message_window);
++	} else {
++	    putchar('\n');
++	    proutn(prompt);
++	    fgets(buf, sizeof(buf), stdin);
++	    if (announcement) {
++		int j;
++		for (j = 0; j &lt; rows; j++)
++		    putchar('\n');
++	    }
++	    linecount = 0;
++	}
++	pause_latch = true;
+     }
+ }
+ 
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-28 08:20:52 UTC (rev 638)
++++ trunk/src/sst.h	2006-09-28 09:19:16 UTC (rev 639)
+@@ -406,10 +406,11 @@
+ void moveklings(void);
+ void torpedo(double, double, coord, double *, int, int);
+ void huh(void);
++void pause_reset(void);
+ void pause_game(bool);
+ void nova(coord);
+ void snova(bool, coord *);
+-void scom(bool *);
++void scom(void);
+ void hittem(double *);
+ bool isit(char *);
+ void preport(void);
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-09-28 08:20:52 UTC (rev 638)
++++ trunk/src/sst.py	2006-09-28 09:19:16 UTC (rev 639)
+@@ -544,7 +544,6 @@
+ 
+ def movescom(ship, avoid):
+     # commander movement helper
+-    global ipage
+     if game.state.kscmdr == game.quadrant or \
+ 	game.state.galaxy[iq].supernova or \
+         game.state.galaxy[iq].klingons &gt; MAXKLQUAD-1: 
+@@ -575,9 +574,7 @@
+ 	    # destroy the planet
+ 	    del planet
+             if communicating():
+-                if not ipage:
+                     pause_game(True)
+-		ipage = true
+ 		prout(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;)
+ 		proutn(_(&quot;   a planet in &quot;))
+ 		proutn(cramlc(quadrant, game.state.kscmdr))
+@@ -669,9 +666,7 @@
+                 if not communicating():
+                     return # no warning
+                 game.iseenit = True
+-                if not ipage:
+-                    pause_game(true)
+-                ipage = True
++                pause_game(true)
+                 proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;))
+                 proutn(cramlc(quadrant, game.state.kscmdr))
+                 skip(1)
+@@ -690,9 +685,7 @@
+     if (Rand() &gt; 0.2 or not communicating() or
+         not game.state.galaxy[game.state.kscmdr].charted):
+ 	return
+-    if ipage:
+-        pause_game(true)
+-        ipage = true
++    pause_game(true)
+     prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;))
+     proutn(_(&quot;   the Super-commander is in &quot;))
+     proutn(cramlc(quadrant, game.state.kscmdr))
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000105.html">[Sst-commit-watch] r638 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000107.html">[Sst-commit-watch] r640 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#106">[ date ]</a>
+              <a href="thread.html#106">[ thread ]</a>
+              <a href="subject.html#106">[ subject ]</a>
+              <a href="author.html#106">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

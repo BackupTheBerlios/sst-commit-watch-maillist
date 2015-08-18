@@ -1,0 +1,411 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r675 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r675%20-%20trunk/src&In-Reply-To=%3C200610050953.k959r60T007723%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000141.html">
+   <LINK REL="Next"  HREF="000143.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r675 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r675%20-%20trunk/src&In-Reply-To=%3C200610050953.k959r60T007723%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r675 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct  5 11:53:06 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000141.html">[Sst-commit-watch] r674 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000143.html">[Sst-commit-watch] r676 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#142">[ date ]</a>
+              <a href="thread.html#142">[ thread ]</a>
+              <a href="subject.html#142">[ subject ]</a>
+              <a href="author.html#142">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-05 11:53:06 +0200 (Thu, 05 Oct 2006)
+New Revision: 675
+
+Modified:
+   trunk/src/sst.py
+Log:
+Planet pointer mess cleaned up.  planets now works.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-05 09:12:06 UTC (rev 674)
++++ trunk/src/sst.py	2006-10-05 09:53:06 UTC (rev 675)
+@@ -262,7 +262,6 @@
+     def __str__(self):
+         return self.name
+ 
+-NOPLANET = None
+ class quadrant:
+     def __init__(self):
+         self.stars = None
+@@ -454,7 +453,7 @@
+         self.casual = 0		# causalties
+         self.nhelp = 0		# calls for help
+         self.nkinks = 0		# count of energy-barrier crossings
+-        self.iplnet = 0		# planet # in quadrant
++        self.iplnet = None	# planet # in quadrant
+         self.inplan = 0		# initial planets
+         self.nenhere = 0	# number of enemies in quadrant
+         self.irhere = 0		# Romulans in quadrant
+@@ -888,7 +887,7 @@
+ 	    game.state.planets[i].crystals == &quot;present&quot;:
+ 	    # destroy the planet 
+ 	    game.state.planets[i].pclass = &quot;destroyed&quot;
+-	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET
++	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = None
+ 	    if communicating():
+ 		announce()
+ 		prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;))
+@@ -1420,9 +1419,9 @@
+ 	    crmena(True, iquad, sector, w)
+ 	    prout(_(&quot; destroyed.&quot;))
+ 	    game.state.nplankl += 1
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NOPLANET
+-	    game.state.planets[game.iplnet].pclass = destroyed
+-	    game.iplnet = 0
++	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = None
++	    game.iplnet.pclass = &quot;destroyed&quot;
++	    game.iplnet = None
+ 	    invalidate(game.plnet)
+ 	    game.quad[w.x][w.y] = IHDOT
+ 	    if game.landed:
+@@ -1433,9 +1432,9 @@
+ 	    crmena(True, iquad, sector, w)
+ 	    prout(_(&quot; destroyed.&quot;))
+ 	    game.state.nworldkl += 1
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NOPLANET
+-	    game.state.planets[game.iplnet].pclass = destroyed
+-	    game.iplnet = 0
++	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = None
++	    game.iplnet.pclass = &quot;destroyed&quot;
++	    game.iplnet = None
+ 	    invalidate(game.plnet)
+ 	    game.quad[w.x][w.y] = IHDOT
+ 	    if game.landed:
+@@ -2627,8 +2626,8 @@
+ 		# supernova'ed, and which has some Klingons in it
+ 		w = randplace(GALSIZE)
+ 		q = game.state.galaxy[w.x][w.y]
+-                if not (game.quadrant == w or q.planet == NOPLANET or \
+-		      not game.state.planets[q.planet].inhabited or \
++                if not (game.quadrant == w or q.planet == None or \
++		      not q.planet.inhabited or \
+ 		      q.supernova or q.status!=secure or q.klingons&lt;=0):
+                     break
+             else:
+@@ -2711,7 +2710,7 @@
+ 		    prout(_(&quot;launched a warship from %s.&quot;) % q.planet)
+ 		else:
+ 		    prout(_(&quot;Uhura- Starfleet reports increased Klingon activity&quot;))
+-		    if q.planet != NOPLANET:
++		    if q.planet != None:
+ 			proutn(_(&quot;near %s&quot;) % q.planet)
+ 		    prout(_(&quot;in Quadrant %s.&quot;) % w)
+ 				
+@@ -2826,12 +2825,12 @@
+ 			prout(_(&quot; novas.&quot;))
+ 			game.quad[scratch.x][scratch.y] = IHDOT
+ 		    elif iquad == IHP: # Destroy planet 
+-			game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NOPLANET
++			game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = None
+ 			game.state.nplankl += 1
+ 			crmena(True, IHP, sector, scratch)
+ 			prout(_(&quot; destroyed.&quot;))
+-			game.state.planets[game.iplnet].pclass = destroyed
+-			game.iplnet = 0
++			game.iplnet.pclass = &quot;destroyed&quot;
++			game.iplnet = None
+ 			invalidate(game.plnet)
+ 			if game.landed:
+ 			    finish(FPNOVA)
+@@ -3017,7 +3016,7 @@
+     # Destroy planets 
+     for loop in range(game.inplan):
+ 	if game.state.planets[loop].w == nq:
+-	    game.state.planets[loop].pclass = destroyed
++	    game.state.planets[loop].pclass = &quot;destroyed&quot;
+ 	    npdead += 1
+     # Destroy any base in supernovaed quadrant 
+     if game.state.rembase:
+@@ -4768,7 +4767,7 @@
+ 	if not (game.options &amp; OPTION_WORLDS) and not damaged(DTRANSP):
+ 	    prout(_(&quot;Remainder of ship's complement beam down&quot;))
+ 	    prout(_(&quot;to nearest habitable planet.&quot;))
+-	elif q.planet != NOPLANET and not damaged(DTRANSP):
++	elif q.planet != None and not damaged(DTRANSP):
+ 	    prout(_(&quot;Remainder of ship's complement beam down to %s.&quot;) %
+ 		    q.planet)
+ 	else:
+@@ -4845,7 +4844,7 @@
+     prout(_(&quot;Spock-  \&quot;Planet report follows, Captain.\&quot;&quot;))
+     skip(1)
+     for i in range(game.inplan):
+-	if game.state.planets[i].pclass == destroyed:
++	if game.state.planets[i].pclass == &quot;destroyed&quot;:
+ 	    continue
+ 	if (game.state.planets[i].known != &quot;unknown&quot; \
+             and not game.state.planets[i].inhabited) \
+@@ -4896,23 +4895,25 @@
+ 	if game.options &amp; OPTION_TTY:
+ 	    prout(_(&quot;Short range sensors damaged.&quot;))
+ 	return
+-    if not is_valid(game.plnet):
++    if game.iplnet == None:
+ 	if game.options &amp; OPTION_TTY:
+ 	    prout(_(&quot;Spock- \&quot;No planet in this quadrant, Captain.\&quot;&quot;))
+ 	return
+-    if game.state.planets[game.iplnet].known == &quot;unknown&quot;:
++    if game.iplnet.known == &quot;unknown&quot;:
+ 	prout(_(&quot;Spock-  \&quot;Sensor scan for Quadrant %s-&quot;) % game.quadrant)
+ 	skip(1)
+ 	prout(_(&quot;         Planet at Sector %s is of class %s.&quot;) %
+-	      (sector,game.plnet, game.state.planets[game.iplnet]))
+-	if game.state.planets[game.iplnet].known==&quot;shuttle_down&quot;: 
++	      (game.plnet, game.iplnet.pclass))
++	if game.iplnet.known==&quot;shuttle_down&quot;: 
+ 	    prout(_(&quot;         Sensors show Galileo still on surface.&quot;))
+ 	proutn(_(&quot;         Readings indicate&quot;))
+-	if game.state.planets[game.iplnet].crystals != present:
++	if game.iplnet.crystals != present:
+ 	    proutn(_(&quot; no&quot;))
+ 	prout(_(&quot; dilithium crystals present.\&quot;&quot;))
+-	if game.state.planets[game.iplnet].known == &quot;unknown&quot;:
+-	    game.state.planets[game.iplnet].known = &quot;known&quot;
++	if game.iplnet.known == &quot;unknown&quot;:
++	    game.iplnet.known = &quot;known&quot;
++    elif game.iplnet.inhabited:
++        prout(_(&quot;Spock-  \&quot;The inhabited planet %s is located at Sector %s, Captain.\&quot;&quot;) % (game.iplnet.name, game.plnet))
+ 
+ def beam():
+     # use the transporter 
+@@ -4921,7 +4922,7 @@
+     skip(1)
+     if damaged(DTRANSP):
+ 	prout(_(&quot;Transporter damaged.&quot;))
+-	if not damaged(DSHUTTL) and (game.state.planets[game.iplnet].known==&quot;shuttle_down&quot; or game.iscraft == &quot;onship&quot;):
++	if not damaged(DSHUTTL) and (game.iplnet.known==&quot;shuttle_down&quot; or game.iscraft == &quot;onship&quot;):
+ 	    skip(1)
+ 	    proutn(_(&quot;Spock-  \&quot;May I suggest the shuttle craft, Sir?\&quot; &quot;))
+ 	    if ja() == True:
+@@ -4934,12 +4935,12 @@
+     if game.shldup:
+ 	prout(_(&quot;Impossible to transport through shields.&quot;))
+ 	return
+-    if game.state.planets[game.iplnet].known==&quot;unknown&quot;:
++    if game.iplnet.known==&quot;unknown&quot;:
+ 	prout(_(&quot;Spock-  \&quot;Captain, we have no information on this planet&quot;))
+ 	prout(_(&quot;  and Starfleet Regulations clearly state that in this situation&quot;))
+ 	prout(_(&quot;  you may not go down.\&quot;&quot;))
+ 	return
+-    if not game.landed and game.state.planets[game.iplnet].crystals==absent:
++    if not game.landed and game.iplnet.crystals==&quot;absent&quot;:
+ 	prout(_(&quot;Spock-  \&quot;Captain, I fail to see the logic in&quot;))
+ 	prout(_(&quot;  exploring a planet with no dilithium crystals.&quot;))
+ 	proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;))
+@@ -4956,7 +4957,7 @@
+     	    prout(_(&quot;Engineering to bridge--&quot;))
+ 	    prout(_(&quot;  Captain, we have enough energy only to transport you down to&quot;))
+ 	    prout(_(&quot;  the planet, but there wouldn't be an energy for the trip back.&quot;))
+-	    if game.state.planets[game.iplnet].known == &quot;shuttle_down&quot;:
++	    if game.iplnet.known == &quot;shuttle_down&quot;:
+ 		prout(_(&quot;  Although the Galileo shuttle craft may still be on a surface.&quot;))
+ 	    proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;))
+ 	    if ja() == False:
+@@ -4964,7 +4965,7 @@
+ 		return
+     if game.landed:
+ 	# Coming from planet 
+-	if game.state.planets[game.iplnet].known==&quot;shuttle_down&quot;:
++	if game.iplnet.known==&quot;shuttle_down&quot;:
+ 	    proutn(_(&quot;Spock-  \&quot;Wouldn't you rather take the Galileo?\&quot; &quot;))
+ 	    if ja() == True:
+ 		chew()
+@@ -4998,7 +4999,7 @@
+     game.energy -= nrgneed
+     skip(2)
+     prout(_(&quot;Transport complete.&quot;))
+-    if game.landed and game.state.planets[game.iplnet].known==&quot;shuttle_down&quot;:
++    if game.landed and game.iplnet.known==&quot;shuttle_down&quot;:
+ 	prout(_(&quot;The shuttle craft Galileo is here!&quot;))
+     if not game.landed and game.imine:
+ 	game.icrystl = True
+@@ -5013,10 +5014,10 @@
+     if not game.landed:
+ 	prout(_(&quot;Mining party not on planet.&quot;))
+ 	return
+-    if game.state.planets[game.iplnet].crystals == mined:
++    if game.iplnet.crystals == &quot;mined&quot;:
+ 	prout(_(&quot;This planet has already been strip-mined for dilithium.&quot;))
+ 	return
+-    elif game.state.planets[game.iplnet].crystals == absent:
++    elif game.iplnet.crystals == &quot;absent&quot;:
+ 	prout(_(&quot;No dilithium crystals on this planet.&quot;))
+ 	return
+     if game.imine:
+@@ -5028,11 +5029,11 @@
+ 	skip(1)
+ 	prout(_(&quot;there's no reason to mine more at this time.&quot;))
+ 	return
+-    game.optime = (0.1+0.2*random.random())*game.state.planets[game.iplnet].pclass
++    game.optime = (0.1+0.2*random.random())*game.iplnet.pclass
+     if consumeTime():
+ 	return
+     prout(_(&quot;Mining operation complete.&quot;))
+-    game.state.planets[game.iplnet].crystals = mined
++    game.iplnet.crystals = &quot;mined&quot;
+     game.imine = game.ididit = True
+ 
+ def usecrystals():
+@@ -5087,7 +5088,7 @@
+     skip(1)
+     if damaged(DSHUTTL):
+ 	if game.damage[DSHUTTL] == -1.0:
+-	    if game.inorbit and game.state.planets[game.iplnet].known == &quot;shuttle_down&quot;:
++	    if game.inorbit and game.iplnet.known == &quot;shuttle_down&quot;:
+ 		prout(_(&quot;Ye Faerie Queene has no shuttle craft bay to dock it at.&quot;))
+ 	    else:
+ 		prout(_(&quot;Ye Faerie Queene had no shuttle craft.&quot;))
+@@ -5100,16 +5101,16 @@
+ 	crmshp()
+ 	prout(_(&quot; not in standard orbit.&quot;))
+ 	return
+-    if (game.state.planets[game.iplnet].known != &quot;shuttle_down&quot;) and game.iscraft != &quot;onship&quot;:
++    if (game.iplnet.known != &quot;shuttle_down&quot;) and game.iscraft != &quot;onship&quot;:
+ 	prout(_(&quot;Shuttle craft not currently available.&quot;))
+ 	return
+-    if not game.landed and game.state.planets[game.iplnet].known==&quot;shuttle_down&quot;:
++    if not game.landed and game.iplnet.known==&quot;shuttle_down&quot;:
+ 	prout(_(&quot;You will have to beam down to retrieve the shuttle craft.&quot;))
+ 	return
+     if game.shldup or game.condition == &quot;docked&quot;:
+ 	prout(_(&quot;Shuttle craft cannot pass through shields.&quot;))
+ 	return
+-    if game.state.planets[game.iplnet].known==&quot;unknown&quot;:
++    if game.iplnet.known==&quot;unknown&quot;:
+ 	prout(_(&quot;Spock-  \&quot;Captain, we have no information on this planet&quot;))
+ 	prout(_(&quot;  and Starfleet Regulations clearly state that in this situation&quot;))
+ 	prout(_(&quot;  you may not fly down.\&quot;&quot;))
+@@ -5141,7 +5142,7 @@
+ 	    skip(1)
+ 	    if consumeTime():
+ 		return
+-	    game.state.planets[game.iplnet].known=&quot;shuttle_down&quot;
++	    game.iplnet.known=&quot;shuttle_down&quot;
+ 	    prout(_(&quot;Trip complete.&quot;))
+ 	    return
+ 	else:
+@@ -5151,7 +5152,7 @@
+ 	    skip(1)
+ 	    prouts(_(&quot;The short hop begins . . .&quot;))
+ 	    skip(1)
+-	    game.state.planets[game.iplnet].known=&quot;known&quot;
++	    game.iplnet.known=&quot;known&quot;
+ 	    game.icraft = True
+ 	    skip(1)
+ 	    game.landed = False
+@@ -5177,7 +5178,7 @@
+ 	game.iscraft = &quot;offship&quot;
+ 	if consumeTime():
+ 	    return
+-	game.state.planets[game.iplnet].known = &quot;shuttle_down&quot;
++	game.iplnet.known = &quot;shuttle_down&quot;
+ 	game.landed = True
+ 	game.icraft = False
+ 	prout(_(&quot;Trip complete.&quot;))
+@@ -5534,7 +5535,7 @@
+     if not req or req == 10:
+ 	if game.options &amp; OPTION_WORLDS:
+ 	    plnet = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet
+-	    if plnet != NOPLANET and game.state.planets[plnet].inhabited:
++	    if plnet and plnet.inhabited:
+ 		prstat(_(&quot;Major system&quot;), plnet.name)
+ 	    else:
+ 		prout(_(&quot;Sector is uninhabited&quot;))
+@@ -5939,7 +5940,7 @@
+ 	for j in range(GALSIZE):
+ 	    quad = game.state.galaxy[i][j]
+ 	    quad.charted = 0
+-	    quad.planet = NOPLANET
++	    quad.planet = None
+ 	    quad.romulans = 0
+ 	    quad.klingons = 0
+ 	    quad.starbase = False
+@@ -6032,7 +6033,7 @@
+     for i in range(game.inplan):
+         while True:
+             w = randplace(GALSIZE) 
+-            if game.state.galaxy[w.x][w.y].planet == NOPLANET:
++            if game.state.galaxy[w.x][w.y].planet == None:
+                 break
+         new = planet()
+ 	new.w = w
+@@ -6309,7 +6310,7 @@
+ 	game.base = dropin(IHB)
+ 	
+     # If quadrant needs a planet, put it in
+-    if q.planet != NOPLANET:
++    if q.planet:
+ 	game.iplnet = q.planet
+ 	if not q.planet.inhabited:
+ 	    game.plnet = dropin(IHP)
+@@ -6563,7 +6564,6 @@
+ 	    hitme = False
+ 	    game.justin = False
+ 	    game.optime = 0.0
+-	    i = -1
+ 	    chew()
+ 	    setwnd(prompt_window)
+ 	    clrscr()
+@@ -6581,6 +6581,8 @@
+             if len(candidates) == 1:
+                 cmd = candidates[0]
+                 break
++            elif candidates and not (game.options &amp; OPTION_PLAIN):
++                prout(&quot;Commands with that prefix: &quot; + &quot; &quot;.join(candidates))
+             else:
+                 listCommands()
+                 continue
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000141.html">[Sst-commit-watch] r674 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000143.html">[Sst-commit-watch] r676 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#142">[ date ]</a>
+              <a href="thread.html#142">[ thread ]</a>
+              <a href="subject.html#142">[ subject ]</a>
+              <a href="author.html#142">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

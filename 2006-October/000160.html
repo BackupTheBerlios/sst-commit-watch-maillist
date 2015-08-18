@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r693 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r693%20-%20trunk/src&In-Reply-To=%3C200610061521.k96FLYZK026021%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000159.html">
+   <LINK REL="Next"  HREF="000161.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r693 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r693%20-%20trunk/src&In-Reply-To=%3C200610061521.k96FLYZK026021%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r693 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct  6 17:21:34 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000159.html">[Sst-commit-watch] r692 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000161.html">[Sst-commit-watch] r694 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#160">[ date ]</a>
+              <a href="thread.html#160">[ thread ]</a>
+              <a href="subject.html#160">[ subject ]</a>
+              <a href="author.html#160">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-06 17:21:33 +0200 (Fri, 06 Oct 2006)
+New Revision: 693
+
+Modified:
+   trunk/src/sst.py
+Log:
+Get rid of the nasty old bubble sort in the Python version.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-06 15:08:13 UTC (rev 692)
++++ trunk/src/sst.py	2006-10-06 15:21:33 UTC (rev 693)
+@@ -419,10 +419,11 @@
+     def __init__(self, loc=None, power=None):
+         if loc:
+             self.kloc = loc
++            self.kdist = self.kavgd = distance(game.sector, loc)
+         else:
+             self.kloc = coord()	# enemy sector location
++            self.kdist = self.kavgd = None
+         self.kpower = power	# enemy energy levels
+-        self.kdist = self.kavgd = distance(game.sector, e.kloc)
+     def __repr__(self):
+         return &quot;&lt;%s=%f&gt;&quot; % (self.kloc, self.kpower)	# For debugging
+ 
+@@ -896,7 +897,7 @@
+ 	    w = game.enemies[i].kloc
+ 	    if game.quad[w.x][w.y] == IHK or game.quad[w.x][w.y] == IHR:
+ 		movebaddy(w, i, game.quad[w.x][w.y])
+-    sortklings();
++    game.enemies.sort(lambda x, y: cmp(x.kdist, y.kdist))
+ 
+ def movescom(iq, avoid):
+     # commander movement helper 
+@@ -934,7 +935,7 @@
+ 	game.nenhere -= 1
+ 	if game.condition!=docked:
+ 	    newcnd()
+-	sortklings()
++        game.enemies.sort(lambda x, y: cmp(x.kdist, y.kdist))
+     # check for a helpful planet 
+     for i in range(game.inplan):
+ 	if game.state.planets[i].w == game.state.kscmdr and \
+@@ -1566,7 +1567,7 @@
+ 	prout(_(&quot; displaced by blast to Sector %s &quot;) % jw)
+ 	for ll in range(game.nenhere):
+ 	    game.enemies[ll].kdist = game.enemies[ll].kavgd = distance(game.sector,game.enemies[ll].kloc)
+-	sortklings()
++        game.enemies.sort(lambda x, y: cmp(x.kdist, y.kdist))
+ 	return None
+     skip(1)
+     prout(_(&quot;Torpedo missed.&quot;))
+@@ -1752,7 +1753,7 @@
+     # After attack, reset average distance to enemies 
+     for loop in range(game.nenhere):
+ 	game.enemies[loop].kavgd = game.enemies[loop].kdist
+-    sortklings()
++    game.enemies.sort(lambda x, y: cmp(x.kdist, y.kdist))
+     return;
+ 		
+ def deadkl(w, type, mv):
+@@ -3871,7 +3872,7 @@
+                 finald = distance(w, game.enemies[m].kloc)
+                 game.enemies[m].kavgd = 0.5 * (finald+game.enemies[m].kdist)
+                 game.enemies[m].kdist = finald
+-            sortklings()
++            game.enemies.sort(lambda x, y: cmp(x.kdist, y.kdist))
+             if not game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova:
+                 attack(False)
+             for m in range(game.nenhere):
+@@ -6294,7 +6295,7 @@
+ 		game.quad[QUADSIZE-1][0] = 'X'
+ 	    if game.quad[QUADSIZE-1][QUADSIZE-1]==IHDOT:
+ 		game.quad[QUADSIZE-1][QUADSIZE-1] = 'X'
+-    sortklings()
++    game.enemies.sort(lambda x, y: cmp(x.kdist, y.kdist))
+     # Put in a few black holes
+     for i in range(1, 3+1):
+ 	if withprob(0.5): 
+@@ -6310,34 +6311,6 @@
+ 	if game.quad[QUADSIZE-1][QUADSIZE-1]=='X':
+ 	    game.quad[QUADSIZE-1][QUADSIZE-1] = IHDOT
+ 
+-def sortklings():
+-    # sort Klingons by distance from us 
+-    # The author liked bubble sort. So we will use it. :-(
+-    if game.nenhere-(thing==game.quadrant)-(game.tholian!=None) &lt; 2:
+-	return
+-    while True:
+-	sw = False
+-	for j in range(game.nenhere-1):
+-	    if game.enemies[j].kdist &gt; game.enemies[j+1].kdist:
+-		sw = True
+-		t = game.enemies[j].kdist
+-		game.enemies[j].kdist = game.enemies[j+1].kdist
+-		game.enemies[j+1].kdist = t
+-		t = game.enemies[j].kavgd
+-		game.enemies[j].kavgd = game.enemies[j+1].kavgd
+-		game.enemies[j+1].kavgd = t
+-		k = game.enemies[j].kloc.x
+-		game.enemies[j].kloc.x = game.enemies[j+1].kloc.x
+-		game.enemies[j+1].kloc.x = k
+-		k = game.enemies[j].kloc.y
+-		game.enemies[j].kloc.y = game.enemies[j+1].kloc.y
+-		game.enemies[j+1].kloc.y = k
+-		t = game.enemies[j].kpower
+-		game.enemies[j].kpower = game.enemies[j+1].kpower
+-		game.enemies[j+1].kpower = t
+-        if not sw:
+-            break
+-
+ def setpassword():
+     # set the self-destruct password 
+     if game.options &amp; OPTION_PLAIN:
+@@ -6924,4 +6897,3 @@
+     except KeyboardInterrupt:
+         print&quot;&quot;
+         pass
+-
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000159.html">[Sst-commit-watch] r692 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000161.html">[Sst-commit-watch] r694 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#160">[ date ]</a>
+              <a href="thread.html#160">[ thread ]</a>
+              <a href="subject.html#160">[ subject ]</a>
+              <a href="author.html#160">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

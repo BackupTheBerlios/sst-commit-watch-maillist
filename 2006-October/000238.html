@@ -1,0 +1,601 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r771 - in trunk: . doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r771%20-%20in%20trunk%3A%20.%20doc%20src&In-Reply-To=%3C200610171509.k9HF9kol031712%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000237.html">
+   <LINK REL="Next"  HREF="000239.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r771 - in trunk: . doc src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r771%20-%20in%20trunk%3A%20.%20doc%20src&In-Reply-To=%3C200610171509.k9HF9kol031712%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r771 - in trunk: . doc src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 17 17:09:46 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000237.html">[Sst-commit-watch] r770 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000239.html">[Sst-commit-watch] r772 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#238">[ date ]</a>
+              <a href="thread.html#238">[ thread ]</a>
+              <a href="subject.html#238">[ subject ]</a>
+              <a href="author.html#238">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-17 17:09:45 +0200 (Tue, 17 Oct 2006)
+New Revision: 771
+
+Added:
+   trunk/doc/HACKING
+Modified:
+   trunk/TODO
+   trunk/doc/sst-doc.xml
+   trunk/src/io.c
+   trunk/src/sst.py
+Log:
+Imprive documentation, fix a typo, add the hacking guide.
+
+
+Modified: trunk/TODO
+===================================================================
+--- trunk/TODO	2006-10-17 14:08:28 UTC (rev 770)
++++ trunk/TODO	2006-10-17 15:09:45 UTC (rev 771)
+@@ -9,9 +9,12 @@
+ 
+ * Add the attacked inhabited planets to the status report
+ 
+-
+ Long-term items:
+ 
++* Python's random module supports the von Mises distribution (circular
++  equivalent of the Gaussian).  Tweak the code that handles dispersion
++  in torpedos and explosion displacements to use it.
++
+ * Wrap a GUI around it.
+ 
+ * Wandering planet-killer as in &quot;The Doomsday Machine&quot;;
+
+Added: trunk/doc/HACKING
+===================================================================
+--- trunk/doc/HACKING	2006-10-17 14:08:28 UTC (rev 770)
++++ trunk/doc/HACKING	2006-10-17 15:09:45 UTC (rev 771)
+@@ -0,0 +1,247 @@
++This is the hackers' guide to SST2K.  Read it before messing with the code.
++
++It consists of an introduction, a history, suggestions for regression testing,
++some notes on the Python translation.  For a to-do list, see TODO in the
++top-level directory.
++
++INTRODUCTION:
++
++SST2K is a Python translation of a C translation of a FORTRAN
++original dating back to 1973.  Beautiful Python it is not, but it
++works. 
++
++The intention of SST2K is to be able to replicate precisely the 
++experience of the original game, while allowing new features to be
++added under option control.  Therefore, be very conservative about
++what changes are visible under the 'plain' option.
++
++HISTORY:
++
++Dave Matuszek, one of the two original authors, says:
++
++SRSCAN, MOVE, PHASERS, CALL, STATUS, IMPULSE, PHOTONS, ABANDON,
++LRSCAN, WARP, SHIELDS, DESTRUCT, CHART, REST, DOCK, QUIT, and DAMAGE
++were in the original non-&quot;super&quot; version of UT FORTRAN Star Trek.
++
++Tholians were not in the original. Dave is dubious about their merits.
++(They are now controlled by OPTION_THOLIAN and turned off if the game
++type is &quot;plain&quot;.)
++
++Planets and dilithium crystals were not in the original.  Dave is OK
++with this idea. (It's now controlled by OPTION_PLANETS and turned 
++off if the game type is &quot;plain&quot;.)
++
++Dave says the bit about the Galileo getting turned into a
++McDonald's is &quot;consistant with our original vision&quot;.  (This has been
++left permanently enabled, as it can only happen if OPTION_PLANETS
++is on.)
++
++Dave also says the Space Thingy should not be preserved across saved
++games, so you can't prove to others that you've seen it.  He says it
++shouldn't fire back, either.  It should do nothing except scream and
++disappear when hit by photon torpedos.  It's OK that it may move
++when attacked, but it didn't in the original.  (Whether the Thingy
++can fire back is now controlled by OPTION_THINGY and turned off if the
++game type is &quot;plain&quot; or &quot;almy&quot;.  The no-save behavior has been restored.)
++
++The Faerie Queen, black holes, and time warping were in the original.
++
++Here are Tom Almy's changes:
++
++In early 1997, I got the bright idea to look for references to
++&quot;Super Star Trek&quot; on the World Wide Web. There weren't many hits,
++but there was one that came up with 1979 Fortran sources! This
++version had a few additional features that mine didn't have,
++however mine had some feature it didn't have. So I merged its
++features that I liked. I also took a peek at the DECUS version (a
++port, less sources, to the PDP-10), and some other variations.
++
++1, Compared to the original UT version, I've changed the &quot;help&quot;
++command to &quot;call&quot; and the &quot;terminate&quot; command to &quot;quit&quot; to better
++match user expectations. The DECUS version apparently made those
++changes as well as changing &quot;freeze&quot; to &quot;save&quot;. However I like
++&quot;freeze&quot;.  (Both &quot;freeze&quot; and &quot;save&quot; work in SST2K.)
++
++2. The experimental deathray originally had only a 5% chance of
++success, but could be used repeatedly. I guess after a couple
++years of use, it was less &quot;experimental&quot; because the 1979
++version had a 70% success rate. However it was prone to breaking
++after use. I upgraded the deathray, but kept the original set of
++failure modes (great humor!).  (Now controlled by OPTION_DEATHRAY
++and turned off if game type is &quot;plain&quot;.)
++
++3. The 1979 version also mentions srscan and lrscan working when
++docked (using the starbase's scanners), so I made some changes here
++to do this (and indicating that fact to the player), and then realized
++the base would have a subspace radio as well -- doing a Chart when docked
++updates the star chart, and all radio reports will be heard. The Dock
++command will also give a report if a base is under attack.
++
++4. Tholian Web from the 1979 version.  (Now controlled by
++OPTION_THOLIAN and turned off if game type is &quot;plain&quot;.)
++
++5. Enemies can ram the Enterprise. (Now controlled by OPTION_RAMMING
++and turned off if game type is &quot;plain&quot;.)
++
++6. Regular Klingons and Romulans can move in Expert and Emeritus games. 
++This code could use improvement. (Now controlled by OPTION_MVBADDY
++and turned off if game type is &quot;plain&quot;.)
++
++7. The deep-space probe feature from the DECUS version.  (Now controlled
++by OPTION_PROBE and turned off if game type is &quot;plain&quot;).
++
++8. 'emexit' command from the 1979 version.
++
++9. Bugfix: Klingon commander movements are no longer reported if long-range 
++sensors are damaged.
++
++10. Bugfix: Better base positioning at startup (more spread out).
++That made sense to add because most people abort games with 
++bad base placement.
++
++In June 2002, I fixed two known bugs and a documentation typo.
++In June 2004 I fixed a number of bugs involving: 1) parsing invalid
++numbers, 2) manual phasers when SR scan is damaged and commander is
++present, 3) time warping into the future, 4) hang when moving
++klingons in crowded quadrants.  (These fixes are in SST2K.)
++
++Here are Stas Sergeev's changes:
++
++1. The Space Thingy can be shoved, if you ram it, and can fire back if 
++fired upon. (Now controlled by OPTION_THINGY and turned off if game 
++type is &quot;plain&quot; or &quot;almy&quot;.)
++
++2. When you are docked, base covers you with an almost invincible shield. 
++(A commander can still ram you, or a Romulan can destroy the base,
++or a SCom can even succeed with direct attack IIRC, but this rarely 
++happens.)  (Now controlled by OPTION_BASE and turned off if game 
++type is &quot;plain&quot; or &quot;almy&quot;.)
++
++3. Ramming a black hole is no longer instant death.  There is a
++chance you might get timewarped instead. (Now controlled by 
++OPTION_BLKHOLE and turned off if game type is &quot;plain&quot; or &quot;almy&quot;.)
++
++4. The Tholian can be hit with phasers.
++
++5. SCom can't escape from you if no more enemies remain 
++(without this, chasing SCom can take an eternity).
++
++6. Probe target you enter is now the destination quadrant. Before I don't 
++remember what it was, but it was something I had difficulty using.
++
++7. Secret password is now autogenerated.
++
++8. &quot;Plaque&quot; is adjusted for A4 paper :-)
++
++9. Phasers now tells you how much energy needed, but only if the computer 
++is alive.
++
++10. Planets are auto-scanned when you enter the quadrant.
++
++11. Mining or using crystals in presense of enemy now yields an attack.
++There are other minor adjustments to what yields an attack
++and what does not.
++
++12. &quot;freeze&quot; command reverts to &quot;save&quot;, most people will understand this
++better anyway. (SST2K recognizes both.)
++
++13. Screen-oriented interface, with sensor scans always up.  (SST2K
++supports both screen-oriented and TTY modes.)
++
++Eric Raymond's changes:
++
++Mainly, I translated this C code out of FORTRAN into C -- created #defines
++for a lot of magic numbers and refactored the heck out of it.
++
++1. &quot;sos&quot; and &quot;call&quot; becomes &quot;mayday&quot;, &quot;freeze&quot; and &quot;save&quot; are both good.
++
++2. Status report now indicates when dilithium crystals are on board.
++
++3. Per Dave Matuszek's remarks, Thingy state is never saved across games.
++
++4. Added game option selection so you can play a close (but not bug-for-
++bug identical) approximation of older versions.
++
++5. Half the quadrants now have inhabited planets, from which one 
++cannot mine dilithium (there will still be the same additional number
++of dilithium-bearing planets).  Torpedoing an inhabited world is *bad*.
++There is BSD-Trek-like logic for Klingons to attack and enslave 
++inhabited worlds, producing more ships (only is skill is 'good' or 
++better). (Controlled by OPTION_WORLDS and turned off if game 
++type is &quot;plain&quot; or &quot;almy&quot;.)
++
++6. User input is now logged so we can do regression testing.
++
++7. More BSD-Trek features: You can now lose if your entire crew
++dies in battle.  When abandoning ship in a game with inhabited
++worlds enabled, they must have one in the quadrant to beam down
++to; otherwise they die in space and this counts heavily against
++your score.  Docking at a starbase replenishes your crew.
++
++8. Still more BSD-Trek: we now have a weighted damage table.
++Also, the nav subsystem (enabling automatic course
++setting) can be damaged separately from the main computer (which
++handles weapons targeting, ETA calculation, and self-destruct).
++
++After these features were added, I translated this into Python and added
++more:
++
++9. A long-range scan is done silently whenever you call CHART; thus
++the LRSCAN command is no longer needed.  (Controlled by OPTION_AUTOSCAN
++and turned off if game type is &quot;plain&quot; or &quot;almy&quot;.)
++
++TESTING:
++
++This code has been designed to be tested.  A simple shellscript
++included in the distribution, 'replay', automatically reruns the
++last game you played.
++
++Here are some interesting seeds for debugging and regression testing
++For each one, I list the seed, the options, and the last svn revision
++for which it is known to have given the described behavior.
++
++1160647745 regular short good fancy	(r769)
++
++Starts you in a quadrant with the Super-Commander in it.  Slamming three
++torps at him will kill him.  You can use this to regression-test both
++torpedo tracks and the Deep Space Probe. Known bug: &quot;probe aut 2 8&quot;
++triggers manual navigation.
++
++1160707235 regular short good fancy	(r769)
++
++Do sr/mov aut 5 4/sr/sensors/orbit/transport; you'll get a transporter
++failure.
++
++NOTES ON THE PYTHON TRANSLATION:
++
++The Python translation was done with a regexp-based C-to-Python
++translator I wrote for the purpose (I expect to release this as a
++separate project).  I then hand-tuned and refactored the result.
++
++The LOC count dropped by almost exactly 20% during this process, from
++a bit over 8100 lines to a bit over 6500 lines.  If the code is still
++shorter than that when you read thism, it's because this file comtains
++nost of what used to be a huge header comment.  
++
++SST is not a data-structure- intensive program, so it compresses less
++under translation to Python than the 50% drop in LOC I've found to be
++more typical.  The gain in readability, though impossible to quantify,
++is much greater than the drop in line count would suggest.
++
++Some parts of the code, such as the finish() and score() functions, 
++have barely been touched.  Code in the general category of report 
++generators has tended to change little, especially since we've tried
++to preserve the look and feel of the original.
++
++On the other hand, the vector-arithmetic code around navigation and
++torpedos, and deep-space-probe handling changed a lot.  All that 
++stuff is now centralized in a 'course' object that hides the
++trigonometric calculations.  
++
++The course object builds on a 'coord' object, which I actually had
++introduced while refactoring the C version.  Large parts of SST2K are,
++perforce, an exercise in 2D vector arithmetic.  In the original
++FORTRAN all the vector representation was done with parallel arrays;
++in C, I introduced a struct; in Python, the class has a complete
++repertoire of vector-algebra operations.
++
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2006-10-17 14:08:28 UTC (rev 770)
++++ trunk/doc/sst-doc.xml	2006-10-17 15:09:45 UTC (rev 771)
+@@ -2004,7 +2004,7 @@
+ 
+ &lt;appendix&gt;&lt;title&gt;Setting the Wayback Machine&lt;/title&gt;
+ 
+-&lt;para&gt;SSTK and its ancestors have a long history.  One of the
++&lt;para&gt;SST2K and its ancestors have a long history.  One of the
+ objectives of this project is to make that history available.
+ Accordingly, here is a timeline of the development of SST2K and
+ its ancestors, as closely as we can reconstruct it.  Someday this
+@@ -2029,7 +2029,7 @@
+ version to PDP-11 FORTRAN.&lt;/para&gt;&lt;/listitem&gt;
+ 
+ &lt;listitem&gt;&lt;para&gt;21 September 1978 &mdash; This was the date on the
+-first version Tom Almy saw, on which he based his C
++first version Tom Almy saw, on which he based his later C
+ translation.&lt;/para&gt;&lt;/listitem&gt;
+ 
+ &lt;listitem&gt;&lt;para&gt;1979 &mdash; Marc Newman adds Tholians, black holes,
+@@ -2038,7 +2038,7 @@
+ &lt;listitem&gt;&lt;para&gt;1995-1996 &mdash; Tom Almy translates his FORTRAN
+ port to ANSI C.&lt;/para&gt;&lt;/listitem&gt;
+ 
+-&lt;listitem&gt;&lt;para&gt;1997 &mdash; Tom Almy finds the sources for the UT
++&lt;listitem&gt;&lt;para&gt;1997 &mdash; Tom Almy finds the sources for UT
+ FORTRAN on the Web and merges in features new since the 1978 version:
+ EMEXIT, Tholian Web, improved death ray.  He adds deep-space probes
+ from the DECUS version.&lt;/para&gt;&lt;/listitem&gt;
+@@ -2056,6 +2056,9 @@
+ &lt;listitem&gt;&lt;para&gt;September 2006 &mdash; BSD features merged
+ in. Inhabited-worlds features and weighted critical hits date from
+ this time.&lt;/para&gt;&lt;/listitem&gt;
++
++&lt;listitem&gt;&lt;para&gt;9 October 2006 &mdash; Translation to
++Python.&lt;/para&gt;&lt;/listitem&gt;
+ &lt;/itemizedlist&gt;
+ 
+ &lt;para&gt;One as-yet unanswered question is when the code changed from
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-10-17 14:08:28 UTC (rev 770)
++++ trunk/src/io.c	2006-10-17 15:09:45 UTC (rev 771)
+@@ -92,7 +92,7 @@
+ void announce(void)
+ {
+     skip(1);
+-    prouts(_(&quot;[ANOUNCEMENT ARRIVING...]&quot;));
++    prouts(_(&quot;[ANNOUNCEMENT ARRIVING...]&quot;));
+     skip(1);
+ }
+ 
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-17 14:08:28 UTC (rev 770)
++++ trunk/src/sst.py	2006-10-17 15:09:45 UTC (rev 771)
+@@ -1,183 +1,15 @@
+ #!/usr/bin/env python
+ &quot;&quot;&quot;
+-sst.py =-- Super Star Trek in Python
++sst.py -- Super Star Trek 2K
+ 
+-This code is a Python translation of a C translation of a FORTRAN
+-original dating back to 1973.  Beautiful Python it is not.  But it
+-works.
++SST2K is a Python translation of a C translation of a FORTRAN
++original dating back to 1973.  Beautiful Python it is not, but it
++works.  Translation by Eric S. Raymond; original game by David Matuszek
++and Paul Reynolds, with modifications by Don Smith, Tom Almy,
++Stas Sergeev, and Eric S. Raymond.
+ 
+-Dave Matuszek says:
+-
+-SRSCAN, MOVE, PHASERS, CALL, STATUS, IMPULSE, PHOTONS, ABANDON,
+-LRSCAN, WARP, SHIELDS, DESTRUCT, CHART, REST, DOCK, QUIT, and DAMAGE
+-were in the original non-&quot;super&quot; version of UT FORTRAN Star Trek.
+-
+-Tholians were not in the original. Dave is dubious about their merits.
+-(They are now controlled by OPTION_THOLIAN and turned off if the game
+-type is &quot;plain&quot;.)
+-
+-Planets and dilithium crystals were not in the original.  Dave is OK
+-with this idea. (It's now controlled by OPTION_PLANETS and turned 
+-off if the game type is &quot;plain&quot;.)
+-
+-Dave says the bit about the Galileo getting turned into a
+-McDonald's is &quot;consistant with our original vision&quot;.  (This has been
+-left permanently enabled, as it can only happen if OPTION_PLANETS
+-is on.)
+-
+-Dave also says the Space Thingy should not be preserved across saved
+-games, so you can't prove to others that you've seen it.  He says it
+-shouldn't fire back, either.  It should do nothing except scream and
+-disappear when hit by photon torpedos.  It's OK that it may move
+-when attacked, but it didn't in the original.  (Whether the Thingy
+-can fire back is now controlled by OPTION_THINGY and turned off if the
+-game type is &quot;plain&quot; or &quot;almy&quot;.  The no-save behavior has been restored.)
+-
+-The Faerie Queen, black holes, and time warping were in the original.
+-
+-Here are Tom Almy's changes:
+-
+-In early 1997, I got the bright idea to look for references to
+-&quot;Super Star Trek&quot; on the World Wide Web. There weren't many hits,
+-but there was one that came up with 1979 Fortran sources! This
+-version had a few additional features that mine didn't have,
+-however mine had some feature it didn't have. So I merged its
+-features that I liked. I also took a peek at the DECUS version (a
+-port, less sources, to the PDP-10), and some other variations.
+-
+-1, Compared to the original UT version, I've changed the &quot;help&quot;
+-command to &quot;call&quot; and the &quot;terminate&quot; command to &quot;quit&quot; to better
+-match user expectations. The DECUS version apparently made those
+-changes as well as changing &quot;freeze&quot; to &quot;save&quot;. However I like
+-&quot;freeze&quot;.  (Both &quot;freeze&quot; and &quot;save&quot; work in SST2K.)
+-
+-2. The experimental deathray originally had only a 5% chance of
+-success, but could be used repeatedly. I guess after a couple
+-years of use, it was less &quot;experimental&quot; because the 1979
+-version had a 70% success rate. However it was prone to breaking
+-after use. I upgraded the deathray, but kept the original set of
+-failure modes (great humor!).  (Now controlled by OPTION_DEATHRAY
+-and turned off if game type is &quot;plain&quot;.)
+-
+-3. The 1979 version also mentions srscan and lrscan working when
+-docked (using the starbase's scanners), so I made some changes here
+-to do this (and indicating that fact to the player), and then realized
+-the base would have a subspace radio as well -- doing a Chart when docked
+-updates the star chart, and all radio reports will be heard. The Dock
+-command will also give a report if a base is under attack.
+-
+-4. Tholian Web from the 1979 version.  (Now controlled by
+-OPTION_THOLIAN and turned off if game type is &quot;plain&quot;.)
+-
+-5. Enemies can ram the Enterprise. (Now controlled by OPTION_RAMMING
+-and turned off if game type is &quot;plain&quot;.)
+-
+-6. Regular Klingons and Romulans can move in Expert and Emeritus games. 
+-This code could use improvement. (Now controlled by OPTION_MVBADDY
+-and turned off if game type is &quot;plain&quot;.)
+-
+-7. The deep-space probe feature from the DECUS version.  (Now controlled
+-by OPTION_PROBE and turned off if game type is &quot;plain&quot;).
+-
+-8. 'emexit' command from the 1979 version.
+-
+-9. Bugfix: Klingon commander movements are no longer reported if long-range 
+-sensors are damaged.
+-
+-10. Bugfix: Better base positioning at startup (more spread out).
+-That made sense to add because most people abort games with 
+-bad base placement.
+-
+-In June 2002, I fixed two known bugs and a documentation typo.
+-In June 2004 I fixed a number of bugs involving: 1) parsing invalid
+-numbers, 2) manual phasers when SR scan is damaged and commander is
+-present, 3) time warping into the future, 4) hang when moving
+-klingons in crowded quadrants.  (These fixes are in SST2K.)
+-
+-Here are Stas Sergeev's changes:
+-
+-1. The Space Thingy can be shoved, if you ram it, and can fire back if 
+-fired upon. (Now controlled by OPTION_THINGY and turned off if game 
+-type is &quot;plain&quot; or &quot;almy&quot;.)
+-
+-2. When you are docked, base covers you with an almost invincible shield. 
+-(A commander can still ram you, or a Romulan can destroy the base,
+-or a SCom can even succeed with direct attack IIRC, but this rarely 
+-happens.)  (Now controlled by OPTION_BASE and turned off if game 
+-type is &quot;plain&quot; or &quot;almy&quot;.)
+-
+-3. Ramming a black hole is no longer instant death.  There is a
+-chance you might get timewarped instead. (Now controlled by 
+-OPTION_BLKHOLE and turned off if game type is &quot;plain&quot; or &quot;almy&quot;.)
+-
+-4. The Tholian can be hit with phasers.
+-
+-5. SCom can't escape from you if no more enemies remain 
+-(without this, chasing SCom can take an eternity).
+-
+-6. Probe target you enter is now the destination quadrant. Before I don't 
+-remember what it was, but it was something I had difficulty using.
+-
+-7. Secret password is now autogenerated.
+-
+-8. &quot;Plaque&quot; is adjusted for A4 paper :-)
+-
+-9. Phasers now tells you how much energy needed, but only if the computer 
+-is alive.
+-
+-10. Planets are auto-scanned when you enter the quadrant.
+-
+-11. Mining or using crystals in presense of enemy now yields an attack.
+-There are other minor adjustments to what yields an attack
+-and what does not.
+-
+-12. &quot;freeze&quot; command reverts to &quot;save&quot;, most people will understand this
+-better anyway. (SST2K recognizes both.)
+-
+-13. Screen-oriented interface, with sensor scans always up.  (SST2K
+-supports both screen-oriented and TTY modes.)
+-
+-Eric Raymond's changes:
+-
+-Mainly, I translated this C code out of FORTRAN into C -- created #defines
+-for a lot of magic numbers and refactored the heck out of it.
+-
+-1. &quot;sos&quot; and &quot;call&quot; becomes &quot;mayday&quot;, &quot;freeze&quot; and &quot;save&quot; are both good.
+-
+-2. Status report now indicates when dilithium crystals are on board.
+-
+-3. Per Dave Matuszek's remarks, Thingy state is never saved across games.
+-
+-4. Added game option selection so you can play a close (but not bug-for-
+-bug identical) approximation of older versions.
+-
+-5. Half the quadrants now have inhabited planets, from which one 
+-cannot mine dilithium (there will still be the same additional number
+-of dilithium-bearing planets).  Torpedoing an inhabited world is *bad*.
+-There is BSD-Trek-like logic for Klingons to attack and enslave 
+-inhabited worlds, producing more ships (only is skill is 'good' or 
+-better). (Controlled by OPTION_WORLDS and turned off if game 
+-type is &quot;plain&quot; or &quot;almy&quot;.)
+-
+-6. User input is now logged so we can do regression testing.
+-
+-7. More BSD-Trek features: You can now lose if your entire crew
+-dies in battle.  When abandoning ship in a game with inhabited
+-worlds enabled, they must have one in the quadrant to beam down
+-to; otherwise they die in space and this counts heavily against
+-your score.  Docking at a starbase replenishes your crew.
+-
+-8. Still more BSD-Trek: we now have a weighted damage table.
+-Also, the nav subsystem (enabling automatic course
+-setting) can be damaged separately from the main computer (which
+-handles weapons targeting, ETA calculation, and self-destruct).
+-
+-After these features were added, I translated this into Python and added
+-more:
+-
+-9. A long-range scan is done silently whenever you call CHART; thus
+-the LRSCAN command is no longer needed.  (Controlled by OPTION_AUTOSCAN
+-and turned off if game type is &quot;plain&quot; or &quot;almy&quot;.)
++See the doc/HACKING file in the distribution for designers notes and advice
++ion how to modify (and how not to modify!) this code.
+ &quot;&quot;&quot;
+ import os, sys, math, curses, time, readline, cPickle, random, copy, gettext
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000237.html">[Sst-commit-watch] r770 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000239.html">[Sst-commit-watch] r772 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#238">[ date ]</a>
+              <a href="thread.html#238">[ thread ]</a>
+              <a href="subject.html#238">[ subject ]</a>
+              <a href="author.html#238">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

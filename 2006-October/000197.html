@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r730 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r730%20-%20trunk/src&In-Reply-To=%3C200610100706.k9A76lPh031373%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000196.html">
+   <LINK REL="Next"  HREF="000198.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r730 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r730%20-%20trunk/src&In-Reply-To=%3C200610100706.k9A76lPh031373%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r730 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 09:06:47 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000196.html">[Sst-commit-watch] r729 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000198.html">[Sst-commit-watch] r731 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#197">[ date ]</a>
+              <a href="thread.html#197">[ thread ]</a>
+              <a href="subject.html#197">[ subject ]</a>
+              <a href="author.html#197">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 09:06:46 +0200 (Tue, 10 Oct 2006)
+New Revision: 730
+
+Modified:
+   trunk/src/sst.py
+Log:
+Time to make curses work.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 06:21:55 UTC (rev 729)
++++ trunk/src/sst.py	2006-10-10 07:06:46 UTC (rev 730)
+@@ -1573,7 +1573,7 @@
+ 	    hit = enemy.kpower*math.pow(dustfac,enemy.kavgd)
+ 	    enemy.kpower *= 0.75
+ 	else: # Enemy uses photon torpedo 
+-	    #course2 = (enemy.kloc-game.sector).bearing()
++	    # We should be able to make the bearing() method work here
+ 	    course = 1.90985*math.atan2(game.sector.j-enemy.kloc.j, enemy.kloc.i-game.sector.i)
+ 	    hit = 0
+ 	    proutn(_(&quot;***TORPEDO INCOMING&quot;))
+@@ -6552,11 +6552,10 @@
+         game = gamestate()
+         idebug = 0
+         game.options = OPTION_ALL &amp;~ (OPTION_IOMODES | OPTION_PLAIN | OPTION_ALMY)
+-        # Disable curses mode until the game logic is working.
+-        #    if os.getenv(&quot;TERM&quot;):
+-        #	game.options |= OPTION_CURSES | OPTION_SHOWME
+-        #    else:
+-        game.options |= OPTION_TTY
++        if os.getenv(&quot;TERM&quot;):
++            game.options |= OPTION_CURSES
++        else:
++            game.options |= OPTION_TTY
+         seed = int(time.time())
+         (options, arguments) = getopt.getopt(sys.argv[1:], &quot;r:s:tx&quot;)
+         for (switch, val) in options:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000196.html">[Sst-commit-watch] r729 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000198.html">[Sst-commit-watch] r731 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#197">[ date ]</a>
+              <a href="thread.html#197">[ thread ]</a>
+              <a href="subject.html#197">[ subject ]</a>
+              <a href="author.html#197">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

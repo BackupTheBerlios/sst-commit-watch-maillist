@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r623 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r623%20-%20trunk/src&In-Reply-To=%3C200609202118.k8KLI5eK017255%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000089.html">
+   <LINK REL="Next"  HREF="000091.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r623 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r623%20-%20trunk/src&In-Reply-To=%3C200609202118.k8KLI5eK017255%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r623 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 23:18:05 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000089.html">[Sst-commit-watch] r622 - in trunk: doc src
+</A></li>
+        <LI>Next message: <A HREF="000091.html">[Sst-commit-watch] r624 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#90">[ date ]</a>
+              <a href="thread.html#90">[ thread ]</a>
+              <a href="subject.html#90">[ subject ]</a>
+              <a href="author.html#90">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 23:18:05 +0200 (Wed, 20 Sep 2006)
+New Revision: 623
+
+Modified:
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+Get rid of obnoxious iattak global, a kluge to prevent recursiion through
+an infinit regress of moves leading to exit attacks forcing moves, etc.
+
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-20 20:50:53 UTC (rev 622)
++++ trunk/src/battle.c	2006-09-20 21:18:05 UTC (rev 623)
+@@ -544,7 +544,6 @@
+     coord jay;
+     enum loctype where = neither;
+ 
+-    game.iattak = 1;
+     if (game.alldone) return;
+     if (idebug) prout(&quot;=== ATTACK!&quot;);
+ 
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-20 20:50:53 UTC (rev 622)
++++ trunk/src/events.c	2006-09-20 21:18:05 UTC (rev 623)
+@@ -784,8 +784,7 @@
+     game.optime = 10.0*game.dist/16.0;
+     skip(1);
+     prout(_(&quot;Force of nova displaces starship.&quot;));
+-    game.iattak=2;	/* Eliminates recursion problem */
+-    imove();
++    imove(true);
+     game.optime = 10.0*game.dist/16.0;
+     return;
+ }
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-20 20:50:53 UTC (rev 622)
++++ trunk/src/moving.c	2006-09-20 21:18:05 UTC (rev 623)
+@@ -4,8 +4,8 @@
+ 
+ static void getcd(bool, int);
+ 
+-void imove(void)
+-/* movement execution for warp, impule, supernova, and tractor-beam events */
++void imove(bool novapush)
++/* movement execution for warp, impulse, supernova, and tractor-beam events */
+ {
+     double angle, deltax, deltay, bigger, x, y,
+         finald, stopegy, probf;
+@@ -51,7 +51,7 @@
+ 	    if (!VALID_SECTOR(w.x, w.y)) {
+ 		/* Leaving quadrant -- allow final enemy attack */
+ 		/* Don't do it if being pushed by Nova */
+-		if (game.nenhere != 0 &amp;&amp; game.iattak != 2) {
++		if (game.nenhere != 0 &amp;&amp; !novapush) {
+ 		    newcnd();
+ 		    for_local_enemies(m) {
+ 			finald = distance(w, game.ks[m]);
+@@ -197,12 +197,11 @@
+ 	    game.kdist[m] = finald;
+ 	}
+ 	sortkl();
+-	if (!game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova &amp;&amp; game.iattak == 0)
++	if (!game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+ 	    attack(false);
+ 	for_local_enemies(m) game.kavgd[m] = game.kdist[m];
+     }
+     newcnd();
+-    game.iattak = 0;
+     drawmaps(0);
+     setwnd(message_window);
+     return;
+@@ -477,7 +476,7 @@
+ 	if (ja() == false) return;
+     }
+     /* Activate impulse engines and pay the cost */
+-    imove();
++    imove(false);
+     game.ididit = true;
+     if (game.alldone) return;
+     power = 20.0 + 100.0*game.dist;
+@@ -605,7 +604,7 @@
+ 				
+ 
+     /* Activate Warp Engines and pay the cost */
+-    imove();
++    imove(false);
+     if (game.alldone) return;
+     game.energy -= game.dist*game.warpfac*game.warpfac*game.warpfac*(game.shldup+1);
+     if (game.energy &lt;= 0) finish(FNRG);
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-20 20:50:53 UTC (rev 622)
++++ trunk/src/setup.c	2006-09-20 21:18:05 UTC (rev 623)
+@@ -560,7 +560,6 @@
+     coord w;
+     struct quadrant *q;
+ 
+-    game.iattak = 1;
+     game.justin = true;
+     game.base.x = game.base.y = 0;
+     game.klhere = 0;
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-20 20:50:53 UTC (rev 622)
++++ trunk/src/sst.h	2006-09-20 21:18:05 UTC (rev 623)
+@@ -286,7 +286,6 @@
+ 	nenhere,	// number of enemies in quadrant
+ 	irhere,		// Romulans in quadrant
+ 	isatb,		// =1 if super commander is attacking base
+-	iattak,		// attack recursion elimination (was cracks[4])
+ 	tourn,		// tournament number
+ 	proben,		// number of moves for probe
+ 	nprobes;	// number of probes available
+@@ -400,7 +399,7 @@
+ coord dropin(feature);
+ void newcnd(void);
+ void sortkl(void);
+-void imove(void);
++void imove(bool);
+ void ram(bool, feature, coord);
+ void crmena(bool, feature, enum loctype, coord w);
+ void deadkl(coord, feature, coord);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000089.html">[Sst-commit-watch] r622 - in trunk: doc src
+</A></li>
+	<LI>Next message: <A HREF="000091.html">[Sst-commit-watch] r624 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#90">[ date ]</a>
+              <a href="thread.html#90">[ thread ]</a>
+              <a href="subject.html#90">[ subject ]</a>
+              <a href="author.html#90">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

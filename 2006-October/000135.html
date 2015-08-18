@@ -1,0 +1,314 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r668 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r668%20-%20trunk/src&In-Reply-To=%3C200610050338.k953cigJ008870%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000134.html">
+   <LINK REL="Next"  HREF="000136.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r668 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r668%20-%20trunk/src&In-Reply-To=%3C200610050338.k953cigJ008870%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r668 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct  5 05:38:44 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000134.html">[Sst-commit-watch] r667 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000136.html">[Sst-commit-watch] r669 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#135">[ date ]</a>
+              <a href="thread.html#135">[ thread ]</a>
+              <a href="subject.html#135">[ subject ]</a>
+              <a href="author.html#135">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-05 05:38:44 +0200 (Thu, 05 Oct 2006)
+New Revision: 668
+
+Modified:
+   trunk/src/sst.py
+Log:
+Python version did its first I/O.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-05 02:30:35 UTC (rev 667)
++++ trunk/src/sst.py	2006-10-05 03:38:44 UTC (rev 668)
+@@ -1,4 +1,5 @@
+-'''
++#!/usr/bin/env python
++&quot;&quot;&quot;
+ sst.py =-- Super Star Trek in Python
+ 
+ This code is a Python translation of a C translation of a FORTRAN original.
+@@ -171,7 +172,7 @@
+ Also, the nav subsystem (enabling automatic course
+ setting) can be damaged separately from the main computer (which
+ handles weapons targeting, ETA calculation, and self-destruct).
+-'''
++&quot;&quot;&quot;
+ import os, sys, math, curses, time, atexit, readline, cPickle, random, getopt
+ 
+ SSTDOC  	= &quot;/usr/share/doc/sst/sst.doc&quot;
+@@ -3477,6 +3478,7 @@
+ 
+ rows = linecount = 0	# for paging 
+ stdscr = None
++replayfp = None
+ fullscreen_window = None
+ srscan_window     = None
+ report_window     = None
+@@ -3484,6 +3486,7 @@
+ lrscan_window     = None
+ message_window    = None
+ prompt_window     = None
++curwnd = None
+ 
+ def outro():
+     &quot;wrap up, either normally or due to signal&quot;
+@@ -3494,12 +3497,12 @@
+ 	#resetterm()
+ 	#echo()
+ 	curses.endwin()
+-	stdout.write('\n')
++	sys.stdout.write('\n')
+     if logfp:
+ 	logfp.close()
+ 
+ def iostart():
+-    global stdscr
++    global stdscr, rows
+     #setlocale(LC_ALL, &quot;&quot;)
+     #bindtextdomain(PACKAGE, LOCALEDIR)
+     #textdomain(PACKAGE)
+@@ -3572,16 +3575,16 @@
+         setwnd(message_window)
+     else:
+         global linecount
+-        stdout.write('\n')
++        sys.stdout.write('\n')
+         proutn(prompt)
+         raw_input()
+         for j in range(0, rows):
+-            stdout.write('\n')
++            sys.stdout.write('\n')
+         linecount = 0
+ 
+ def skip(i):
+     &quot;Skip i lines.  Pause game if this would cause a scrolling event.&quot;
+-    while dummy in range(i):
++    for dummy in range(i):
+ 	if game.options &amp; OPTION_CURSES:
+             (y, x) = curwnd.getyx()
+             (my, mx) = curwnd.getmaxyx()
+@@ -3593,10 +3596,10 @@
+ 	else:
+             global linecount
+ 	    linecount += 1
+-	    if linecount &gt;= rows:
++	    if rows and linecount &gt;= rows:
+ 		pause_game()
+ 	    else:
+-		stdout.write('\n')
++		sys.stdout.write('\n')
+ 
+ def proutn(line):
+     &quot;Utter a line with no following line feed.&quot;
+@@ -3604,7 +3607,8 @@
+ 	curwnd.addstr(line)
+ 	curwnd.refresh()
+     else:
+-	stdout.write(line)
++	sys.stdout.write(line)
++        sys.stdout.flush()
+ 
+ def prout(line):
+     proutn(line)
+@@ -3630,12 +3634,14 @@
+ 	if replayfp and not replayfp.closed:
+ 	    line = replayfp.readline()
+ 	else:
+-	    sys.stdin.readline()
++	    line = raw_input()
+     if logfp:
+ 	logfp.write(line)
++    return line
+ 
+ def setwnd(wnd):
+-    &quot;Change windows -- OK for this to be a no-op in tty mode.&quot; 
++    &quot;Change windows -- OK for this to be a no-op in tty mode.&quot;
++    global curwnd
+     if game.options &amp; OPTION_CURSES:
+         curwnd = wnd
+         curses.curs_set(wnd == fullscreen_window or wnd == message_window or wnd == prompt_window)
+@@ -5890,7 +5896,6 @@
+ 
+ def setup(needprompt):
+     # prepare to play, set up cosmos 
+-    intj, krem, klumper
+     w = coord()
+ 
+     #  Decide how many of everything
+@@ -6131,9 +6136,7 @@
+ 	    return True
+         if isit(&quot;regular&quot;):
+ 	    break
+-	proutn(_(&quot;What is \&quot;&quot;))
+-	proutn(citem)
+-	prout(&quot;\&quot;?&quot;)
++	proutn(_(&quot;What is \&quot;%s\&quot;?&quot;), citem)
+ 	chew()
+     while game.length==0 or game.skill==SKILL_NONE:
+ 	if scan() == IHALPHA:
+@@ -6773,37 +6776,34 @@
+     return w
+ 
+ def chew():
++    # Demand input for next scan
+     global inqueue
+-    inqueue = []
++    inqueue = None
+ 
+ def chew2():
+     # return IHEOL next time 
+     global inqueue
+-    inqueue = [&quot;\n&quot;]
++    inqueue = []
+ 
+ def scan():
+     # Get a token from the user
+-    global inqueue
++    global inqueue, line, citem
+     aaitem = 0.0
+     citem = ''
+ 
+     # Read a line if nothing here
+-    if line == '\n':
+-        line = ''
+-        return IHEOL
+-    elif line == '':
++    if inqueue == None:
+ 	line = cgetline()
+ 	if curwnd==prompt_window:
+ 	    clrscr()
+ 	    setwnd(message_window)
+ 	    clrscr()
+-    # Skip leading white space
+-    line = line.lstrip()
+-    # Nothing left
+-    if not line:
+-	return IHEOL
+-    else:
+-        inqueue += line.split()
++        # Skip leading white space
++        line = line.lstrip()
++        if line:
++            inqueue = line.split()
++    elif not inqueue:
++        return IHEOL
+     # From here on in it's all looking at the queue
+     citem = inqueue.pop(0)
+     if citem == IHEOL:
+@@ -6811,7 +6811,7 @@
+     try:
+         aaitem = float(citem)
+         return IHREAL
+-    except ValuError:
++    except ValueError:
+         pass
+     # Treat as alpha
+     citem = citem.lower()
+@@ -6836,8 +6836,8 @@
+     prout(_(&quot;Beg your pardon, Captain?&quot;))
+ 
+ def isit(s):
+-    # compares s to citem and returns true if it matches to the length of s 
+-    return citem.startswith(s)
++    # compares s to citem and returns true if it matches to the length of s
++    return s.startswith(citem)
+ 
+ def debugme():
+     # access to the internals for debugging 
+@@ -6929,15 +6929,18 @@
+ 	atover(True)
+ 
+ if __name__ == '__main__':
+-    line = &quot;&quot;
++    global line, thing, game
++    game = citem = aaitem = inqueue = None
++    line = ''
+     thing = coord()
+     game = gamestate()
+ 
+     game.options = OPTION_ALL &amp;~ (OPTION_IOMODES | OPTION_SHOWME | OPTION_PLAIN | OPTION_ALMY)
+-    if os.getenv(&quot;TERM&quot;):
+-	game.options |= OPTION_CURSES | OPTION_SHOWME
+-    else:
+-	game.options |= OPTION_TTY
++    # Disable curses mode until the game logic is working.
++    #    if os.getenv(&quot;TERM&quot;):
++    #	game.options |= OPTION_CURSES | OPTION_SHOWME
++    #    else:
++    game.options |= OPTION_TTY
+ 
+     seed = time.time()
+     (options, arguments) = getopt.getopt(sys.argv[1:], &quot;r:tx&quot;)
+@@ -6977,15 +6980,15 @@
+ 
+     iostart()
+ 
+-    for i in range(optind, argc):
+-	line += sys.argv[i]
++    for tok in arguments:
++	line += tok
+ 	line += &quot; &quot;
+ 
+     while True: # Play a game 
+ 	setwnd(fullscreen_window)
+ 	clrscr()
+ 	prelim()
+-	setup(line[0] == '\0')
++	setup(needprompt=not line)
+ 	if game.alldone:
+ 	    score()
+ 	    game.alldone = False
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000134.html">[Sst-commit-watch] r667 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000136.html">[Sst-commit-watch] r669 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#135">[ date ]</a>
+              <a href="thread.html#135">[ thread ]</a>
+              <a href="subject.html#135">[ subject ]</a>
+              <a href="author.html#135">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r722 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r722%20-%20trunk/src&In-Reply-To=%3C200610092240.k99MeMTL030042%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000188.html">
+   <LINK REL="Next"  HREF="000190.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r722 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r722%20-%20trunk/src&In-Reply-To=%3C200610092240.k99MeMTL030042%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r722 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 00:40:22 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000188.html">[Sst-commit-watch] r721 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000190.html">[Sst-commit-watch] r723 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#189">[ date ]</a>
+              <a href="thread.html#189">[ thread ]</a>
+              <a href="subject.html#189">[ subject ]</a>
+              <a href="author.html#189">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 00:40:21 +0200 (Tue, 10 Oct 2006)
+New Revision: 722
+
+Modified:
+   trunk/src/sst.py
+Log:
+Fix a rather basic error in vecvtor comparisons.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-09 21:53:56 UTC (rev 721)
++++ trunk/src/sst.py	2006-10-09 22:40:21 UTC (rev 722)
+@@ -240,7 +240,7 @@
+     def is_valid(self):
+         return self.x != None and self.y != None
+     def __eq__(self, other):
+-        return other != None and self.x == other.y and self.x == other.y
++        return other != None and self.x == other.y and self.y == other.y
+     def __add__(self, other):
+         return coord(self.x+other.x, self.y+other.y)
+     def __sub__(self, other):
+@@ -1734,8 +1734,8 @@
+ 	return None
+     delta = coord()
+     # FIXME: C code this was translated from is wacky -- why the sign reversal?
+-    delta.y = 0.1*(w.y - game.sector.y);
+-    delta.x = 0.1*(game.sector.x - w.x);
++    delta.y = (w.y - game.sector.y);
++    delta.x = (game.sector.x - w.x);
+     if delta == coord(0, 0):
+ 	skip(1)
+ 	prout(_(&quot;Spock-  \&quot;Bridge to sickbay.  Dr. McCoy,&quot;))
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000188.html">[Sst-commit-watch] r721 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000190.html">[Sst-commit-watch] r723 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#189">[ date ]</a>
+              <a href="thread.html#189">[ thread ]</a>
+              <a href="subject.html#189">[ subject ]</a>
+              <a href="author.html#189">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

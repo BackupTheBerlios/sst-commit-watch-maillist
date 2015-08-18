@@ -1,0 +1,747 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r606 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r606%20-%20trunk/src&In-Reply-To=%3C200609192356.k8JNuvL9029900%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000072.html">
+   <LINK REL="Next"  HREF="000074.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r606 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r606%20-%20trunk/src&In-Reply-To=%3C200609192356.k8JNuvL9029900%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r606 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 01:56:57 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000072.html">[Sst-commit-watch] r605 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000074.html">[Sst-commit-watch] r607 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#73">[ date ]</a>
+              <a href="thread.html#73">[ thread ]</a>
+              <a href="subject.html#73">[ subject ]</a>
+              <a href="author.html#73">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 01:56:55 +0200 (Wed, 20 Sep 2006)
+New Revision: 606
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+Clean up more booleans.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-19 23:09:39 UTC (rev 605)
++++ trunk/src/ai.c	2006-09-19 23:56:55 UTC (rev 606)
+@@ -45,14 +45,13 @@
+     game.state.galaxy[game.quadrant.x][game.quadrant.y].klingons--;
+     game.state.galaxy[iq.x][iq.y].klingons++;
+     if (ienm==IHS) {
+-	game.ishere=0;
+-	game.iscate=0;
+-	game.ientesc=0;
+-	game.isatb=0;
++	game.ishere = false;
++	game.iscate = 0;
++	game.ientesc = false;
++	game.isatb = 0;
+ 	schedule(FSCMOVE, 0.2777);
+ 	unschedule(FSCDBAS);
+-	game.state.kscmdr.x=iq.x;
+-	game.state.kscmdr.y=iq.y;
++	game.state.kscmdr=iq;
+     }
+     else {
+ 	for_commanders(n) {
+@@ -317,8 +316,8 @@
+ 	/* SC has scooted, Remove him from current quadrant */
+ 	game.iscate=0;
+ 	game.isatb=0;
+-	game.ishere=0;
+-	game.ientesc=0;
++	game.ishere = false;
++	game.ientesc = false;
+ 	unschedule(FSCDBAS);
+ 	for_local_enemies(i) 
+ 	    if (game.quad[game.ks[i].x][game.ks[i].y] == IHS) break;
+@@ -535,7 +534,7 @@
+     int idx, idy, im, i;
+     coord dummy;
+     /* Move the Tholian */
+-    if (game.ithere==0 || game.justin == 1) return;
++    if (!game.ithere || game.justin) return;
+ 
+     if (game.tholian.x == 1 &amp;&amp; game.tholian.y == 1) {
+ 	idx = 1; idy = QUADSIZE;
+@@ -551,7 +550,7 @@
+     }
+     else {
+ 	/* something is wrong! */
+-	game.ithere = 0;
++	game.ithere = false;
+ 	return;
+     }
+ 
+@@ -590,7 +589,8 @@
+     dropin(IHBLANK, &amp;dummy);
+     crmena(true, IHT, sector, game.tholian);
+     prout(_(&quot; completes web.&quot;));
+-    game.ithere = game.tholian.x = game.tholian.y = 0;
++    game.ithere = false;
++    game.tholian.x = game.tholian.y = 0;
+     game.nenhere--;
+     return;
+ }
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-19 23:09:39 UTC (rev 605)
++++ trunk/src/battle.c	2006-09-19 23:56:55 UTC (rev 606)
+@@ -181,13 +181,14 @@
+ void torpedo(double course, double r, int inx, int iny, double *hit, int i, int n)
+ /* let a photon torpedo fly */
+ {
+-    int l, iquad=0, jx=0, jy=0, shoved=0, ll;
+-	
++    int l, iquad=0, jx=0, jy=0, ll;
++    bool shoved = false;
+     double ac=course + 0.25*r;
+     double angle = (15.0-ac)*0.5235988;
+     double bullseye = (15.0 - course)*0.5235988;
+     double deltax=-sin(angle), deltay=cos(angle), x=inx, y=iny, bigger;
+     double ang, temp, xx, yy, kp, h1;
++    struct quadrant *q = &amp;game.state.galaxy[game.quadrant.x][game.quadrant.y];
+     coord w;
+ 
+     w.x = w.y = 0;
+@@ -245,7 +246,7 @@
+ 	    game.sector.x = jx;
+ 	    game.sector.y = jy;
+ 	    crmshp();
+-	    shoved = 1;
++	    shoved = true;
+ 	    break;
+ 					  
+ 	case IHC: /* Hit a commander */
+@@ -298,22 +299,21 @@
+ 	    proutn(_(&quot; damaged--&quot;));
+ 	    game.ks[ll].x = jx;
+ 	    game.ks[ll].y = jy;
+-	    shoved = 1;
++	    shoved = true;
+ 	    break;
+ 	case IHB: /* Hit a base */
+ 	    skip(1);
+ 	    prout(_(&quot;***STARBASE DESTROYED..&quot;));
+ 	    for_starbases(ll) {
+-		if (game.state.baseq[ll].x==game.quadrant.x &amp;&amp; game.state.baseq[ll].y==game.quadrant.y) {
+-		    game.state.baseq[ll].x=game.state.baseq[game.state.rembase].x;
+-		    game.state.baseq[ll].y=game.state.baseq[game.state.rembase].y;
++		if (same(game.state.baseq[ll], game.quadrant)) {
++		    game.state.baseq[ll]=game.state.baseq[game.state.rembase];
+ 		    break;
+ 		}
+ 	    }
+ 	    game.quad[w.x][w.y]=IHDOT;
+ 	    game.state.rembase--;
+ 	    game.base.x=game.base.y=0;
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].starbase--;
++	    q-&gt;starbase--;
+ 	    game.state.chart[game.quadrant.x][game.quadrant.y].starbase--;
+ 	    game.state.basekl++;
+ 	    newcnd();
+@@ -322,7 +322,7 @@
+ 	    crmena(true, iquad, sector, w);
+ 	    prout(_(&quot; destroyed.&quot;));
+ 	    game.state.nplankl++;
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NOPLANET;
++	    q-&gt;planet = NOPLANET;
+ 	    DESTROY(&amp;game.state.plnets[game.iplnet]);
+ 	    game.iplnet = 0;
+ 	    game.plnet.x = game.plnet.y = 0;
+@@ -336,7 +336,7 @@
+ 	    crmena(true, iquad, sector, w);
+ 	    prout(_(&quot; destroyed.&quot;));
+ 	    game.state.nworldkl++;
+-	    game.state.galaxy[game.quadrant.x][game.quadrant.y].planet = NOPLANET;
++	    q-&gt;planet = NOPLANET;
+ 	    DESTROY(&amp;game.state.plnets[game.iplnet]);
+ 	    game.iplnet = 0;
+ 	    game.plnet.x = game.plnet.y = 0;
+@@ -373,8 +373,8 @@
+ 		 * you can shove the Thingy and piss it off.
+ 		 * It then becomes an enemy and may fire at you.
+ 		 */
+-		iqengry=1;
+-		shoved=1;
++		iqengry = true;
++		shoved = true;
+ 	    }
+ 	    return;
+ 	case IHBLANK: /* Black hole */
+@@ -393,7 +393,7 @@
+ 	    h1 = fabs(h1);
+ 	    if (h1 &gt;= 600) {
+ 		game.quad[w.x][w.y] = IHDOT;
+-		game.ithere = 0;
++		game.ithere = false;
+ 		game.tholian.x = game.tholian.y = 0;
+ 		deadkl(w, iquad, w.x, w.y);
+ 		return;
+@@ -406,7 +406,8 @@
+ 	    }
+ 	    prout(_(&quot; disappears.&quot;));
+ 	    game.quad[w.x][w.y] = IHWEB;
+-	    game.ithere = game.tholian.x = game.tholian.y = 0;
++	    game.ithere = false;
++	    game.tholian.x = game.tholian.y = 0;
+ 	    game.nenhere--;
+ 	    {
+ 		coord dummy;
+@@ -498,7 +499,7 @@
+ 	return;
+     }
+     if ((((game.comhere || game.ishere) &amp;&amp; !game.justin) || game.skill == SKILL_EMERITUS) &amp;&amp; torps_ok) movcom();
+-    if (game.nenhere==0 || (game.nenhere==1 &amp;&amp; iqhere &amp;&amp; iqengry==0)) return;
++    if (game.nenhere==0 || (game.nenhere==1 &amp;&amp; iqhere &amp;&amp; !iqengry)) return;
+     pfac = 1.0/game.inshld;
+     if (game.shldchg == 1) chgfac = 0.25+0.5*Rand();
+     skip(1);
+@@ -510,8 +511,7 @@
+ 	/* Increase chance of photon torpedos if docked or enemy energy low */
+ 	if (game.condit == IHDOCKED) r *= 0.25;
+ 	if (game.kpower[loop] &lt; 500) r *= 0.25; 
+-	jay.x = game.ks[loop].x;
+-	jay.y = game.ks[loop].y;
++	jay = game.ks[loop];
+ 	iquad = game.quad[jay.x][jay.y];
+ 	if (iquad==IHT || (iquad==IHQUEST &amp;&amp; !iqengry)) continue;
+ 	itflag = (iquad == IHK &amp;&amp; r &gt; 0.0005) || !torps_ok ||
+@@ -641,11 +641,12 @@
+     }
+     else if (type == IHT) {
+ 	/* Killed a Tholian */
+-	game.ithere = 0;
++	game.ithere = false;
+     }
+     else if (type == IHQUEST) {
+ 	/* Killed a Thingy */
+-	iqhere=iqengry=thing.x=thing.y=0;
++	iqhere = iqengry = false;
++	thing.x =thing.y = 0;
+     }
+     else {
+ 	/* Some type of a Klingon */
+@@ -669,7 +670,8 @@
+ 	    break;
+ 	case IHS:
+ 	    game.state.nscrem--;
+-	    game.ishere = game.state.kscmdr.x = game.state.kscmdr.y = game.isatb = game.iscate = 0;
++	    game.ishere = false;
++	    game.state.kscmdr.x = game.state.kscmdr.y = game.isatb = game.iscate = 0;
+ 	    unschedule(FSCMOVE);
+ 	    unschedule(FSCDBAS);
+ 	    break;
+@@ -731,7 +733,8 @@
+ {
+     double targ[4][3], course[4];
+     double r, dummy;
+-    int key, n, i, osuabor;
++    int key, n, i;
++    bool osuabor;
+ 
+     game.ididit = false;
+ 
+@@ -824,7 +827,7 @@
+     }
+     game.ididit = true;
+     /* Loop for moving &lt;n&gt; torpedoes */
+-    osuabor = 0;
++    osuabor = false;
+     for (i = 1; i &lt;= n &amp;&amp; !osuabor; i++) {
+ 	if (game.condit != IHDOCKED) game.torps--;
+ 	r = (Rand()+Rand())*0.5 -0.5;
+@@ -838,7 +841,7 @@
+ 	    skip(1);
+ 	    if (i &lt; n)
+ 		prout(_(&quot;  Remainder of burst aborted.&quot;));
+-	    osuabor=1;
++	    osuabor = true;
+ 	    if (Rand() &lt;= 0.2) {
+ 		prout(_(&quot;***Photon tubes damaged by misfire.&quot;));
+ 		game.damage[DPHOTON] = game.damfac*(1.0+2.0*Rand());
+@@ -868,7 +871,7 @@
+     }
+ }
+ 
+-static int checkshctrl(double rpow) 
++static bool checkshctrl(double rpow) 
+ /* check shield control */
+ {
+     double hit;
+@@ -877,7 +880,7 @@
+     skip(1);
+     if (Rand() &lt; .998) {
+ 	prout(_(&quot;Shields lowered.&quot;));
+-	return 0;
++	return false;
+     }
+     /* Something bad has happened */
+     prouts(_(&quot;***RED ALERT!  RED ALERT!&quot;));
+@@ -890,7 +893,7 @@
+ 	skip(1);
+ 	stars();
+ 	finish(FPHASER);
+-	return 1;
++	return true;
+     }
+     prouts(_(&quot;Sulu-  \&quot;Captain! Shield malfunction! Phaser fire contained!\&quot;&quot;));
+     skip(2);
+@@ -909,7 +912,7 @@
+     prout(_(&quot;Phaser energy dispersed by shields.&quot;));
+     prout(_(&quot;Enemy unaffected.&quot;));
+     overheat(rpow);
+-    return 1;
++    return true;
+ }
+ 	
+ 
+@@ -918,13 +921,13 @@
+ {
+     double hits[21], rpow=0, extra, powrem, over, temp;
+     int kz = 0, k=1, i, irec=0; /* Cheating inhibitor */
+-    int ifast=0, no=0, ipoop=1, msgflag = 1;
++    bool ifast = false, no = false, ipoop = true, msgflag = true;
+     enum {NOTSET, MANUAL, FORCEMAN, AUTOMATIC} automode = NOTSET;
+     int key=0;
+ 
+     skip(1);
+     /* SR sensors and Computer */
+-    if (damaged(DSRSENS) || damaged(DCOMPTR)) ipoop = 0;
++    if (damaged(DSRSENS) || damaged(DCOMPTR)) ipoop = false;
+     if (game.condit == IHDOCKED) {
+ 	prout(_(&quot;Phasers can't be fired through base shields.&quot;));
+ 	chew();
+@@ -947,7 +950,7 @@
+ 	    return;
+ 	}
+ 	prout(_(&quot;Weapons Officer Sulu-  \&quot;High-speed shield control enabled, sir.\&quot;&quot;));
+-	ifast = 1;
++	ifast = true;
+ 		
+     }
+     /* Original code so convoluted, I re-did it all */
+@@ -978,7 +981,7 @@
+ 		}
+ 	    }
+ 	    else if (isit(&quot;no&quot;)) {
+-		no = 1;
++		no = true;
+ 	    }
+ 	    else {
+ 		huh();
+@@ -1011,7 +1014,7 @@
+     switch (automode) {
+     case AUTOMATIC:
+ 	if (key == IHALPHA &amp;&amp; isit(&quot;no&quot;)) {
+-	    no = 1;
++	    no = true;
+ 	    key = scan();
+ 	}
+ 	if (key != IHREAL &amp;&amp; game.nenhere != 0) {
+@@ -1044,7 +1047,7 @@
+ 	    return;
+ 	}
+ 	if ((key=scan()) == IHALPHA &amp;&amp; isit(&quot;no&quot;)) {
+-	    no = 1;
++	    no = true;
+ 	}
+ 	if (ifast) {
+ 	    game.energy -= 200; /* Go and do it! */
+@@ -1071,7 +1074,7 @@
+ 	    hittem(hits);
+ 	    game.ididit = true;
+ 	}
+-	if (extra &gt; 0 &amp;&amp; game.alldone == 0) {
++	if (extra &gt; 0 &amp;&amp; !game.alldone) {
+ 	    if (game.ithere) {
+ 		proutn(_(&quot;*** Tholian web absorbs &quot;));
+ 		if (game.nenhere&gt;0) proutn(_(&quot;excess &quot;));
+@@ -1106,7 +1109,7 @@
+ 		proutn(_(&quot;Energy available= %.2f&quot;),
+ 		       game.energy-.006-(ifast?200:0));
+ 		skip(1);
+-		msgflag = 0;
++		msgflag = false;
+ 		rpow = 0.0;
+ 	    }
+ 	    if (damaged(DSRSENS) &amp;&amp; !(abs(game.sector.x-aim.x) &lt; 2 &amp;&amp; abs(game.sector.y-aim.y) &lt; 2) &amp;&amp;
+@@ -1145,7 +1148,7 @@
+ 	    }
+ 	    if (key == IHEOL) {
+ 		if (k==1) { /* Let me say I'm baffled by this */
+-		    msgflag = 1;
++		    msgflag = true;
+ 		}
+ 		continue;
+ 	    }
+@@ -1172,7 +1175,7 @@
+ 	    return;
+ 	}
+ 	if (key == IHALPHA &amp;&amp; isit(&quot;no&quot;)) {
+-	    no = 1;
++	    no = true;
+ 	}
+ 	game.energy -= rpow;
+ 	chew();
+@@ -1232,7 +1235,7 @@
+ 	else
+ 	    proutn(_(&quot;Very small hit on &quot;));
+ 	ienm = game.quad[w.x][w.y];
+-	if (ienm==IHQUEST) iqengry=1;
++	if (ienm==IHQUEST) iqengry = true;
+ 	crmena(false,ienm,sector,w);
+ 	skip(1);
+ 	if (kpow == 0) {
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-19 23:09:39 UTC (rev 605)
++++ trunk/src/events.c	2006-09-19 23:56:55 UTC (rev 606)
+@@ -60,9 +60,9 @@
+ void events(void) 
+ /* run through the event queue looking for things to do */
+ {
+-    int istract=0, evcode, i=0, j, k, l;
++    int evcode, i=0, j, k, l;
+     double fintim = game.state.date + game.optime, datemin, xtime, repair, yank=0;
+-    bool radio_was_broken, ictbeam = false, ipage = false;
++    bool radio_was_broken, ictbeam = false, ipage = false, istract = false;
+     struct quadrant *pdest, *q;
+     coord w, hold;
+     event *ev, *ev2;
+@@ -160,7 +160,7 @@
+ 	    break;
+ 	case FSPY: /* Check with spy to see if S.C. should tractor beam */
+ 	    if (game.state.nscrem == 0 ||
+-		ictbeam+istract &gt; 0 ||
++		ictbeam || istract ||
+ 		game.condit==IHDOCKED || game.isatb==1 || game.iscate==1) return;
+ 	    if (game.ientesc ||
+ 		(game.energy &lt; 2000 &amp;&amp; game.torps &lt; 4 &amp;&amp; game.shield &lt; 1250) ||
+@@ -169,7 +169,7 @@
+ 		 (game.energy &lt; 2500 || damaged(DPHASER)) &amp;&amp;
+ 		 (game.torps &lt; 5 || damaged(DPHOTON)))) {
+ 		/* Tractor-beam her! */
+-		istract=1;
++		istract = true;
+ 		yank = square(game.state.kscmdr.x-game.quadrant.x) + square(game.state.kscmdr.y-game.quadrant.y);
+ 		/********* fall through to FTBEAM code ***********/
+ 	    }
+@@ -202,7 +202,7 @@
+ 	    /* If Kirk &amp; Co. screwing around on planet, handle */
+ 	    atover(true); /* atover(true) is Grab */
+ 	    if (game.alldone) return;
+-	    if (game.icraft == 1) { /* Caught in Galileo? */
++	    if (game.icraft) { /* Caught in Galileo? */
+ 		finish(FSTRACTOR);
+ 		return;
+ 	    }
+@@ -363,9 +363,9 @@
+ 	    break;
+ 	case FSCMOVE: /* Supercommander moves */
+ 	    schedule(FSCMOVE, 0.2777);
+-	    if (game.ientesc+istract==0 &amp;&amp;
+-		game.isatb != 1 &amp;&amp;
+-		(game.iscate != 1 || !game.justin)) scom(&amp;ipage);
++	    if (!game.ientesc &amp;&amp; !istract &amp;&amp; game.isatb != 1 &amp;&amp;
++			(game.iscate != 1 || !game.justin)) 
++		scom(&amp;ipage);
+ 	    break;
+ 	case FDSPROB: /* Move deep space probe */
+ 	    schedule(FDSPROB, 0.01);
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-19 23:09:39 UTC (rev 605)
++++ trunk/src/planets.c	2006-09-19 23:56:55 UTC (rev 606)
+@@ -357,12 +357,12 @@
+ 	    skip(1);
+ 	    prout(_(&quot;The short hop begins . . .&quot;));
+ 	    game.state.plnets[game.iplnet].known=known;
+-	    game.icraft = 1;
++	    game.icraft = true;
+ 	    skip(1);
+ 	    game.landed = -1;
+ 	    if (consumeTime()) return;
+ 	    game.iscraft = 1;
+-	    game.icraft = 0;
++	    game.icraft = false;
+ 	    if (game.imine) {
+ 		game.icrystl = 1;
+ 		game.cryprob = 0.05;
+@@ -380,12 +380,12 @@
+ 	skip(1);
+ 	prouts(_(&quot;The hangar doors open; the trip begins.&quot;));
+ 	skip(1);
+-	game.icraft = 1;
++	game.icraft = true;
+ 	game.iscraft = 0;
+ 	if (consumeTime()) return;
+ 	game.state.plnets[game.iplnet].known = shuttle_down;
+ 	game.landed = 1;
+-	game.icraft = 0;
++	game.icraft = false;
+ 	prout(_(&quot;Trip complete&quot;));
+ 	return;
+     }
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-19 23:09:39 UTC (rev 605)
++++ trunk/src/reports.c	2006-09-19 23:56:55 UTC (rev 606)
+@@ -323,9 +323,9 @@
+ 	break;
+     case 10:
+ 	if (game.options &amp; OPTION_WORLDS) {
+-	    int here = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet;
+-	    if (here != NOPLANET &amp;&amp; game.state.plnets[here].inhabited != UNINHABITED)
+-		proutn(_(&quot;Major system  %s&quot;), systemname(here));
++	    int plnet = game.state.galaxy[game.quadrant.x][game.quadrant.y].planet;
++	    if (plnet != NOPLANET &amp;&amp; game.state.plnets[plnet].inhabited != UNINHABITED)
++		proutn(_(&quot;Major system  %s&quot;), systemname(plnet));
+ 	    else
+ 		proutn(_(&quot;Sector is uninhabited&quot;));
+ 	}
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-19 23:09:39 UTC (rev 605)
++++ trunk/src/setup.c	2006-09-19 23:56:55 UTC (rev 606)
+@@ -253,8 +253,8 @@
+     game.battle.x = game.battle.y = 0;
+     game.state.date = game.indate = 100.0*(int)(31.0*Rand()+20.0);
+     game.nkinks = game.nhelp = game.casual = game.abandoned = 0;
+-    game.resting = game.imine = false;
+-    game.isatb = game.iscate = game.icrystl = game.icraft = game.state.nplankl = 0;
++    game.resting = game.imine = game.icraft = false;
++    game.isatb = game.iscate = game.icrystl = game.state.nplankl = 0;
+     game.state.starkl = game.state.basekl = 0;
+     game.iscraft = 1;
+     game.landed = -1;
+@@ -595,7 +595,7 @@
+ {
+     int i, j;
+     coord w;
+-    struct quadrant *here;
++    struct quadrant *q;
+ 
+     game.iattak = 1;
+     game.justin = true;
+@@ -603,39 +603,39 @@
+     game.klhere = 0;
+     game.comhere = 0;
+     game.plnet.x = game.plnet.y = 0;
+-    game.ishere = 0;
++    game.ishere = false;
+     game.irhere = 0;
+     game.iplnet = 0;
+     game.nenhere = 0;
+     game.neutz = false;
+     game.inorbit = false;
+     game.landed = -1;
+-    game.ientesc = 0;
+-    game.ithere = 0;
+-    iqhere=0;
+-    iqengry=0;
++    game.ientesc = false;
++    game.ithere = false;
++    iqhere = false;
++    iqengry = false;
+     game.iseenit = 0;
+     if (game.iscate) {
+ 	// Attempt to escape Super-commander, so tbeam back!
+ 	game.iscate = 0;
+-	game.ientesc = 1;
++	game.ientesc = true;
+     }
+     // Clear quadrant
+     for_sectors(i)
+ 	for_sectors(j) 
+ 	    game.quad[i][j] = IHDOT;
+-    here = &amp;game.state.galaxy[game.quadrant.x][game.quadrant.y];
++    q = &amp;game.state.galaxy[game.quadrant.x][game.quadrant.y];
+     // cope with supernova
+-    if (here-&gt;supernova)
++    if (q-&gt;supernova)
+ 	return;
+-    game.klhere = here-&gt;klingons;
+-    game.irhere = here-&gt;romulans;
++    game.klhere = q-&gt;klingons;
++    game.irhere = q-&gt;romulans;
+     game.nenhere = game.klhere + game.irhere;
+ 
+     // Position Starship
+     game.quad[game.sector.x][game.sector.y] = game.ship;
+ 
+-    if (here-&gt;klingons) {
++    if (q-&gt;klingons) {
+ 	// Position ordinary Klingons
+ 	for (i = 1; i &lt;= game.klhere; i++)
+ 	    newkling(i, &amp;w);
+@@ -654,7 +654,7 @@
+ 	    game.quad[game.ks[1].x][game.ks[1].y] = IHS;
+ 	    game.kpower[1] = 1175.0 + 400.0*Rand() + 125.0*game.skill;
+ 	    game.iscate = game.state.remkl&gt;1;
+-	    game.ishere = 1;
++	    game.ishere = true;
+ 	}
+     }
+     // Put in Romulans if needed
+@@ -665,13 +665,13 @@
+ 	game.kpower[i] = Rand()*400.0 + 450.0 + 50.0*game.skill;
+     }
+     // If quadrant needs a starbase, put it in
+-    if (here-&gt;starbase)
++    if (q-&gt;starbase)
+ 	dropin(IHB, &amp;game.base);
+ 	
+     // If quadrant needs a planet, put it in
+-    if (here-&gt;planet != NOPLANET) {
+-	game.iplnet = here-&gt;planet;
+-	if (game.state.plnets[here-&gt;planet].inhabited == UNINHABITED)
++    if (q-&gt;planet != NOPLANET) {
++	game.iplnet = q-&gt;planet;
++	if (game.state.plnets[q-&gt;planet].inhabited == UNINHABITED)
+ 	    dropin(IHP, &amp;game.plnet);
+ 	else
+ 	    dropin(IHW, &amp;game.plnet);
+@@ -679,11 +679,11 @@
+     // Check for game.condition
+     newcnd();
+     // And finally the stars
+-    for (i = 1; i &lt;= here-&gt;stars; i++) 
++    for (i = 1; i &lt;= q-&gt;stars; i++) 
+ 	dropin(IHSTAR, &amp;w);
+ 
+     // Check for RNZ
+-    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (here-&gt;planet == NOPLANET || game.state.plnets[here-&gt;planet].inhabited == UNINHABITED)) {
++    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (q-&gt;planet == NOPLANET || game.state.plnets[q-&gt;planet].inhabited == UNINHABITED)) {
+ 	game.neutz = 1;
+ 	if (!damaged(DRADIO)) {
+ 	    skip(1);
+@@ -725,7 +725,7 @@
+ 		game.tholian.y = Rand() &gt; 0.5 ? QUADSIZE : 1;
+ 	    } while (game.quad[game.tholian.x][game.tholian.y] != IHDOT);
+ 	    game.quad[game.tholian.x][game.tholian.y] = IHT;
+-	    game.ithere = 1;
++	    game.ithere = true;
+ 	    game.nenhere++;
+ 	    game.ks[game.nenhere].x = game.tholian.x;
+ 	    game.ks[game.nenhere].y = game.tholian.y;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-19 23:09:39 UTC (rev 605)
++++ trunk/src/sst.c	2006-09-19 23:56:55 UTC (rev 606)
+@@ -175,7 +175,7 @@
+ 
+ struct game game;
+ coord thing;
+-int iqhere, iqengry;
++bool iqhere, iqengry;
+ int iscore, iskill;	// Common PLAQ
+ double aaitem;
+ double perdate;
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-19 23:09:39 UTC (rev 605)
++++ trunk/src/sst.h	2006-09-19 23:56:55 UTC (rev 606)
+@@ -210,7 +210,11 @@
+ 	alive,		// we are alive (not killed)
+ 	justin,		// just entered quadrant
+ 	shldup,		// shields are up
++	ishere,		// super-commander in quadrant
++	ientesc,	// attempted escape from supercommander
++	ithere,		// Tholian is here 
+ 	resting,	// rest time
++	icraft,		// Kirk in Galileo
+ 	alldone,	// game is now finished
+ 	neutz,		// Romulan Neutral Zone
+ 	isarmed,	// probe is armed
+@@ -240,17 +244,13 @@
+ 	iplnet,		// planet # in quadrant
+ 	inplan,		// initial planets
+ 	nenhere,	// number of enemies in quadrant
+-	ishere,		// super-commander in quandrant
+ 	irhere,		// Romulans in quadrant
+-	icraft,		// Kirk in Galileo
+-	ientesc,	// attempted escape from supercommander
+ 	iscraft,	// =1 if craft on ship, -1 if removed from game
+ 	isatb,		// =1 if super commander is attacking base
+ 	iscate,		// super commander is here
+ 	iattak,		// attack recursion elimination (was cracks[4])
+ 	icrystl,	// dilithium crystals aboard
+ 	tourn,		// tournament number
+-	ithere,		// Tholian is here 
+ 	iseenit,	// seen base attack report
+ 	proben,		// number of moves for probe
+ 	nprobes;	// number of probes available
+@@ -292,7 +292,7 @@
+ 
+ /* the Space Thingy's global state should *not* be saved! */
+ extern coord thing;
+-extern int iqhere, iqengry;
++extern bool iqhere, iqengry;
+ 
+ typedef enum {FWON, FDEPLETE, FLIFESUP, FNRG, FBATTLE,
+               FNEG3, FNOVA, FSNOVAED, FABANDN, FDILITHIUM,
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000072.html">[Sst-commit-watch] r605 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000074.html">[Sst-commit-watch] r607 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#73">[ date ]</a>
+              <a href="thread.html#73">[ thread ]</a>
+              <a href="subject.html#73">[ subject ]</a>
+              <a href="author.html#73">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

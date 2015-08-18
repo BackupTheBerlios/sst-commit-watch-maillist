@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r634 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r634%20-%20trunk/src&In-Reply-To=%3C200609261746.k8QHkwXA001249%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000100.html">
+   <LINK REL="Next"  HREF="000102.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r634 - trunk/src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r634%20-%20trunk/src&In-Reply-To=%3C200609261746.k8QHkwXA001249%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r634 - trunk/src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 26 19:46:58 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000100.html">[Sst-commit-watch] r633 - in trunk: po src
+</A></li>
+        <LI>Next message: <A HREF="000102.html">[Sst-commit-watch] r635 - in trunk: po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#101">[ date ]</a>
+              <a href="thread.html#101">[ thread ]</a>
+              <a href="subject.html#101">[ subject ]</a>
+              <a href="author.html#101">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2006-09-26 19:46:57 +0200 (Tue, 26 Sep 2006)
+New Revision: 634
+
+Modified:
+   trunk/src/sst.h
+Log:
+better fix for is_valid()
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-26 17:27:51 UTC (rev 633)
++++ trunk/src/sst.h	2006-09-26 17:46:57 UTC (rev 634)
+@@ -46,7 +46,7 @@
+ #define same(c1, c2)		((c1.x == c2.x) &amp;&amp; (c1.y == c2.y))
+ #define distance(c1, c2)	sqrt(square(c1.x - c2.x) + square(c1.y - c2.y))
+ #define invalidate(w)		w.x = w.y = 0
+-#define is_valid(w)		(w.x != 0 || w.y != 0)
++#define is_valid(w)		(w.x != 0 &amp;&amp; w.y != 0)
+ 
+ typedef struct {
+     coord w;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000100.html">[Sst-commit-watch] r633 - in trunk: po src
+</A></li>
+	<LI>Next message: <A HREF="000102.html">[Sst-commit-watch] r635 - in trunk: po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#101">[ date ]</a>
+              <a href="thread.html#101">[ thread ]</a>
+              <a href="subject.html#101">[ subject ]</a>
+              <a href="author.html#101">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

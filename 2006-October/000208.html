@@ -1,0 +1,258 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r741 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r741%20-%20trunk/src&In-Reply-To=%3C200610101538.k9AFcnV6013415%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000207.html">
+   <LINK REL="Next"  HREF="000209.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r741 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r741%20-%20trunk/src&In-Reply-To=%3C200610101538.k9AFcnV6013415%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r741 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 10 17:38:49 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000207.html">[Sst-commit-watch] r740 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000209.html">[Sst-commit-watch] r742 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#208">[ date ]</a>
+              <a href="thread.html#208">[ thread ]</a>
+              <a href="subject.html#208">[ subject ]</a>
+              <a href="author.html#208">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-10 17:38:45 +0200 (Tue, 10 Oct 2006)
+New Revision: 741
+
+Modified:
+   trunk/src/sst.py
+Log:
+Debug the logic for deep-space probes.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-10 10:03:10 UTC (rev 740)
++++ trunk/src/sst.py	2006-10-10 15:38:45 UTC (rev 741)
+@@ -335,9 +335,9 @@
+         self.baseq = [] 	# Base quadrant coordinates
+         self.kcmdr = [] 	# Commander quadrant coordinates
+ 	self.kscmdr = coord()	# Supercommander quadrant coordinates
+-        # the galaxy (subscript 0 not used)
++        # the galaxy
+         self.galaxy = fill2d(GALSIZE, lambda i, j: quadrant())
+-        # the starchart (subscript 0 not used)
++        # the starchart
+     	self.chart = fill2d(GALSIZE, lambda i, j: page())
+ 
+ class event:
+@@ -524,10 +524,8 @@
+         self.damfac = 0.0	# damage factor
+         self.lastchart = 0.0	# time star chart was last updated
+         self.cryprob = 0.0	# probability that crystal will work
+-        self.probex = 0.0	# location of probe
+-        self.probey = 0.0	#
+-        self.probeinx = 0.0	# probe x,y increment
+-        self.probeiny = 0.0	#
++        self.probe = None	# location of probe
++        self.probein = None	# probe i,j increment
+         self.height = 0.0	# height of orbit around planet
+     def recompute(self):
+         # Stas thinks this should be (C expression): 
+@@ -537,7 +535,7 @@
+         # after killing the last klingon when score is shown -- perhaps also
+         # if the only remaining klingon is SCOM.
+         game.state.remtime = game.state.remres/(game.state.remkl + 4*len(game.state.kcmdr))
+-# From enumerated type 'feature'
++
+ IHR = 'R'
+ IHK = 'K'
+ IHC = 'C'
+@@ -557,8 +555,6 @@
+ IHMATER1 = 'o'
+ IHMATER2 = '0'
+ 
+-
+-# From enumerated type 'FINTYPE'
+ FWON = 0
+ FDEPLETE = 1
+ FLIFESUP = 2
+@@ -582,10 +578,6 @@
+ FHOLE = 20
+ FCREW = 21
+ 
+-# Log the results of pulling random numbers so we can check determinism.
+-
+-import traceback
+-
+ def withprob(p):
+     v = random.random()
+     #logfp.write(&quot;# withprob(%s) -&gt; %f (%s) at %s\n&quot; % (p, v, v&lt;p, traceback.extract_stack()[-2][1:]))
+@@ -2465,21 +2457,20 @@
+ 		supercommander()
+ 	elif evcode == FDSPROB: # Move deep space probe 
+ 	    schedule(FDSPROB, 0.01)
+-	    game.probex += game.probeinx
+-	    game.probey += game.probeiny
+-	    i = (int)(game.probex/QUADSIZE +0.05)
+-	    j = (int)(game.probey/QUADSIZE + 0.05)
++	    game.probe += game.probein
++	    i = int(round(game.probe.i/float(QUADSIZE)))
++	    j = int(round(game.probe.j/float(QUADSIZE)))
+ 	    if game.probec.i != i or game.probec.j != j:
+ 		game.probec.i = i
+ 		game.probec.j = j
+ 		if not VALID_QUADRANT(i, j) or \
+ 		    game.state.galaxy[game.probec.i][game.probec.j].supernova:
+ 		    # Left galaxy or ran into supernova
+-                    if comunicating():
++                    if communicating():
+ 			announce()
+ 			skip(1)
+ 			proutn(_(&quot;Lt. Uhura-  \&quot;The deep space probe &quot;))
+-			if not VALID_QUADRANT(j, i):
++			if not VALID_QUADRANT(i, j):
+ 			    proutn(_(&quot;has left the galaxy&quot;))
+ 			else:
+ 			    proutn(_(&quot;is no longer transmitting&quot;))
+@@ -2500,8 +2491,7 @@
+ 		pdest.charted = True
+ 	    game.proben -= 1 # One less to travel
+ 	    if game.proben == 0 and game.isarmed and pdest.stars:
+-		# lets blow the sucker! 
+-		supernova(game.probec)
++		supernova(game.probec)		# fire in the hole!
+ 		unschedule(FDSPROB)
+ 		if game.state.galaxy[game.quadrant.i][game.quadrant.j].supernova: 
+ 		    return
+@@ -3811,7 +3801,7 @@
+ # because it involves giving x and y motions, yet the coordinates
+ # are always displayed y - x, where +y is downward!
+ 
+-def getcourse(isprobe, akey):
++def getcourse(isprobe):
+     &quot;Get a course and distance from the user.&quot;
+     key = 0
+     dquad = copy.copy(game.quadrant)
+@@ -3834,12 +3824,7 @@
+ 	    navmode = &quot;manual&quot;
+ 	    key = &quot;IHEOL&quot;
+ 	    break
+-	if isprobe and akey != -1:
+-	    # For probe launch, use pre-scanned value first time 
+-	    key = akey
+-	    akey = -1
+-	else: 
+-	    key = scanner.next()
++        key = scanner.next()
+ 	if key == &quot;IHEOL&quot;:
+ 	    proutn(_(&quot;Manual or automatic- &quot;))
+ 	    iprompt = True
+@@ -3961,7 +3946,7 @@
+ 	prout(_(&quot;Engineer Scott- \&quot;The impulse engines are damaged, Sir.\&quot;&quot;))
+ 	return
+     if game.energy &gt; 30.0:
+-        if not getcourse(isprobe=False, akey=0):
++        if not getcourse(isprobe=False):
+ 	    return
+ 	power = 20.0 + 100.0*game.dist
+     else:
+@@ -4016,7 +4001,7 @@
+ 	    prout(_(&quot;  is repaired, I can only give you warp 4.\&quot;&quot;))
+ 	    return
+        	# Read in course and distance 
+-        if not getcourse(isprobe=False, akey=0):
++        if not getcourse(isprobe=False):
+ 	    return
+ 	# Make sure starship has enough energy for the trip 
+ 	power = (game.dist+0.05)*game.warpfac*game.warpfac*game.warpfac*(game.shldup+1)
+@@ -4195,8 +4180,7 @@
+ 	    proutn(_(&quot;The %s has stopped in a quadrant containing&quot;) % crmshp())
+ 	    prouts(_(&quot;   a supernova.&quot;))
+ 	    skip(2)
+-	prout(_(&quot;***Emergency automatic override attempts to hurl &quot;)+crmshp())
+-	skip(1)
++	proutn(_(&quot;***Emergency automatic override attempts to hurl &quot;)+crmshp())
+ 	prout(_(&quot;safely out of quadrant.&quot;))
+ 	if not damaged(DRADIO):
+ 	    game.state.galaxy[game.quadrant.i][game.quadrant.j].charted = True
+@@ -4309,7 +4293,6 @@
+ 	return
+     key = scanner.next()
+     if key == &quot;IHEOL&quot;:
+-	# slow mode, so let Kirk know how many probes there are left
+         if game.nprobes == 1:
+             prout(_(&quot;1 probe left.&quot;))
+         else:
+@@ -4324,22 +4307,19 @@
+     elif key == &quot;IHEOL&quot;:
+ 	proutn(_(&quot;Arm NOVAMAX warhead? &quot;))
+ 	game.isarmed = ja()
+-    if not getcourse(isprobe=True, akey=key):
++    elif key == &quot;IHREAL&quot;:		# first element of course
++        scanner.push(scanner.token)
++    if not getcourse(isprobe=True):
+ 	return
+     game.nprobes -= 1
+     angle = ((15.0 - game.direc) * 0.5235988)
+-    game.probeinx = -math.sin(angle)
+-    game.probeiny = math.cos(angle)
+-    if math.fabs(game.probeinx) &gt; math.fabs(game.probeiny):
+-	bigger = math.fabs(game.probeinx)
+-    else:
+-	bigger = math.fabs(game.probeiny)
+-    game.probeiny /= bigger
+-    game.probeinx /= bigger
++    game.probein = coord(-math.sin(angle), math.cos(angle))
++    bigger = max(abs(game.probein.i), abs(game.probein.j))
++    game.probein /= bigger
+     game.proben = 10.0*game.dist*bigger +0.5
+-    game.probex = game.quadrant.i*QUADSIZE + game.sector.i - 1	# We will use better packing than original
+-    game.probey = game.quadrant.j*QUADSIZE + game.sector.j - 1
+-    game.probec = game.quadrant
++    game.probe = coord(game.quadrant.i*QUADSIZE + game.sector.i, 
++                       game.quadrant.j*QUADSIZE + game.sector.j)
++    game.probec = copy.copy(game.quadrant)
+     schedule(FDSPROB, 0.01) # Time to move one sector
+     prout(_(&quot;Ensign Chekov-  \&quot;The deep space probe is launched, Captain.\&quot;&quot;))
+     game.ididit = True
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000207.html">[Sst-commit-watch] r740 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000209.html">[Sst-commit-watch] r742 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#208">[ date ]</a>
+              <a href="thread.html#208">[ thread ]</a>
+              <a href="subject.html#208">[ subject ]</a>
+              <a href="author.html#208">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

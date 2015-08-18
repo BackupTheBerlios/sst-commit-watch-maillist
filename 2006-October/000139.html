@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r672 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r672%20-%20trunk/src&In-Reply-To=%3C200610050836.k958ats2000421%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000138.html">
+   <LINK REL="Next"  HREF="000140.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r672 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r672%20-%20trunk/src&In-Reply-To=%3C200610050836.k958ats2000421%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r672 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct  5 10:36:55 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000138.html">[Sst-commit-watch] r671 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000140.html">[Sst-commit-watch] r673 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#139">[ date ]</a>
+              <a href="thread.html#139">[ thread ]</a>
+              <a href="subject.html#139">[ subject ]</a>
+              <a href="author.html#139">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-05 10:36:54 +0200 (Thu, 05 Oct 2006)
+New Revision: 672
+
+Modified:
+   trunk/src/sst.py
+Log:
+Eliminate iqhere global in order to get rid of spurious Python
+warning.  Where we need this flag, we now deduce it from the location
+of the Thing.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-05 06:56:51 UTC (rev 671)
++++ trunk/src/sst.py	2006-10-05 08:36:54 UTC (rev 672)
+@@ -1587,7 +1587,7 @@
+ 	moveklings()
+ 
+     # if no enemies remain after movement, we're done 
+-    if game.nenhere==0 or (game.nenhere==1 and iqhere and not iqengry):
++    if game.nenhere==0 or (game.nenhere==1 and thing == game.quadrant and not iqengry):
+ 	return
+ 
+     # set up partial hits if attack happens during shield status change 
+@@ -1737,8 +1737,8 @@
+ 	game.ithere = False
+     elif type == IHQUEST:
+ 	# Killed a Thingy
+-        global iqhere, iqengry
+-	iqhere = iqengry = False
++        global iqengry
++	iqengry = False
+ 	invalidate(thing)
+     else:
+ 	# Some type of a Klingon 
+@@ -6103,7 +6103,7 @@
+ 	prout(_(&quot;  YOU'LL NEED IT.&quot;))
+     waitfor()
+     newqad(False)
+-    if game.nenhere - iqhere-game.ithere:
++    if game.nenhere - (thing == game.quadrant) - game.ithere:
+ 	game.shldup = True
+     if game.neutz:	# bad luck to start in a Romulan Neutral Zone
+ 	attack(False)
+@@ -6262,8 +6262,7 @@
+     game.landed = False
+     game.ientesc = False
+     game.ithere = False
+-    global iqhere, iqengry
+-    iqhere = False
++    global iqengry
+     iqengry = False
+     game.iseenit = False
+     if game.iscate:
+@@ -6343,8 +6342,6 @@
+ 	    w = dropin(IHQUEST)
+ 	    thing = randplace(GALSIZE)
+ 	    game.nenhere += 1
+-            global iqhere
+-	    iqhere = True
+ 	    game.ks[game.nenhere] = w
+ 	    game.kdist[game.nenhere] = game.kavgd[game.nenhere] = \
+ 		distance(game.sector, w)
+@@ -6401,7 +6398,7 @@
+ def sortklings():
+     # sort Klingons by distance from us 
+     # The author liked bubble sort. So we will use it. :-(
+-    if game.nenhere-iqhere-game.ithere &lt; 2:
++    if game.nenhere-(thing==game.quadrant)-game.ithere &lt; 2:
+ 	return
+     while True:
+ 	sw = False
+@@ -6936,11 +6933,11 @@
+ 	atover(True)
+ 
+ if __name__ == '__main__':
+-    global line, thing, game, idebug, iqhere, iqengry
++    global line, thing, game, idebug, iqengry
+     game = citem = aaitem = inqueue = None
+     line = ''
+     thing = coord()
+-    iqhere = iqengry = False
++    iqengry = False
+     game = gamestate()
+     idebug = 0
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000138.html">[Sst-commit-watch] r671 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000140.html">[Sst-commit-watch] r673 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#139">[ date ]</a>
+              <a href="thread.html#139">[ thread ]</a>
+              <a href="subject.html#139">[ subject ]</a>
+              <a href="author.html#139">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

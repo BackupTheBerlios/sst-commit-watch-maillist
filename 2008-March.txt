@@ -1,0 +1,283 @@
+From stsp at mail.berlios.de  Fri Mar 14 15:44:10 2008
+From: stsp at mail.berlios.de (stsp at BerliOS)
+Date: Fri, 14 Mar 2008 15:44:10 +0100
+Subject: [Sst-commit-watch] r784 - in trunk: po src
+Message-ID: <200803141444.m2EEiAAH015119@sheep.berlios.de>
+
+Author: stsp
+Date: 2008-03-14 15:44:09 +0100 (Fri, 14 Mar 2008)
+New Revision: 784
+
+Modified:
+   trunk/po/ru.po
+   trunk/src/finish.c
+   trunk/src/setup.c
+   trunk/src/sst.py
+Log:
+- Update translation
+- Fix score calculation for romulans and worlds
+- Rewrite the score calculation of C version
+
+
+Modified: trunk/po/ru.po
+===================================================================
+--- trunk/po/ru.po	2007-12-14 00:15:51 UTC (rev 783)
++++ trunk/po/ru.po	2008-03-14 14:44:09 UTC (rev 784)
+@@ -11,7 +11,7 @@
+ msgstr ""
+ "Project-Id-Version: sst 2.0\n"
+ "Report-Msgid-Bugs-To: stsp\n"
+-"POT-Creation-Date: 2006-10-23 21:47+0400\n"
++"POT-Creation-Date: 2008-03-13 10:49+0300\n"
+ "PO-Revision-Date: 2006-09-15 11:01+0400\n"
+ "Last-Translator: Stas Sergeev <stsp at aknet.ru>\n"
+ "Language-Team: Russian <ru at li.org>\n"
+@@ -590,7 +590,7 @@
+ #: src/sst.py:1974
+ #, python-format
+ msgid " is pulled to Quadrant %s, Sector %s"
+-msgstr ""
++msgstr " ??????? ? ???????? %s, ?????? %s"
+ 
+ #: src/sst.py:1977
+ msgid "(Remainder of rest/repair period cancelled.)"
+@@ -868,7 +868,7 @@
+ 
+ #: src/sst.py:2737
+ msgid "  YOUR-SKILL-HAS-EXCEEDED-THE-CAPACITY-OF-THIS-PROGRAM"
+-msgstr "  ????-??????????-????????????-????-?????????"
++msgstr "  ????-??????????-?????-??-?????-????????????-?????????"
+ 
+ #: src/sst.py:2739 src/sst.py:2741 src/sst.py:2743
+ msgid "  THIS-PROGRAM-MUST-SURVIVE"
+@@ -3037,11 +3037,11 @@
+ #: src/sst.py:5379
+ #, python-format
+ msgid "You have an initial allotment of %d stardates to complete"
+-msgstr "? ??? ???? %d ???? ????? ?????????"
++msgstr "? ??? ???? %d ???? ????? ?????????"
+ 
+ #: src/sst.py:5380
+ msgid "your mission.  As you proceed you may be given more time."
+-msgstr "??? ??????.  ?? ???? ???? ??? ????? ???? ??? ???????."
++msgstr "??? ??????.  ?? ???? ???? ??? ????? ???? ??? ?????."
+ 
+ #: src/sst.py:5382
+ #, python-format
+@@ -3125,8 +3125,8 @@
+ "?? ??????? (n), ??????? (f), ?????? (g), ?????????? (e), ??? ????????? (em)? "
+ 
+ #: src/sst.py:5476
+-msgid "Choose your game style (or just press enter): "
+-msgstr "???????? ????? ???? (??? ??????? ????): "
++msgid "Choose your game style (plain, almy, fancy or just press enter): "
++msgstr "???????? ????? ???? (plain, almy, fancy ??? ??????? ????): "
+ 
+ #: src/sst.py:5596
+ msgid "LT. Uhura- \"Captain, an urgent message."
+@@ -3174,7 +3174,7 @@
+ 
+ #: src/sst.py:5749
+ msgid " and put it in the"
+-msgstr "? ????????? ??? ?"
++msgstr " ? ????????? ??? ?"
+ 
+ #: src/sst.py:5750
+ msgid "   current directory or to "
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2007-12-14 00:15:51 UTC (rev 783)
++++ trunk/src/finish.c	2008-03-14 14:44:09 UTC (rev 784)
+@@ -328,17 +328,37 @@
+     score();
+ }
+ 
++static void score_item(const char *str, int num, int score)
++{
++    if (num) {
++	prout(str, num, score);
++	iscore += score;
++    }
++}
++
++static void score_item1(const char *str, int score)
++{
++    prout(str, score);
++    iscore += score;
++}
++
++static void score_itemf(const char *str, float num, int score)
++{
++    if (num > 0) {
++	prout(str, num, score);
++	iscore += score;
++    }
++}
++
+ void score(void) 
+ /* compute player's score */
+ {
+     double timused = game.state.date - game.indate;
+-    int ithperd, iwon, klship;
++    int iwon, klship, num;
+ 
+     iskill = game.skill;
+     if ((timused == 0 || (game.state.remkl + game.state.remcom + game.state.nscrem) != 0) && timused < 5.0)
+ 	timused = 5.0;
+-    perdate = ((game.inkling + game.incom + game.inscom) - (game.state.remkl + game.state.remcom + game.state.nscrem))/timused;
+-    ithperd = 500*perdate + 0.5;
+     iwon = 0;
+     if (game.gamewon)
+ 	iwon = 100*game.skill;
+@@ -348,59 +368,43 @@
+ 	klship = 1;
+     else
+ 	klship = 2;
+-    if (!game.gamewon)
+-	game.state.nromrem = 0; // None captured if no win
+-    iscore = 10*(game.inkling - game.state.remkl) + 50*(game.incom - game.state.remcom) + ithperd + iwon
+-	- 100*game.state.basekl - 100*klship - 45*game.nhelp -5*game.state.starkl - game.casual
+-	+ 20*(game.inrom - game.state.nromrem) + 200*(game.inscom - game.state.nscrem) - 10*game.state.nplankl - 300*game.state.nworldkl + game.state.nromrem;
+-    if (!game.alive)
+-	iscore -= 200;
++    iscore = 0;
+     skip(2);
+     prout(_("Your score --"));
+-    if (game.inrom - game.state.nromrem)
+-	prout(_("%6d Romulans destroyed                 %5d"),
+-	      game.inrom - game.state.nromrem, 20*(game.inrom - game.state.nromrem));
+-    if (game.state.nromrem)
+-	prout(_("%6d Romulans captured                  %5d"),
++    num = game.inrom - game.state.nromrem;
++    score_item(_("%6d Romulans destroyed                 %5d"), num, 20 * num);
++    if (game.gamewon)
++	score_item(_("%6d Romulans captured                  %5d"),
+ 	      game.state.nromrem, game.state.nromrem);
+-    if (game.inkling - game.state.remkl)
+-	prout(_("%6d ordinary Klingons destroyed        %5d"),
+-	      game.inkling - game.state.remkl, 10*(game.inkling - game.state.remkl));
+-    if (game.incom - game.state.remcom)
+-	prout(_("%6d Klingon commanders destroyed       %5d"),
+-	      game.incom - game.state.remcom, 50*(game.incom - game.state.remcom));
+-    if (game.inscom - game.state.nscrem)
+-	prout(_("%6d Super-Commander destroyed          %5d"),
+-	      game.inscom - game.state.nscrem, 200*(game.inscom - game.state.nscrem));
+-    if (ithperd)
+-	prout(_("%6.2f Klingons per stardate              %5d"),
+-	      perdate, ithperd);
+-    if (game.state.starkl)
+-	prout(_("%6d stars destroyed by your action     %5d"),
+-	      game.state.starkl, -5*game.state.starkl);
+-    if (game.state.nplankl)
+-	prout(_("%6d planets destroyed by your action   %5d"),
+-	      game.state.nplankl, -10*game.state.nplankl);
+-    if ((game.options & OPTION_WORLDS) && game.state.nworldkl)
+-	prout(_("%6d inhabited planets destroyed by your action   %5d"),
+-	      game.state.nplankl, -300*game.state.nworldkl);
+-    if (game.state.basekl)
+-	prout(_("%6d bases destroyed by your action     %5d"),
+-	      game.state.basekl, -100*game.state.basekl);
+-    if (game.nhelp)
+-	prout(_("%6d calls for help from starbase       %5d"),
+-	      game.nhelp, -45*game.nhelp);
+-    if (game.casual)
+-	prout(_("%6d casualties incurred                %5d"),
+-	      game.casual, -game.casual);
+-    if (game.abandoned)
+-	prout(_("%6d crew abandoned in space            %5d"),
+-	      game.abandoned, -3*game.abandoned);
+-    if (klship)
+-	prout(_("%6d ship(s) lost or destroyed          %5d"),
+-	      klship, -100*klship);
++    num = game.inkling - game.state.remkl;
++    score_item(_("%6d ordinary Klingons destroyed        %5d"), num, 10 * num);
++    num = game.incom - game.state.remcom;
++    score_item(_("%6d Klingon commanders destroyed       %5d"), num, 50 * num);
++    num = game.inscom - game.state.nscrem;
++    score_item(_("%6d Super-Commander destroyed          %5d"), num, 200 * num);
++    perdate = ((game.inkling + game.incom + game.inscom) -
++	    (game.state.remkl + game.state.remcom + game.state.nscrem))/timused;
++    score_itemf(_("%6.2f Klingons per stardate              %5d"), perdate,
++	    500 * perdate + 0.5);
++    score_item(_("%6d stars destroyed by your action     %5d"),
++	    game.state.starkl, -5*game.state.starkl);
++    score_item(_("%6d planets destroyed by your action   %5d"),
++	    game.state.nplankl, -10*game.state.nplankl);
++    if (game.options & OPTION_WORLDS)
++	score_item(_("%6d inhabited planets destroyed by your action   %5d"),
++		game.state.nworldkl, -300*game.state.nworldkl);
++    score_item(_("%6d bases destroyed by your action     %5d"),
++	    game.state.basekl, -100*game.state.basekl);
++    score_item(_("%6d calls for help from starbase       %5d"),
++	    game.nhelp, -45*game.nhelp);
++    score_item(_("%6d casualties incurred                %5d"),
++	    game.casual, -game.casual);
++    score_item(_("%6d crew abandoned in space            %5d"),
++	    game.abandoned, -3*game.abandoned);
++    score_item(_("%6d ship(s) lost or destroyed          %5d"),
++	    klship, -100*klship);
+     if (!game.alive)
+-	prout(_("Penalty for getting yourself killed        -200"));
++	score_item1(_("Penalty for getting yourself killed        %5d"), -200);
+     if (game.gamewon) {
+ 	proutn(_("Bonus for winning "));
+ 	switch (game.skill) {
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2007-12-14 00:15:51 UTC (rev 783)
++++ trunk/src/setup.c	2008-03-14 14:44:09 UTC (rev 784)
+@@ -495,7 +495,7 @@
+     // Choose game options -- added by ESR for SST2K
+     if (scan() != IHALPHA) {
+ 	chew();
+-	proutn(_("Choose your game style (or just press enter): "));
++	proutn(_("Choose your game style (plain, almy, fancy or just press enter): "));
+ 	scan();
+     }
+     if (isit("plain")) {
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2007-12-14 00:15:51 UTC (rev 783)
++++ trunk/src/sst.py	2008-03-14 14:44:09 UTC (rev 784)
+@@ -2904,8 +2904,6 @@
+ 	klship = 1
+     else:
+ 	klship = 2
+-    if not game.gamewon:
+-	game.state.nromrem = 0 # None captured if no win
+     iscore = 10*(game.inkling - game.state.remkl) \
+              + 50*(game.incom - len(game.state.kcmdr)) \
+              + ithperd + iwon \
+@@ -2920,7 +2918,7 @@
+     if game.inrom - game.state.nromrem:
+ 	prout(_("%6d Romulans destroyed                 %5d") %
+ 	      (game.inrom - game.state.nromrem, 20*(game.inrom - game.state.nromrem)))
+-    if game.state.nromrem:
++    if game.state.nromrem and game.gamewon:
+ 	prout(_("%6d Romulans captured                  %5d") %
+ 	      (game.state.nromrem, game.state.nromrem))
+     if game.inkling - game.state.remkl:
+@@ -2943,7 +2941,7 @@
+ 	      (game.state.nplankl, -10*game.state.nplankl))
+     if (game.options & OPTION_WORLDS) and game.state.nworldkl:
+ 	prout(_("%6d inhabited planets destroyed by your action   %5d") %
+-	      (game.state.nplankl, -300*game.state.nworldkl))
++	      (game.state.nworldkl, -300*game.state.nworldkl))
+     if game.state.basekl:
+ 	prout(_("%6d bases destroyed by your action     %5d") %
+ 	      (game.state.basekl, -100*game.state.basekl))
+@@ -5473,7 +5471,7 @@
+     # Choose game options -- added by ESR for SST2K
+     if scanner.next() != "IHALPHA":
+ 	scanner.chew()
+-	proutn(_("Choose your game style (or just press enter): "))
++	proutn(_("Choose your game style (plain, almy, fancy or just press enter): "))
+ 	scanner.next()
+     if scanner.sees("plain"):
+ 	# Approximates the UT FORTRAN version.
+
+
+

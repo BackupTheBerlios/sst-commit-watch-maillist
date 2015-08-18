@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r646 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r646%20-%20trunk/src&In-Reply-To=%3C200609290759.k8T7xkE7014103%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000112.html">
+   <LINK REL="Next"  HREF="000114.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r646 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r646%20-%20trunk/src&In-Reply-To=%3C200609290759.k8T7xkE7014103%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r646 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 29 09:59:46 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000112.html">[Sst-commit-watch] r645 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000114.html">[Sst-commit-watch] r647 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#113">[ date ]</a>
+              <a href="thread.html#113">[ thread ]</a>
+              <a href="subject.html#113">[ subject ]</a>
+              <a href="author.html#113">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-29 09:59:45 +0200 (Fri, 29 Sep 2006)
+New Revision: 646
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/planets.c
+   trunk/src/sst.h
+Log:
+Get rid of DESTROY macro.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-29 07:41:43 UTC (rev 645)
++++ trunk/src/ai.c	2006-09-29 07:59:45 UTC (rev 646)
+@@ -360,7 +360,7 @@
+ 	if (same(game.state.planets[i].w, game.state.kscmdr) &amp;&amp;
+ 	    game.state.planets[i].crystals == present) {
+ 	    /* destroy the planet */
+-	    DESTROY(&amp;game.state.planets[i]);
++	    game.state.planets[i].pclass = destroyed;
+ 	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET;
+ 	    if (!damaged(DRADIO) || game.condition == docked) {
+ 		pause_game(true);
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-29 07:41:43 UTC (rev 645)
++++ trunk/src/battle.c	2006-09-29 07:59:45 UTC (rev 646)
+@@ -399,7 +399,7 @@
+ 	    prout(_(&quot; destroyed.&quot;));
+ 	    game.state.nplankl++;
+ 	    q-&gt;planet = NOPLANET;
+-	    DESTROY(&amp;game.state.planets[game.iplnet]);
++	    game.state.planets[game.iplnet].pclass = destroyed;
+ 	    game.iplnet = 0;
+ 	    invalidate(game.plnet);
+ 	    game.quad[w.x][w.y] = IHDOT;
+@@ -413,7 +413,7 @@
+ 	    prout(_(&quot; destroyed.&quot;));
+ 	    game.state.nworldkl++;
+ 	    q-&gt;planet = NOPLANET;
+-	    DESTROY(&amp;game.state.planets[game.iplnet]);
++	    game.state.planets[game.iplnet].pclass = destroyed;
+ 	    game.iplnet = 0;
+ 	    invalidate(game.plnet);
+ 	    game.quad[w.x][w.y] = IHDOT;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-29 07:41:43 UTC (rev 645)
++++ trunk/src/events.c	2006-09-29 07:59:45 UTC (rev 646)
+@@ -689,7 +689,7 @@
+ 			game.state.nplankl++;
+ 			crmena(true, IHP, sector, scratch);
+ 			prout(_(&quot; destroyed.&quot;));
+-			DESTROY(&amp;game.state.planets[game.iplnet]);
++			game.state.planets[game.iplnet].pclass = destroyed;
+ 			game.iplnet = 0;
+ 			invalidate(game.plnet);
+ 			if (game.landed) {
+@@ -919,7 +919,7 @@
+ 	int loop;
+ 	for (loop = 0; loop &lt; game.inplan; loop++)
+ 	    if (same(game.state.planets[loop].w, nq)) {
+-		DESTROY(&amp;game.state.planets[loop]);
++		game.state.planets[loop].pclass = destroyed;
+ 	    }
+     }
+     /* Destroy any base in supernovaed quadrant */
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-29 07:41:43 UTC (rev 645)
++++ trunk/src/planets.c	2006-09-29 07:59:45 UTC (rev 646)
+@@ -22,10 +22,11 @@
+     prout(_(&quot;Spock-  \&quot;Planet report follows, Captain.\&quot;&quot;));
+     skip(1);
+     for (i = 0; i &lt; game.inplan; i++) {
++	if (game.state.planets[i].pclass == destroyed)
++	    continue;
+ 	if ((game.state.planets[i].known != unknown
+-	    &amp;&amp; game.state.planets[i].inhabited == UNINHABITED)
+-	    || (idebug &amp;&amp; game.state.planets[i].w.x !=0)
+-	    ) {
++	     &amp;&amp; game.state.planets[i].inhabited == UNINHABITED)
++	    || idebug) {
+ 	    iknow = true;
+ 	    if (idebug &amp;&amp; game.state.planets[i].known==unknown)
+ 		proutn(&quot;(Unknown) &quot;);
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-29 07:41:43 UTC (rev 645)
++++ trunk/src/sst.h	2006-09-29 07:59:45 UTC (rev 646)
+@@ -47,15 +47,13 @@
+ 
+ typedef struct {
+     coord w;
+-    enum {M=0, N=1, O=2} pclass;
++    enum {destroyed= -1, M=0, N=1, O=2} pclass;
+     int inhabited;	/* if NZ, an index into a name array */
+ #define UNINHABITED	-1
+     enum {mined=-1, present=0, absent=1} crystals; /* has crystals */
+     enum {unknown, known, shuttle_down} known;
+ } planet;
+ 
+-#define DESTROY(pl)	memset(pl, '\0', sizeof(planet))
+-
+ typedef enum {
+     IHR = 'R',
+     IHK = 'K',
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000112.html">[Sst-commit-watch] r645 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000114.html">[Sst-commit-watch] r647 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#113">[ date ]</a>
+              <a href="thread.html#113">[ thread ]</a>
+              <a href="subject.html#113">[ subject ]</a>
+              <a href="author.html#113">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

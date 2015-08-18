@@ -1,0 +1,358 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r625 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r625%20-%20trunk/src&In-Reply-To=%3C200609211816.k8LIGdij022262%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000091.html">
+   <LINK REL="Next"  HREF="000093.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r625 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r625%20-%20trunk/src&In-Reply-To=%3C200609211816.k8LIGdij022262%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r625 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 21 20:16:39 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000091.html">[Sst-commit-watch] r624 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000093.html">[Sst-commit-watch] r626 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#92">[ date ]</a>
+              <a href="thread.html#92">[ thread ]</a>
+              <a href="subject.html#92">[ subject ]</a>
+              <a href="author.html#92">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-21 20:16:38 +0200 (Thu, 21 Sep 2006)
+New Revision: 625
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/planets.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+Make the &quot;crystals' member into an enumeration.
+Add explanatory comments to the attack code.
+Remove some redundant logic to push you out of dock on an attack.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-21 10:47:26 UTC (rev 624)
++++ trunk/src/ai.c	2006-09-21 18:16:38 UTC (rev 625)
+@@ -331,7 +331,7 @@
+     /* check for a helpful planet */
+     for (i = 0; i &lt; game.inplan; i++) {
+ 	if (same(game.state.plnets[i].w, game.state.kscmdr) &amp;&amp;
+-	    game.state.plnets[i].crystals == 1) {
++	    game.state.plnets[i].crystals == present) {
+ 	    /* destroy the planet */
+ 	    DESTROY(&amp;game.state.plnets[i]);
+ 	    game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].planet = NOPLANET;
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-21 10:47:26 UTC (rev 624)
++++ trunk/src/battle.c	2006-09-21 18:16:38 UTC (rev 625)
+@@ -539,29 +539,49 @@
+ {
+     /* torps_ok == false forces use of phasers in an attack */
+     int percent, loop, iquad;
+-    bool itflag, atackd = false, attempt = false, ihurt = false;
++    bool usephasers, atackd = false, attempt = false, ihurt = false;
+     double hit, pfac, dustfac, hitmax=0.0, hittot=0.0, chgfac=1.0, r;
+     coord jay;
+     enum loctype where = neither;
+ 
+-    if (game.alldone) return;
+-    if (idebug) prout(&quot;=== ATTACK!&quot;);
++    /* game could be over at this point, check */
++    if (game.alldone) 
++	return;
+ 
+-    if (game.ithere) movetho();
++    if (idebug) 
++	prout(&quot;=== ATTACK!&quot;);
+ 
++    /* Tholian gewts to move before attacking */
++    if (game.ithere) 
++	movetho();
++
++    /* if you have just entered the RNZ, you'll get a warning */
+     if (game.neutz) { /* The one chance not to be attacked */
+ 	game.neutz = false;
+ 	return;
+     }
+-    if ((((game.comhere || game.ishere) &amp;&amp; !game.justin) || game.skill == SKILL_EMERITUS) &amp;&amp; torps_ok) movcom();
+-    if (game.nenhere==0 || (game.nenhere==1 &amp;&amp; iqhere &amp;&amp; !iqengry)) return;
++
++    /* commanders get a chance to tac-move towards you */
++    if ((((game.comhere || game.ishere) &amp;&amp; !game.justin) || game.skill == SKILL_EMERITUS) &amp;&amp; torps_ok) 
++	movcom();
++
++    /* if no enemies remain after movement, we're done */
++    if (game.nenhere==0 || (game.nenhere==1 &amp;&amp; iqhere &amp;&amp; !iqengry)) 
++	return;
++
++    /* set up partial hits if attack happens during shield status change */
+     pfac = 1.0/game.inshld;
+     if (game.shldchg) chgfac = 0.25+0.5*Rand();
++
+     skip(1);
+-    if (game.skill &lt;= SKILL_FAIR) where = sector;
++
++    /* message verbosity control */
++    if (game.skill &lt;= SKILL_FAIR) 
++	where = sector;
++
+     for_local_enemies(loop) {
+ 	if (game.kpower[loop] &lt; 0) continue;	/* too weak to attack */
+-	/* compute hit strength and diminsh shield power */
++	/* compute hit strength and diminish shield power */
+ 	r = Rand();
+ 	/* Increase chance of photon torpedos if docked or enemy energy low */
+ 	if (game.condition == docked) r *= 0.25;
+@@ -569,20 +589,21 @@
+ 	jay = game.ks[loop];
+ 	iquad = game.quad[jay.x][jay.y];
+ 	if (iquad==IHT || (iquad==IHQUEST &amp;&amp; !iqengry)) continue;
+-	itflag = (iquad == IHK &amp;&amp; r &gt; 0.0005) || !torps_ok ||
++	/* different enemies have different probabilities of throwing a torp */
++	usephasers = !torps_ok || \
++	    (iquad == IHK &amp;&amp; r &gt; 0.0005) || 
+ 	    (iquad==IHC &amp;&amp; r &gt; 0.015) ||
+ 	    (iquad==IHR &amp;&amp; r &gt; 0.3) ||
+ 	    (iquad==IHS &amp;&amp; r &gt; 0.07) ||
+ 	    (iquad==IHQUEST &amp;&amp; r &gt; 0.05);
+-	if (itflag) {
+-	    /* Enemy uses phasers */
++	if (usephasers) {	    /* Enemy uses phasers */
+ 	    if (game.condition == docked) continue; /* Don't waste the effort! */
+ 	    attempt = true; /* Attempt to attack */
+ 	    dustfac = 0.8+0.05*Rand();
+ 	    hit = game.kpower[loop]*pow(dustfac,game.kavgd[loop]);
+ 	    game.kpower[loop] *= 0.75;
+ 	}
+-	else { /* Enemy used photon torpedo */
++	else { /* Enemy uses photon torpedo */
+ 	    double course = 1.90985*atan2((double)game.sector.y-jay.y, (double)jay.x-game.sector.x);
+ 	    hit = 0;
+ 	    proutn(_(&quot;***TORPEDO INCOMING&quot;));
+@@ -601,30 +622,31 @@
+ 		return; /* Supernova or finished */
+ 	    if (hit == 0) continue;
+ 	}
++	/* incoming phaser or torpedo, shields may dissipate it */
+ 	if (game.shldup || game.shldchg || game.condition==docked) {
+ 	    /* shields will take hits */
+ 	    double absorb, hitsh, propor = pfac*game.shield*(game.condition==docked ? 2.1 : 1.0);
+-	    if(propor &lt; 0.1) propor = 0.1;
++	    if (propor &lt; 0.1) propor = 0.1;
+ 	    hitsh = propor*chgfac*hit+1.0;
+-	    atackd = true;
+ 	    absorb = 0.8*hitsh;
+ 	    if (absorb &gt; game.shield) absorb = game.shield;
+ 	    game.shield -= absorb;
+ 	    hit -= hitsh;
+-	    if (game.condition==docked) dock(false);
+-	    if (propor &gt; 0.1 &amp;&amp; hit &lt; 0.005*game.energy) continue;
++	    /* taking a hit blasts us out of a starbase dock */
++	    if (game.condition == docked)
++		dock(false);
++	    /* but the shields may take care of it */
++	    if (propor &gt; 0.1 &amp;&amp; hit &lt; 0.005*game.energy) 
++		continue;
+ 	}
+-	/* It's a hit -- print out hit size */
+-	atackd = true; /* We weren't going to check casualties, etc. if
+-		       shields were down for some strange reason. This
+-		       doesn't make any sense, so I've fixed it */
++	/* hit from this opponent got through shields, so take damage */
+ 	ihurt = true;
+ 	proutn(_(&quot;%d unit hit&quot;), (int)hit);
+-	if ((damaged(DSRSENS) &amp;&amp; itflag) || game.skill&lt;=SKILL_FAIR) {
++	if ((damaged(DSRSENS) &amp;&amp; usephasers) || game.skill&lt;=SKILL_FAIR) {
+ 	    proutn(_(&quot; on the &quot;));
+ 	    crmshp();
+ 	}
+-	if (!damaged(DSRSENS) &amp;&amp; itflag) {
++	if (!damaged(DSRSENS) &amp;&amp; usephasers) {
+ 	    proutn(_(&quot; from &quot;));
+ 	    crmena(false, iquad, where, jay);
+ 	}
+@@ -634,8 +656,6 @@
+ 	hittot += hit;
+ 	fry(hit);
+ 	game.energy -= hit;
+-	if (game.condition==docked) 
+-	    dock(false);
+     }
+     if (game.energy &lt;= 0) {
+ 	/* Returning home upon your shield, not with it... */
+@@ -685,7 +705,7 @@
+ 
+     skip(1);
+     crmena(true, type, sector, mv);
+-    /* Decide what kind of enemy it is and update approriately */
++    /* Decide what kind of enemy it is and update appropriately */
+     if (type == IHR) {
+ 	/* chalk up a Romulan */
+ 	game.state.galaxy[game.quadrant.x][game.quadrant.y].romulans--;
+@@ -709,7 +729,8 @@
+ 	case IHC:
+ 	    game.comhere = false;
+ 	    for_commanders (i)
+-		if (game.state.kcmdr[i].x==game.quadrant.x &amp;&amp; game.state.kcmdr[i].y==game.quadrant.y) break;
++		if (same(game.state.kcmdr[i], game.quadrant)) 
++		    break;
+ 	    game.state.kcmdr[i] = game.state.kcmdr[game.state.remcom];
+ 	    game.state.kcmdr[game.state.remcom].x = 0;
+ 	    game.state.kcmdr[game.state.remcom].y = 0;
+@@ -743,7 +764,7 @@
+     game.state.remtime = game.state.remres/(game.state.remkl + 4*game.state.remcom);
+ 
+     /* Remove enemy ship from arrays describing local conditions */
+-    if (is_scheduled(FCDBAS) &amp;&amp; game.battle.x==game.quadrant.x &amp;&amp; game.battle.y==game.quadrant.y &amp;&amp; type==IHC)
++    if (is_scheduled(FCDBAS) &amp;&amp; same(game.battle, game.quadrant) &amp;&amp; type==IHC)
+ 	unschedule(FCDBAS);
+     for_local_enemies(i)
+ 	if (same(game.ks[i], w)) break;
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-21 10:47:26 UTC (rev 624)
++++ trunk/src/planets.c	2006-09-21 18:16:38 UTC (rev 625)
+@@ -23,7 +23,7 @@
+     skip(1);
+     for (i = 0; i &lt; game.inplan; i++) {
+ 	if ((game.state.plnets[i].known != unknown
+-	    &amp;&amp; game.state.plnets[i].crystals != 0)
++	    &amp;&amp; game.state.plnets[i].crystals != absent)
+ 	    || (idebug &amp;&amp; game.state.plnets[i].w.x !=0)
+ 	    ) {
+ 	    iknow = true;
+@@ -33,7 +33,7 @@
+ 	    proutn(_(&quot;   class &quot;));
+ 	    proutn(classes[game.state.plnets[i].pclass]);
+ 	    proutn(&quot;   &quot;);
+-	    if (game.state.plnets[i].crystals &lt;= 0) proutn(_(&quot;no &quot;));
++	    if (game.state.plnets[i].crystals != present) proutn(_(&quot;no &quot;));
+ 	    prout(_(&quot;dilithium crystals present.&quot;));
+ 	    if (game.state.plnets[i].known==shuttle_down) 
+ 		prout(_(&quot;    Shuttle Craft Galileo on surface.&quot;));
+@@ -93,7 +93,7 @@
+ 	if (game.state.plnets[game.iplnet].known==shuttle_down) 
+ 	    prout(_(&quot;         Sensors show Galileo still on surface.&quot;));
+ 	proutn(_(&quot;         Readings indicate&quot;));
+-	if (game.state.plnets[game.iplnet].crystals == 0) proutn(_(&quot; no&quot;));
++	if (game.state.plnets[game.iplnet].crystals != present) proutn(_(&quot; no&quot;));
+ 	prout(_(&quot; dilithium crystals present.\&quot;&quot;));
+ 	if (game.state.plnets[game.iplnet].known == unknown) game.state.plnets[game.iplnet].known = known;
+     }
+@@ -147,7 +147,7 @@
+     }
+     else {
+ 	/* Going to planet */
+-	if (game.state.plnets[game.iplnet].crystals==0) {
++	if (game.state.plnets[game.iplnet].crystals==absent) {
+ 	    prout(_(&quot;Spock-  \&quot;Captain, I fail to see the logic in&quot;));
+ 	    prout(_(&quot;  exploring a planet with no dilithium crystals.&quot;));
+ 	    proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;));
+@@ -197,11 +197,11 @@
+ 	prout(_(&quot;Mining party not on planet.&quot;));
+ 	return;
+     }
+-    if (game.state.plnets[game.iplnet].crystals == MINED) {
++    if (game.state.plnets[game.iplnet].crystals == mined) {
+ 	prout(_(&quot;This planet has already been strip-mined for dilithium.&quot;));
+ 	return;
+     }
+-    else if (game.state.plnets[game.iplnet].crystals == 0) {
++    else if (game.state.plnets[game.iplnet].crystals == absent) {
+ 	prout(_(&quot;No dilithium crystals on this planet.&quot;));
+ 	return;
+     }
+@@ -219,7 +219,7 @@
+     game.optime = (0.1+0.2*Rand())*game.state.plnets[game.iplnet].pclass;
+     if (consumeTime()) return;
+     prout(_(&quot;Mining operation complete.&quot;));
+-    game.state.plnets[game.iplnet].crystals = MINED;
++    game.state.plnets[game.iplnet].crystals = mined;
+     game.imine = game.ididit = true;
+ }
+ 
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-21 10:47:26 UTC (rev 624)
++++ trunk/src/setup.c	2006-09-21 18:16:38 UTC (rev 625)
+@@ -337,12 +337,12 @@
+ 	game.state.plnets[i].w = w;
+ 	if (i &lt; NINHAB) {
+ 	    game.state.plnets[i].pclass = M;	// All inhabited planets are class M
+-	    game.state.plnets[i].crystals = 0;
++	    game.state.plnets[i].crystals = absent;
+ 	    game.state.plnets[i].known = known;
+ 	    game.state.plnets[i].inhabited = i;
+ 	} else {
+ 	    game.state.plnets[i].pclass = Rand()*3.0; // Planet class M N or O
+-	    game.state.plnets[i].crystals = 1.5*Rand();		// 1 in 3 chance of crystals
++	    game.state.plnets[i].crystals = Rand()*1.5;		// 1 in 3 chance of crystals
+ 	    game.state.plnets[i].known = unknown;
+ 	    game.state.plnets[i].inhabited = UNINHABITED;
+ 	}
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-21 10:47:26 UTC (rev 624)
++++ trunk/src/sst.h	2006-09-21 18:16:38 UTC (rev 625)
+@@ -51,8 +51,7 @@
+     enum {M=0, N=1, O=2} pclass;
+     int inhabited;	/* if NZ, an index into a name array */
+ #define UNINHABITED	-1
+-    int crystals; /* has crystals */
+-#define MINED	-1	/* used to have crystals, but they were mined out */
++    enum {mined=-1, present=0, absent=1} crystals; /* has crystals */
+     enum {unknown, known, shuttle_down} known;
+ } planet;
+ 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000091.html">[Sst-commit-watch] r624 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000093.html">[Sst-commit-watch] r626 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#92">[ date ]</a>
+              <a href="thread.html#92">[ thread ]</a>
+              <a href="subject.html#92">[ subject ]</a>
+              <a href="author.html#92">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

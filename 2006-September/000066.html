@@ -1,0 +1,337 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r599 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r599%20-%20trunk/src&In-Reply-To=%3C200609191904.k8JJ4aXb002487%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000065.html">
+   <LINK REL="Next"  HREF="000067.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r599 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r599%20-%20trunk/src&In-Reply-To=%3C200609191904.k8JJ4aXb002487%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r599 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 19 21:04:36 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000065.html">[Sst-commit-watch] r598 - in trunk: po src
+</A></li>
+        <LI>Next message: <A HREF="000067.html">[Sst-commit-watch] r600 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#66">[ date ]</a>
+              <a href="thread.html#66">[ thread ]</a>
+              <a href="subject.html#66">[ subject ]</a>
+              <a href="author.html#66">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-19 21:04:35 +0200 (Tue, 19 Sep 2006)
+New Revision: 599
+
+Modified:
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/finish.c
+   trunk/src/moving.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+More BSD features; You can now lose if your entire crew
+dies in battle.  When abandoning ship in a game with inhabited
+worlds enabled, they must have one in the quadrant to beam down
+to; otherwise they die in space and this counts heavily against
+your score (BSD Trek had score adjustment as a to-do).  
+Docking at a starbase replenishes your crew.
+
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-19 18:44:07 UTC (rev 598)
++++ trunk/src/battle.c	2006-09-19 19:04:35 UTC (rev 599)
+@@ -158,6 +158,7 @@
+     icas = 10.0+20.0*Rand();
+     prout(_(&quot;***Sickbay reports %d casualties&quot;), icas);
+     game.casual += icas;
++    game.state.crew -= icas;
+     for (l=0; l &lt; NDEVICES; l++) {
+ 	if (l == DDRAY) 
+ 	    continue; // Don't damage deathray 
+@@ -550,13 +551,13 @@
+ 	    if (absorb &gt; game.shield) absorb = game.shield;
+ 	    game.shield -= absorb;
+ 	    hit -= hitsh;
+-	    if (game.condit==IHDOCKED) dock(0);
++	    if (game.condit==IHDOCKED) dock(false);
+ 	    if (propor &gt; 0.1 &amp;&amp; hit &lt; 0.005*game.energy) continue;
+ 	}
+ 	/* It's a hit -- print out hit size */
+ 	atackd = 1; /* We weren't going to check casualties, etc. if
+ 		       shields were down for some strange reason. This
+-		       doesn't make any sense, so I've fw.xed it */
++		       doesn't make any sense, so I've fixed it */
+ 	ihurt = 1;
+ 	proutn(_(&quot;%d unit hit&quot;), (int)hit);
+ 	if ((damaged(DSRSENS) &amp;&amp; itflag) || game.skill&lt;=SKILL_FAIR) {
+@@ -574,7 +575,7 @@
+ 	fry(hit);
+ 	game.energy -= hit;
+ 	if (game.condit==IHDOCKED) 
+-	    dock(0);
++	    dock(false);
+     }
+     if (game.energy &lt;= 0) {
+ 	/* Returning home upon your shield, not with it... */
+@@ -606,6 +607,7 @@
+ 	    prout(_(&quot;Mc Coy-  \&quot;Sickbay to bridge.  We suffered %d casualties&quot;), icas);
+ 	    prout(_(&quot;   in that last attack.\&quot;&quot;));
+ 	    game.casual += icas;
++	    game.state.crew -= icas;
+ 	}
+     }
+     /* After attack, reset average distance to enemies */
+@@ -891,7 +893,8 @@
+ 	skip(1);
+ 	prout(_(&quot;McCoy to bridge- \&quot;Severe radiation burns, Jim.&quot;));
+ 	prout(_(&quot;  %d casualties so far.\&quot;&quot;), icas);
+-	game.casual -= icas;
++	game.casual += icas;
++	game.state.crew -= icas;
+     }
+     skip(1);
+     prout(_(&quot;Phaser energy dispersed by shields.&quot;));
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-19 18:44:07 UTC (rev 598)
++++ trunk/src/events.c	2006-09-19 19:04:35 UTC (rev 599)
+@@ -112,6 +112,11 @@
+ 	    finish(FDEPLETE);
+ 	    return;
+ 	}
++	/* Any crew left alive? */
++	if (game.state.crew &lt;=0) {
++	    finish(FCREW);
++	    return;
++	}
+ 	/* Is life support adequate? */
+ 	if (damaged(DLIFSUP) &amp;&amp; game.condit != IHDOCKED) {
+ 	    if (game.lsupres &lt; xtime &amp;&amp; game.damage[DLIFSUP] &gt; game.lsupres) {
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-19 18:44:07 UTC (rev 598)
++++ trunk/src/finish.c	2006-09-19 19:04:35 UTC (rev 599)
+@@ -88,7 +88,7 @@
+ 	if (game.alive) {
+ 	    double badpt;
+ 	    badpt = 5.0*game.state.starkl + game.casual + 10.0*game.state.nplankl +
+-		45.*game.nhelp+100.*game.state.basekl;
++		45.*game.nhelp+100.*game.state.basekl+3.*game.abandoned;
+ 	    if (game.ship == IHF) badpt += 100.0;
+ 	    else if (game.ship == 0) badpt += 200.0;
+ 	    if (badpt &lt; 100.0) badpt = 0.0;	// Close enough!
+@@ -278,6 +278,9 @@
+ 	prout(_(&quot;Your ship is drawn to the center of the black hole.&quot;));
+ 	prout(_(&quot;You are crushed into extremely dense matter.&quot;));
+ 	break;
++    case FCREW:
++	prout(_(&quot;Your last crew member has died.&quot;));
++	break;
+     }
+     if (game.ship==IHF) game.ship= 0;
+     else if (game.ship == IHE) game.ship = IHF;
+@@ -366,6 +369,9 @@
+     if (game.casual)
+ 	prout(_(&quot;%6d casualties incurred                %5d&quot;),
+ 	      game.casual, -game.casual);
++    if (game.abandoned)
++	prout(_(&quot;%6d crew abandoned in space            %5d&quot;),
++	      game.abandoned, -3*game.abandoned);
+     if (klship)
+ 	prout(_(&quot;%6d ship(s) lost or destroyed          %5d&quot;),
+ 	      klship, -100*klship);
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-19 18:44:07 UTC (rev 598)
++++ trunk/src/moving.c	2006-09-19 19:04:35 UTC (rev 599)
+@@ -214,10 +214,10 @@
+     return;
+ }
+ 
+-void dock(int l) 
++void dock(bool verbose) 
+ {
+     chew();
+-    if (game.condit == IHDOCKED &amp;&amp; l) {
++    if (game.condit == IHDOCKED &amp;&amp; verbose) {
+ 	prout(_(&quot;Already docked.&quot;));
+ 	return;
+     }
+@@ -231,12 +231,13 @@
+ 	return;
+     }
+     game.condit = IHDOCKED;
+-    if (l) prout(_(&quot;Docked.&quot;));
++    if (verbose) prout(_(&quot;Docked.&quot;));
+     game.ididit=1;
+     if (game.energy &lt; game.inenrg) game.energy = game.inenrg;
+     game.shield = game.inshld;
+     game.torps = game.intorps;
+     game.lsupres = game.inlsr;
++    game.state.crew = FULLCREW;
+     if (!damaged(DRADIO) &amp;&amp;
+ 	(is_scheduled(FCDBAS) || game.isatb == 1) &amp;&amp; game.iseenit == 0) {
+ 	/* get attack report from base */
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-19 18:44:07 UTC (rev 598)
++++ trunk/src/setup.c	2006-09-19 19:04:35 UTC (rev 599)
+@@ -28,7 +28,7 @@
+     }
+     else {
+ 	if ((key = scan()) == IHEOL) {
+-	    proutn(&quot;File name: &quot;);
++	    proutn(_(&quot;File name: &quot;));
+ 	    key = scan();
+ 	}
+ 	if (key != IHALPHA) {
+@@ -41,7 +41,7 @@
+ 	}
+     }
+     if ((fp = fopen(citem, &quot;wb&quot;)) == NULL) {
+-	proutn(&quot;Can't freeze game as file &quot;);
++	proutn(_(&quot;Can't freeze game as file &quot;));
+ 	proutn(citem);
+ 	skip(1);
+ 	return;
+@@ -169,6 +169,8 @@
+ 	    prout(&quot;to %s.&quot;, systemname(q-&gt;planet));
+ 	} else {
+ 	    prout(&quot;Entire crew of %d left to die in outer space.&quot;);
++	    game.casual += game.state.crew;
++	    game.abandoned += game.state.crew;
+ 	}
+ 
+ 	/* If at least one base left, give 'em the Faerie Queene */
+@@ -202,6 +204,7 @@
+     }
+     /* Get new commission */
+     game.quad[game.sector.x][game.sector.y] = game.ship = IHF;
++    game.state.crew = FULLCREW;
+     prout(&quot;Starfleet puts you in command of another ship,&quot;);
+     prout(&quot;the Faerie Queene, which is antiquated but,&quot;);
+     prout(&quot;still useable.&quot;);
+@@ -232,6 +235,7 @@
+     // Prepare the Enterprise
+     game.alldone = game.gamewon = 0;
+     game.ship = IHE;
++    game.state.crew = FULLCREW;
+     game.energy = game.inenrg = 5000.0;
+     game.shield = game.inshld = 2500.0;
+     game.shldchg = 0;
+@@ -249,7 +253,7 @@
+     // Set up assorted game parameters
+     game.battle.x = game.battle.y = 0;
+     game.state.date = game.indate = 100.0*(int)(31.0*Rand()+20.0);
+-    game.nkinks = game.nhelp = game.casual = 0;
++    game.nkinks = game.nhelp = game.casual = game.abandoned = 0;
+     game.resting = false;
+     game.isatb = game.iscate = game.imine = game.icrystl = game.icraft = game.state.nplankl = 0;
+     game.state.starkl = game.state.basekl = 0;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-19 18:44:07 UTC (rev 598)
++++ trunk/src/sst.c	2006-09-19 19:04:35 UTC (rev 599)
+@@ -162,6 +162,12 @@
+       type is &quot;plain&quot; or &quot;almy&quot;.)
+ 
+    6. User input is now logged so we can do regression testing.
++
++   7. More BSD-Trek features: You can now lose if your entire crew
++      dies in battle.  When abandoning ship in a game with inhabited
++      worlds enabled, they must have one in the quadrant to beam down
++      to; otherwise they die in space and this counts heavily against
++      your score.  Docking at a starbase replenishes your crew.
+ */
+ 
+ /* the input queue */
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-19 18:44:07 UTC (rev 598)
++++ trunk/src/sst.h	2006-09-19 19:04:35 UTC (rev 599)
+@@ -58,6 +58,8 @@
+ 
+ typedef struct {
+     int snap,		// snapshot taken
++	crew,		// crew complement
++#define FULLCREW	428	/* BSD Trek was 387, that's wrong */
+ 	remkl,			// remaining klingons
+ 	remcom,			// remaining commanders
+ 	nscrem,			// remaining super commanders
+@@ -224,6 +226,7 @@
+ 	condit,		// condition (red/yellow/green/docked)
+ 	torps,		// number of torpedoes
+ 	ship,		// ship type -- 'E' is Enterprise
++	abandoned,	// count of crew abandoned in space
+ 	length,		// length of game
+ 	skill,		// skill level
+ 	klhere,		// klingons here
+@@ -295,7 +298,7 @@
+               FNEG3, FNOVA, FSNOVAED, FABANDN, FDILITHIUM,
+ 			  FMATERIALIZE, FPHASER, FLOST, FMINING, FDPLANET,
+ 			  FPNOVA, FSSC, FSTRACTOR, FDRAY, FTRIBBLE,
+-			  FHOLE} FINTYPE ;
++	      FHOLE, FCREW} FINTYPE ;
+ enum loctype {neither, quadrant, sector};
+ 
+ #define IHR 'R'
+@@ -336,7 +339,7 @@
+ void photon(void);
+ void warp(bool);
+ void doshield(int);
+-void dock(int);
++void dock(bool);
+ void dreprt(void);
+ void chart(int);
+ void rechart(void);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000065.html">[Sst-commit-watch] r598 - in trunk: po src
+</A></li>
+	<LI>Next message: <A HREF="000067.html">[Sst-commit-watch] r600 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#66">[ date ]</a>
+              <a href="thread.html#66">[ thread ]</a>
+              <a href="subject.html#66">[ subject ]</a>
+              <a href="author.html#66">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

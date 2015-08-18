@@ -1,0 +1,479 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r568 - in trunk: doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r568%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C200609151841.k8FIfGPC001608%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000034.html">
+   <LINK REL="Next"  HREF="000036.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r568 - in trunk: doc src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r568%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C200609151841.k8FIfGPC001608%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r568 - in trunk: doc src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 15 20:41:16 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000034.html">[Sst-commit-watch] r567 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000036.html">[Sst-commit-watch] r569 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#35">[ date ]</a>
+              <a href="thread.html#35">[ thread ]</a>
+              <a href="subject.html#35">[ subject ]</a>
+              <a href="author.html#35">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-15 20:41:16 +0200 (Fri, 15 Sep 2006)
+New Revision: 568
+
+Modified:
+   trunk/doc/sst-doc.xml
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+Add inhabited planets. Presently this is just color, as they have no dilithium.
+In the future, this will become the basis for BSD-Trek like code that allows 
+Klingons to attack and enslave inhabited worlds in order to expand their fleet.
+(This feature is controlled by OPTION_WORLDS).
+
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2006-09-15 09:35:11 UTC (rev 567)
++++ trunk/doc/sst-doc.xml	2006-09-15 18:41:16 UTC (rev 568)
+@@ -1247,9 +1247,10 @@
+ Shortest abbreviation:  PL
+ &lt;/literallayout&gt;
+ 
+-&lt;para&gt;Mr. Spock presents you a list of the available information on planets
+-in the galaxy.  Since planets do not show up on long-range scans, the
+-only way to obtain this information is with the &lt;quote&gt;SENSORS&lt;/quote&gt; command.&lt;/para&gt;
++&lt;para&gt;Mr. Spock presents you a list of the available information on
++planets in the galaxy which are potential dilithium sources.  Since
++planets do not show up on long-range scans, the only way to obtain
++this information is with the &lt;quote&gt;SENSORS&lt;/quote&gt; command.&lt;/para&gt;
+ 
+ &lt;/sect1&gt;
+ &lt;sect1 id=&quot;freeze&quot;&gt;&lt;title&gt;Freeze&lt;/title&gt;
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-15 09:35:11 UTC (rev 567)
++++ trunk/src/ai.c	2006-09-15 18:41:16 UTC (rev 568)
+@@ -351,7 +351,7 @@
+ 	    game.state.plnets[i].crystals == 1) {
+ 	    /* destroy the planet */
+ 	    DESTROY(&amp;game.state.plnets[i]);
+-	    game.state.galaxy[game.state.isx][game.state.isy].planets -= 1;
++	    game.state.galaxy[game.state.isx][game.state.isy].planet = NULL;
+ 	    if (game.damage[DRADIO] == 0.0 || game.condit == IHDOCKED) {
+ 		if (*ipage==0) pause_game(1);
+ 		*ipage = 1;
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-15 09:35:11 UTC (rev 567)
++++ trunk/src/battle.c	2006-09-15 18:41:16 UTC (rev 568)
+@@ -316,7 +316,7 @@
+ 	    crmena(1, iquad, 2, ix, iy);
+ 	    prout(&quot; destroyed.&quot;);
+ 	    game.state.nplankl++;
+-	    game.state.galaxy[game.quadx][game.quady].planets--;
++	    game.state.galaxy[game.quadx][game.quady].planet = NULL;
+ 	    DESTROY(&amp;game.state.plnets[game.iplnet]);
+ 	    game.iplnet = 0;
+ 	    game.plnetx = game.plnety = 0;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-15 09:35:11 UTC (rev 567)
++++ trunk/src/events.c	2006-09-15 18:41:16 UTC (rev 568)
+@@ -466,7 +466,7 @@
+ 			game.quad[ii][jj] = IHDOT;
+ 			break;
+ 		    case IHP: /* Destroy planet */
+-			game.state.galaxy[game.quadx][game.quady].planets -= 1;
++			game.state.galaxy[game.quadx][game.quady].planet = NULL;
+ 			game.state.nplankl++;
+ 			crmena(1, IHP, 2, ii, jj);
+ 			prout(&quot; destroyed.&quot;);
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-15 09:35:11 UTC (rev 567)
++++ trunk/src/planets.c	2006-09-15 18:41:16 UTC (rev 568)
+@@ -33,7 +33,8 @@
+     prout(&quot;Spock-  \&quot;Planet report follows, Captain.\&quot;&quot;);
+     skip(1);
+     for (i = 0; i &lt; game.inplan; i++) {
+-	if (game.state.plnets[i].known != unknown
++	if ((game.state.plnets[i].known != unknown
++	    &amp;&amp; game.state.plnets[i].crystals != 0)
+ #ifdef DEBUG
+ 	    || ( game.idebug &amp;&amp; game.state.plnets[i].x !=0)
+ #endif
+@@ -46,7 +47,7 @@
+ 	    proutn(&quot;   class &quot;);
+ 	    proutn(classes[game.state.plnets[i].pclass]);
+ 	    proutn(&quot;   &quot;);
+-	    if (game.state.plnets[i].crystals == 0) proutn(&quot;no &quot;);
++	    if (game.state.plnets[i].crystals &lt;= 0) proutn(&quot;no &quot;);
+ 	    prout(&quot;dilithium crystals present.&quot;);
+ 	    if (game.state.plnets[i].known==shuttle_down) 
+ 		prout(&quot;    Shuttle Craft Galileo on surface.&quot;);
+@@ -206,7 +207,11 @@
+ 	prout(&quot;Mining party not on planet.&quot;);
+ 	return;
+     }
+-    if (game.state.plnets[game.iplnet].crystals == 0) {
++    if (game.state.plnets[game.iplnet].crystals == MINED) {
++	prout(&quot;This planet has already been strip-mined for dilithium.&quot;);
++	return;
++    }
++    else if (game.state.plnets[game.iplnet].crystals == 0) {
+ 	prout(&quot;No dilithium crystals on this planet.&quot;);
+ 	return;
+     }
+@@ -224,6 +229,7 @@
+     game.optime = (0.1+0.2*Rand())*game.state.plnets[game.iplnet].pclass;
+     if (consumeTime()) return;
+     prout(&quot;Mining operation complete.&quot;);
++    game.state.plnets[game.iplnet].crystals = MINED;
+     game.imine = 1;
+     game.ididit=1;
+ }
+@@ -504,3 +510,79 @@
+     finish(FTRIBBLE);
+     return;
+ }
++
++char *systemname(planet *planet)
++{
++    static char	*names[NINHAB] =
++    {
++	/*
++	 * This started out life as the BSD Trek inhabited-planets list,
++	 * but I used &lt;<A HREF="http://www.memory-alpha.org">http://www.memory-alpha.org</A>&gt; to weed out planets
++	 * with no references in ST:TOS and to fill it out again to the
++	 * required length from &quot;The Worlds of The Federation&quot; list,
++	 * &lt;<A HREF="http://memory-alpha.org/en/wiki/The_Worlds_of_the_Federation">http://memory-alpha.org/en/wiki/The_Worlds_of_the_Federation</A>&gt;.
++	 * Some misspellings have been silently corrected.  (To be
++	 * fair, there was no Web when Eric Allman did his list.)
++	 *
++	 * Some planets marked Class G and P here will be displayed as class M
++	 * because of the way planets are generated. This is a known bug.
++	 */
++	&quot;ERROR&quot;,
++	// Added Federation Worlds
++	&quot;Deneva&quot;,		/* TOS: &quot;Operation -- Annihilate!&quot; */
++	&quot;Eminiar VII&quot;,		/* TOS: &quot;A Taste of Armageddon&quot; */
++	&quot;Hansen's Planet&quot;,	/* TOS: &quot;The Galileo Seven&quot; */
++	&quot;Taurus IV&quot;,		/* TOS: &quot;The Galileo Seven&quot; (class G) */
++	&quot;Aldebaran III&quot;,	/* TOS: &quot;The Deadly Years&quot; */
++	&quot;Vulcan (T'Khasi)&quot;,	/* many episodes */
++	&quot;Tellar Prime (Miracht)&quot;,	/* TOS: &quot;Journey to Babel&quot; */
++	&quot;Andoria (Fesoan)&quot;,	/* several episodes */
++	&quot;Antos IV (Doraphane)&quot;,	/* TOS: &quot;Whom Gods Destroy&quot;, &quot;Who Mourns for Adonais?&quot; */
++	&quot;Catulla (Cendo-Prae)&quot;,	/* TOS: &quot;The Way to Eden&quot; */
++	&quot;Izar&quot;,			/* TOS: &quot;Whom Gods Destroy&quot; */
++	&quot;Tiburon&quot;,		/* TOS: &quot;The Way to Eden&quot; */
++	&quot;Merak II&quot;,		/* TOS: &quot;The Cloud Minders&quot; */
++	&quot;Argelius II (Nelphia)&quot;,	/* TOS: &quot;Wolf in the Fold&quot; (&quot;IV&quot; in BSD) */
++	&quot;Daran V&quot;,		/* TOS: &quot;For the World is Hollow and I Have Touched the Sky&quot; */
++	&quot;Medusa&quot;,		/* TOS: &quot;Is There in Truth No Beauty?&quot; */
++	&quot;Coridan (Desotriana)&quot;,	/* TOS: &quot;Journey to Babel&quot; */
++	&quot;Berengaria IV&quot;,	/* TOS: &quot;This Side of Paradise&quot; */
++	&quot;Capella IV (Kohath)&quot;,	/* TOS: &quot;Friday's Child&quot; (Class G) */
++	&quot;Gideon&quot;,		/* TOS: &quot;The Mark of Gideon&quot; */
++	&quot;Iotia&quot;,		/* TOS: &quot;A Piece of the Action&quot; */
++	/* Worlds from BSD Trek */
++	//&quot;Talos IV&quot;,		/* TOS: &quot;The Cage&quot; (interdicted world) */
++	&quot;Rigel II&quot;,		/* TOS: &quot;Shore Leave&quot; (&quot;III&quot; in BSD) */
++	&quot;Deneb II&quot;,		/* TOS: &quot;Wolf in the Fold&quot; (&quot;IV&quot; in BSD) */
++	//&quot;Canopus V&quot;,		/* noncanonical */
++	//&quot;Icarus I&quot;,		/* noncanonical */
++	//&quot;Prometheus II&quot;,	/* noncanonical */
++	//&quot;Omega VII&quot;,		/* noncanonical */
++	//&quot;Elysium I&quot;,		/* noncanonical */
++	&quot;Scalos IV&quot;,		/* TOS: &quot;Wink of an Eye&quot; */
++	//&quot;Procyon IV&quot;,		/* noncanonical */
++	//&quot;Arachnid I&quot;,		/* noncanonical */
++	//&quot;Argo VIII&quot;,		/* noncanonical */
++	//&quot;Triad III&quot;,		/* noncanonical */
++	//&quot;Echo IV&quot;,		/* noncanonical */
++	//&quot;Nimrod III&quot;,		/* noncanonical */
++	//&quot;Nemisis IV&quot;,		/* noncanonical */
++	//&quot;Centarurus I&quot;,	/* noncanonical */
++	//&quot;Kronos III&quot;,		/* noncanonical */
++	//&quot;Spectros V&quot;,		/* noncanonical */
++	&quot;Beta III&quot;,		/* TOS: &quot;The Return of the Archons&quot; */
++	&quot;Gamma Tranguli VI (Vaalel)&quot;,	/* TOS: &quot;The Apple&quot; */
++	&quot;Pyris VII&quot;,		/* TOS: &quot;Catspaw&quot; (&quot;III&quot; in BSD) */
++	&quot;Triacus&quot;,		/* TOS: &quot;And the Children Shall Lead&quot;, */
++	&quot;Marcos XII&quot;,		/* TOS: &quot;And the Children Shall Lead&quot;, */
++	//&quot;Kaland&quot;,		/* noncanonical */
++	&quot;Ardana&quot;,		/* TOS: &quot;The Cloud Minders&quot; */
++	//&quot;Stratos&quot;,		/* noncanonical */
++	//&quot;Eden&quot;,		/* TOS: &quot;The Way to Eden&quot; (in Romulan space) */
++	//&quot;Arrikis&quot;,		/* noncanonical */
++	//&quot;Epsilon Eridani IV&quot;,	/* noncanonical */
++	&quot;Exo III&quot;,		/* TOS: &quot;What Are Little Girls Made Of?&quot; (Class P) */
++    };
++
++    return names[planet-&gt;inhabited];
++}
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-15 09:35:11 UTC (rev 567)
++++ trunk/src/reports.c	2006-09-15 18:41:16 UTC (rev 568)
+@@ -313,6 +313,16 @@
+ 	proutn(&quot;Klingons Left %d&quot;, KLINGREM);
+ 	break;
+     case 10:
++	if (game.options &amp; OPTION_WORLDS) {
++	    planet *here = game.state.galaxy[game.quadx][game.quady].planet;
++	    if (here &amp;&amp; here-&gt;inhabited != UNINHABITED)
++		proutn(&quot;Major system  %s&quot;, systemname(here));
++	    else
++		proutn(&quot;Sector is uninhabited&quot;);
++	}
++
++	break;
++    case 11:
+ 	attakreport(1);
+ 	break;
+     }
+@@ -320,8 +330,9 @@
+ 		
+ int srscan(int l) 
+ {
++    /* the &quot;sy&quot; request is undocumented */
+     static char requests[][3] =
+-	{&quot;&quot;,&quot;da&quot;,&quot;co&quot;,&quot;po&quot;,&quot;ls&quot;,&quot;wa&quot;,&quot;en&quot;,&quot;to&quot;,&quot;sh&quot;,&quot;kl&quot;,&quot;ti&quot;};
++	{&quot;&quot;,&quot;da&quot;,&quot;co&quot;,&quot;po&quot;,&quot;ls&quot;,&quot;wa&quot;,&quot;en&quot;,&quot;to&quot;,&quot;sh&quot;,&quot;kl&quot;,&quot;sy&quot;, &quot;ti&quot;};
+     int leftside=TRUE, rightside=TRUE, i, j, jj, req=0, nn=FALSE;
+     int goodScan=TRUE;
+     switch (l) {
+@@ -358,7 +369,7 @@
+ 	if (req &gt; sizeof(requests)/sizeof(requests[0])) {
+ 	    prout(&quot;UNRECOGNIZED REQUEST. Legal requests are:&quot;);
+ 	    prout(&quot;  date, condition, position, lsupport, warpfactor,&quot;);
+-	    prout(&quot;  energy, torpedoes, shields, klingons, time, bases.&quot;);
++	    prout(&quot;  energy, torpedoes, shields, klingons, time, system, bases.&quot;);
+ 	    return FALSE;
+ 	}
+ 	// no break
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-15 09:35:11 UTC (rev 567)
++++ trunk/src/setup.c	2006-09-15 18:41:16 UTC (rev 568)
+@@ -229,7 +229,7 @@
+     for_quadrants(i)
+ 	for_quadrants(j) {
+ 	    game.state.galaxy[i][j].charted = 0;
+-	    game.state.galaxy[i][j].planets = 0;
++	    game.state.galaxy[i][j].planet = NULL;
+ 	    game.state.galaxy[i][j].romulans = 0;
+ 	    game.state.galaxy[i][j].klingons = 0;
+ 	    game.state.galaxy[i][j].starbase = 0;
+@@ -328,13 +328,22 @@
+     }
+     // Locate planets in galaxy
+     for (i = 0; i &lt; game.inplan; i++) {
+-	do iran(GALSIZE, &amp;ix, &amp;iy); while (game.state.galaxy[ix][iy].planets);
+-	game.state.galaxy[ix][iy].planets = 1;
++	do iran(GALSIZE, &amp;ix, &amp;iy); while (game.state.galaxy[ix][iy].planet);
+ 	game.state.plnets[i].x = ix;
+ 	game.state.plnets[i].y = iy;
+-	game.state.plnets[i].pclass = Rand()*3.0; // Planet class M N or O
+-	game.state.plnets[i].crystals = 1.5*Rand();		// 1 in 3 chance of crystals
+-	game.state.plnets[i].known = unknown;
++	if (i &lt; NINHAB) {
++	    game.state.plnets[i].pclass = M;	// All inhabited planets are class M
++	    game.state.plnets[i].crystals = 0;
++	    game.state.plnets[i].known = known;
++	    game.state.plnets[i].inhabited = i;
++	} else {
++	    game.state.plnets[i].pclass = Rand()*3.0; // Planet class M N or O
++	    game.state.plnets[i].crystals = 1.5*Rand();		// 1 in 3 chance of crystals
++	    game.state.plnets[i].known = unknown;
++	    game.state.plnets[i].inhabited = UNINHABITED;
++	}
++	if ((game.options &amp; OPTION_WORLDS) || i &gt;= NINHAB)
++	    game.state.galaxy[ix][iy].planet = game.state.plnets + i;
+     }
+     // Locate Romulans
+     for (i = 1; i &lt;= game.state.nromrem; i++) {
+@@ -495,7 +504,7 @@
+     game.state.rembase = 2.0 + Rand()*(BASEMAX-2.0);
+     game.inbase = game.state.rembase;
+     if (game.options &amp; OPTION_PLANETS)
+-	game.inplan = (PLNETMAX/2) + (PLNETMAX/2+1)*Rand();
++	game.inplan = NINHAB + (MAXUNINHAB/2) + (MAXUNINHAB/2+1)*Rand();
+     game.state.nromrem = game.inrom = (2.0+Rand())*game.skill;
+     game.state.nscrem = game.inscom = (game.skill &gt; SKILL_FAIR ? 1 : 0);
+     game.state.remtime = 7.0 * game.length;
+@@ -531,7 +540,8 @@
+ 
+ void newqad(int shutup) 
+ {
+-    int i, j, ix, iy, nplan;
++    int i, j, ix, iy;
++    planet *planhere;
+ 
+     game.iattak = 1;
+     game.justin = 1;
+@@ -565,7 +575,6 @@
+ 	return;
+     game.klhere = game.state.galaxy[game.quadx][game.quady].klingons;
+     game.irhere = game.state.galaxy[game.quadx][game.quady].romulans;
+-    nplan  = game.state.galaxy[game.quadx][game.quady].planets;
+     game.nenhere = game.klhere + game.irhere;
+ 
+     // Position Starship
+@@ -610,14 +619,11 @@
+     if (game.state.galaxy[game.quadx][game.quady].starbase)
+ 	dropin(IHB, &amp;game.basex, &amp;game.basey);
+ 	
+-    if (nplan) {
+-	// If quadrant needs a planet, put it in
+-	for (i=0; i &lt; game.inplan; i++)
+-	    if (game.state.plnets[i].x == game.quadx &amp;&amp; game.state.plnets[i].y == game.quady) break;
+-	if (i &lt; game.inplan) {
+-	    game.iplnet = i;
+-	    dropin(IHP, &amp;game.plnetx, &amp;game.plnety);
+-	}
++    // If quadrant needs a planet, put it in
++    planhere = game.state.galaxy[game.quadx][game.quady].planet;
++    if (planhere) {
++	game.iplnet = planhere - game.state.plnets;
++	dropin(IHP, &amp;game.plnetx, &amp;game.plnety);
+     }
+     // Check for game.condition
+     newcnd();
+@@ -626,7 +632,7 @@
+ 	dropin(IHSTAR, &amp;ix, &amp;iy);
+ 
+     // Check for RNZ
+-    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0) {
++    if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (!planhere || planhere-&gt;inhabited == UNINHABITED)) {
+ 	game.neutz = 1;
+ 	if (game.damage[DRADIO] &lt;= 0.0) {
+ 	    skip(1);
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-15 09:35:11 UTC (rev 567)
++++ trunk/src/sst.c	2006-09-15 18:41:16 UTC (rev 568)
+@@ -152,6 +152,12 @@
+ 
+    4. Added game option selection so you can play a close (but not bug-for-
+       bug identical) approximation of older versions.
++
++   5. Half the quadrants now have inhabited planets, from which one 
++      cannot mine dilithium (there will still be the same additional number
++      of dilithium-bearing planets).  Right now this is just color, but
++      eventually we'll fold in BSD-Trek-like logic for Klingons to attack
++      and enslave inhabited worlds.
+ */
+ 
+ /* the input queue */
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-15 09:35:11 UTC (rev 567)
++++ trunk/src/sst.h	2006-09-15 18:41:16 UTC (rev 568)
+@@ -18,8 +18,10 @@
+ // #define DEBUG
+ 
+ #define PHASEFAC (2.0)
+-#define PLNETMAX (10)
+ #define GALSIZE	(8)
++#define NINHAB (GALSIZE * GALSIZE / 2)
++#define MAXUNINHAB (10)
++#define PLNETMAX (NINHAB + MAXUNINHAB)
+ #define QUADSIZE (10)
+ #define BASEMAX	(5)
+ 
+@@ -39,7 +41,10 @@
+     int x;	/* Quadrant location of planet */
+     int y;
+     enum {M=0, N=1, O=2} pclass;
++    int inhabited;	/* if NZ, an index into a name array */
++#define UNINHABITED	-1
+     int crystals; /* has crystals */
++#define MINED	-1	/* used to have crystals, but they were mined out */
+     enum {unknown, known, shuttle_down} known;
+ } planet;
+ 
+@@ -65,7 +70,7 @@
+ 	    remtime;		// remaining time
+     struct {
+ 	int stars;
+-	int planets;
++	planet *planet;
+ 	int starbase;
+ 	int klingons;
+ 	int romulans;
+@@ -108,6 +113,7 @@
+ #define OPTION_MVBADDY	0x00000100	/* more enemies can move */
+ #define OPTION_BLKHOLE	0x00000200	/* black hole may timewarp you */
+ #define OPTION_BASE	0x00000400	/* bases have good shields */
++#define OPTION_WORLDS	0x00000800	/* logic for inhabited worlds */
+ #define OPTION_PLAIN	0x01000000	/* user chose plain game */
+ #define OPTION_ALMY	0x02000000	/* user chose Almy variant */
+ 
+@@ -389,6 +395,7 @@
+ void commandhook(char *, int);
+ void makechart(void);
+ void enqueue(char *);
++char *systemname(planet *);
+ 
+ /* mode arguments for srscan() */
+ #define SCAN_FULL		1
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000034.html">[Sst-commit-watch] r567 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000036.html">[Sst-commit-watch] r569 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#35">[ date ]</a>
+              <a href="thread.html#35">[ thread ]</a>
+              <a href="subject.html#35">[ subject ]</a>
+              <a href="author.html#35">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

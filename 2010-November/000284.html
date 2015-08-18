@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r815 - in trunk: . doc
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2010-November/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r815%20-%20in%20trunk%3A%20.%20doc&In-Reply-To=%3C20101130094456.8C31048018C%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000283.html">
+   <LINK REL="Next"  HREF="000285.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r815 - in trunk: . doc</H1>
+    <B>esr at mail.berlios.de</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r815%20-%20in%20trunk%3A%20.%20doc&In-Reply-To=%3C20101130094456.8C31048018C%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r815 - in trunk: . doc">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Nov 30 10:44:56 CET 2010</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000283.html">[Sst-commit-watch] r814 - in trunk: . c-version/src doc
+</A></li>
+        <LI>Next message: <A HREF="000285.html">[Sst-commit-watch] r816 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#284">[ date ]</a>
+              <a href="thread.html#284">[ thread ]</a>
+              <a href="subject.html#284">[ subject ]</a>
+              <a href="author.html#284">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2010-11-30 10:44:56 +0100 (Tue, 30 Nov 2010)
+New Revision: 815
+
+Added:
+   trunk/NEWS
+Removed:
+   trunk/ChangeLog
+Modified:
+   trunk/doc/sst-doc.xml
+Log:
+Documentation update.
+
+
+Deleted: trunk/ChangeLog
+===================================================================
+--- trunk/ChangeLog	2010-11-30 08:57:12 UTC (rev 814)
++++ trunk/ChangeLog	2010-11-30 09:44:56 UTC (rev 815)
+@@ -1,30 +0,0 @@
+-2006-09-15  Eric S. Raymond  &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">esr at snark.thyrsus.com</A>&gt;
+-
+-	* TODO: Fixed these bug items from the TO-DO list:
+-	
+-	* Bring the online help in sync with our commands changes
+-	
+-	* Find out why the online help contains the escape sequences like
+-	~@~T (Eric?)
+-	
+-	The first was due to bugs in some macro definitions in sst.c, now
+-	fixed.  The second was from escape sequences generated into
+-	sst.doc by xmlto for left-and right-quotes, dashes, and no-break
+-	spaces; that is fixed by an additional translation step in
+-	makehelp.py.
+-	
+-	xmlto still generates line-drawing characters for the tables in
+-	the LRSCAN and REPORT help items, but those look OK on an xterm in
+-	text mode and their help items are suppressed (along with their
+-	commands) in curses mode.
+-	
+-	This is not a completely satisfactory solution, but it will do
+-	until a design change makes those help items visible again.
+-
+-2006-09-12  gettextize  &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">bug-gnu-gettext at gnu.org</A>&gt;
+-
+-	* Makefile.am (SUBDIRS): Add po.
+-	(ACLOCAL_AMFLAGS): New variable.
+-	(EXTRA_DIST): Add config.rpath, m4/ChangeLog.
+-	* configure.ac (AC_CONFIG_FILES): Add po/Makefile.in.
+-
+
+Copied: trunk/NEWS (from rev 809, trunk/ChangeLog)
+===================================================================
+--- trunk/NEWS	                        (rev 0)
++++ trunk/NEWS	2010-11-30 09:44:56 UTC (rev 815)
+@@ -0,0 +1,11 @@
++			SST2K project news.
++
++2.0 @ 2010-11-30
++
++    Game code moved to Python. Many bug fixes.
++
++1.0 @ 2004-06-06
++
++    Initial release.
++
++
+
+Modified: trunk/doc/sst-doc.xml
+===================================================================
+--- trunk/doc/sst-doc.xml	2010-11-30 08:57:12 UTC (rev 814)
++++ trunk/doc/sst-doc.xml	2010-11-30 09:44:56 UTC (rev 815)
+@@ -1826,8 +1826,8 @@
+ &lt;para&gt;Planets are auto-scanned when you enter the quadrant.&lt;/para&gt;
+ &lt;/listitem&gt;
+ &lt;listitem&gt;
+-&lt;para&gt;Mining or using crystals in presense of enemy now yields an attack.
+-There are other minor adjustments to what yields an attack
++&lt;para&gt;Mining or using crystals in the presence of the enemy now yields
++an attack.  There are other minor adjustments to what yields an attack
+ and what does not.&lt;/para&gt;
+ &lt;/listitem&gt;
+ &lt;listitem&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000283.html">[Sst-commit-watch] r814 - in trunk: . c-version/src doc
+</A></li>
+	<LI>Next message: <A HREF="000285.html">[Sst-commit-watch] r816 - in trunk: . doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#284">[ date ]</a>
+              <a href="thread.html#284">[ thread ]</a>
+              <a href="subject.html#284">[ subject ]</a>
+              <a href="author.html#284">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

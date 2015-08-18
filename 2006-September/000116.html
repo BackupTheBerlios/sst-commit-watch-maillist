@@ -1,0 +1,340 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r649 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r649%20-%20trunk/src&In-Reply-To=%3C200609300900.k8U90o2j003803%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000115.html">
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r649 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r649%20-%20trunk/src&In-Reply-To=%3C200609300900.k8U90o2j003803%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r649 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Sat Sep 30 11:00:50 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000115.html">[Sst-commit-watch] r648 - trunk/src
+</A></li>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#116">[ date ]</a>
+              <a href="thread.html#116">[ thread ]</a>
+              <a href="subject.html#116">[ subject ]</a>
+              <a href="author.html#116">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-30 11:00:49 +0200 (Sat, 30 Sep 2006)
+New Revision: 649
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/finish.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+Get rid of some macros that block mechanical translation.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-29 09:39:24 UTC (rev 648)
++++ trunk/src/ai.c	2006-09-30 09:00:49 UTC (rev 649)
+@@ -389,7 +389,7 @@
+ 	prout(&quot;== SUPERCOMMANDER&quot;);
+ 
+     /* Decide on being active or passive */
+-    avoid = ((NKILLC+NKILLK)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) ||
++    avoid = ((game.incom - game.state.remcom + game.inkling - game.state.remkl)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) ||
+ 	    (game.state.date-game.indate) &lt; 3.0);
+     if (!game.iscate &amp;&amp; avoid) {
+ 	/* compute move away from Enterprise */
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-29 09:39:24 UTC (rev 648)
++++ trunk/src/battle.c	2006-09-30 09:00:49 UTC (rev 649)
+@@ -239,7 +239,7 @@
+     }
+     game.shldup = false;
+     prout(_(&quot;***Shields are down.&quot;));
+-    if (KLINGREM) {
++    if (game.state.remkl + game.state.remcom + game.state.nscrem) {
+ 	pause_game(true);
+ 	damagereport();
+     }
+@@ -639,7 +639,7 @@
+ 	    r = (Rand()+Rand())*0.5 -0.5;
+ 	    r += 0.002*game.kpower[loop]*r;
+ 	    torpedo(course, r, jay, &amp;hit, 1, 1);
+-	    if (KLINGREM==0) 
++	    if ((game.state.remkl + game.state.remcom + game.state.nscrem)==0) 
+ 		finish(FWON); /* Klingons did themselves in! */
+ 	    if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova || game.alldone) 
+ 		return; /* Supernova or finished */
+@@ -789,7 +789,7 @@
+     /* For each kind of enemy, finish message to player */
+     prout(_(&quot; destroyed.&quot;));
+     game.quad[w.x][w.y] = IHDOT;
+-    if (KLINGREM==0)
++    if ((game.state.remkl + game.state.remcom + game.state.nscrem)==0)
+ 	return;
+ 
+     game.state.remtime = game.state.remres/(game.state.remkl + 4*game.state.remcom);
+@@ -966,7 +966,7 @@
+ 	if (game.alldone || game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+ 	    return;
+     }
+-    if (KLINGREM==0)
++    if ((game.state.remkl + game.state.remcom + game.state.nscrem)==0)
+ 	finish(FWON);
+ }
+ 
+@@ -1368,7 +1368,7 @@
+ 	skip(1);
+ 	if (kpow == 0) {
+ 	    deadkl(w, ienm, w);
+-	    if (KLINGREM==0)
++	    if ((game.state.remkl + game.state.remcom + game.state.nscrem)==0)
+ 		finish(FWON);		
+ 	    if (game.alldone)
+ 		return;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-29 09:39:24 UTC (rev 648)
++++ trunk/src/events.c	2006-09-30 09:00:49 UTC (rev 649)
+@@ -943,7 +943,7 @@
+     if (same(game.quadrant, nq) || !damaged(DRADIO) || game.condition == docked)
+ 	game.state.galaxy[nq.x][nq.y].supernova = true;
+     /* If supernova destroys last Klingons give special message */
+-    if (KLINGREM==0 &amp;&amp; !same(nq, game.quadrant)) {
++    if ((game.state.remkl + game.state.remcom + game.state.nscrem)==0 &amp;&amp; !same(nq, game.quadrant)) {
+ 	skip(2);
+ 	if (!induced)
+ 	    prout(_(&quot;Lucky you!&quot;));
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-29 09:39:24 UTC (rev 648)
++++ trunk/src/finish.c	2006-09-30 09:00:49 UTC (rev 649)
+@@ -100,7 +100,7 @@
+ 		badpt = 0.0;	// Close enough!
+ 	    if (game.state.date-game.indate &lt; 5.0 ||
+ 		// killsPerDate &gt;= RateMax
+-		KLINGKILLED/(game.state.date-game.indate) &gt;=
++		((game.inkling + game.incom + game.inscom) - (game.state.remkl + game.state.remcom + game.state.nscrem))/(game.state.date-game.indate) &gt;=
+ 		0.1*game.skill*(game.skill+1.0) + 0.1 + 0.008*badpt) {
+ 		skip(1);
+ 		prout(_(&quot;In fact, you have done so well that Starfleet Command&quot;));
+@@ -166,7 +166,7 @@
+ 	prout(_(&quot;conquered.  Your starship is now Klingon property,&quot;));
+ 	prout(_(&quot;and you are put on trial as a war criminal.  On the&quot;));
+ 	proutn(_(&quot;basis of your record, you are &quot;));
+-	if (KLINGREM*3.0 &gt; INKLINGTOT) {
++	if ((game.state.remkl + game.state.remcom + game.state.nscrem)*3.0 &gt; (game.inkling + game.incom + game.inscom)) {
+ 	    prout(_(&quot;acquitted.&quot;));
+ 	    skip(1);
+ 	    prout(_(&quot;LIVE LONG AND PROSPER.&quot;));
+@@ -296,7 +296,7 @@
+     else if (game.ship == IHE)
+ 	game.ship = IHF;
+     game.alive = false;
+-    if (KLINGREM != 0) {
++    if ((game.state.remkl + game.state.remcom + game.state.nscrem) != 0) {
+ 	double goodies = game.state.remres/game.inresor;
+ 	double baddies = (game.state.remkl + 2.0*game.state.remcom)/(game.inkling+2.0*game.incom);
+ 	if (goodies/baddies &gt;= 1.0+0.5*Rand()) {
+@@ -330,9 +330,9 @@
+     int ithperd, iwon, klship;
+ 
+     iskill = game.skill;
+-    if ((timused == 0 || KLINGREM != 0) &amp;&amp; timused &lt; 5.0)
++    if ((timused == 0 || (game.state.remkl + game.state.remcom + game.state.nscrem) != 0) &amp;&amp; timused &lt; 5.0)
+ 	timused = 5.0;
+-    perdate = KLINGKILLED/timused;
++    perdate = ((game.inkling + game.incom + game.inscom) - (game.state.remkl + game.state.remcom + game.state.nscrem))/timused;
+     ithperd = 500*perdate + 0.5;
+     iwon = 0;
+     if (game.gamewon)
+@@ -345,28 +345,28 @@
+ 	klship = 2;
+     if (!game.gamewon)
+ 	game.state.nromrem = 0; // None captured if no win
+-    iscore = 10*NKILLK + 50*NKILLC + ithperd + iwon
++    iscore = 10*(game.inkling - game.state.remkl) + 50*(game.incom - game.state.remcom) + ithperd + iwon
+ 	- 100*game.state.basekl - 100*klship - 45*game.nhelp -5*game.state.starkl - game.casual
+-	+ 20*NKILLROM + 200*NKILLSC - 10*game.state.nplankl - 300*game.state.nworldkl + game.state.nromrem;
++	+ 20*(game.inrom - game.state.nromrem) + 200*(game.inscom - game.state.nscrem) - 10*game.state.nplankl - 300*game.state.nworldkl + game.state.nromrem;
+     if (!game.alive)
+ 	iscore -= 200;
+     skip(2);
+     prout(_(&quot;Your score --&quot;));
+-    if (NKILLROM)
++    if (game.inrom - game.state.nromrem)
+ 	prout(_(&quot;%6d Romulans destroyed                 %5d&quot;),
+-	      NKILLROM,20*NKILLROM);
++	      game.inrom - game.state.nromrem, 20*(game.inrom - game.state.nromrem));
+     if (game.state.nromrem)
+ 	prout(_(&quot;%6d Romulans captured                  %5d&quot;),
+ 	      game.state.nromrem, game.state.nromrem);
+-    if (NKILLK)
++    if (game.inkling - game.state.remkl)
+ 	prout(_(&quot;%6d ordinary Klingons destroyed        %5d&quot;),
+-	      NKILLK, 10*NKILLK);
+-    if (NKILLC)
++	      game.inkling - game.state.remkl, 10*(game.inkling - game.state.remkl));
++    if (game.incom - game.state.remcom)
+ 	prout(_(&quot;%6d Klingon commanders destroyed       %5d&quot;),
+-	      NKILLC, 50*NKILLC);
+-    if (NKILLSC)
++	      game.incom - game.state.remcom, 50*(game.incom - game.state.remcom));
++    if (game.inscom - game.state.nscrem)
+ 	prout(_(&quot;%6d Super-Commander destroyed          %5d&quot;),
+-	      NKILLSC, 200*NKILLSC);
++	      game.inscom - game.state.nscrem, 200*(game.inscom - game.state.nscrem));
+     if (ithperd)
+ 	prout(_(&quot;%6.2f Klingons per stardate              %5d&quot;),
+ 	      perdate, ithperd);
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-29 09:39:24 UTC (rev 648)
++++ trunk/src/moving.c	2006-09-30 09:00:49 UTC (rev 649)
+@@ -793,7 +793,7 @@
+     } while 
+ 	/* Repeat if another snova */
+ 	(game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova);
+-    if (KLINGREM==0) 
++    if ((game.state.remkl + game.state.remcom + game.state.nscrem)==0) 
+ 	finish(FWON); /* Snova killed remaining enemy. */
+ }
+ 
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-29 09:39:24 UTC (rev 648)
++++ trunk/src/planets.c	2006-09-30 09:00:49 UTC (rev 649)
+@@ -450,7 +450,7 @@
+ 	while (game.nenhere &gt; 0)
+ 	    deadkl(game.ks[1], game.quad[game.ks[1].x][game.ks[1].y],game.ks[1]);
+ 	prout(_(&quot;Ensign Chekov-  \&quot;Congratulations, Captain!\&quot;&quot;));
+-	if (KLINGREM == 0)
++	if ((game.state.remkl + game.state.remcom + game.state.nscrem) == 0)
+ 	    finish(FWON);    
+ 	if ((game.options &amp; OPTION_PLAIN) == 0) {
+ 	    prout(_(&quot;Spock-  \&quot;Captain, I believe the `Experimental Death Ray'&quot;));
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-29 09:39:24 UTC (rev 648)
++++ trunk/src/reports.c	2006-09-30 09:00:49 UTC (rev 649)
+@@ -60,10 +60,12 @@
+     if (game.tourn)
+ 	prout(_(&quot;This is tournament game %d.&quot;), game.tourn);
+     prout(_(&quot;Your secret password is \&quot;%s\&quot;&quot;),game.passwd);
+-    proutn(_(&quot;%d of %d Klingons have been killed&quot;), KLINGKILLED, INKLINGTOT);
+-    if (NKILLC)
+-	prout(_(&quot;, including %d Commander%s.&quot;), NKILLC, NKILLC==1?&quot;&quot;:_(&quot;s&quot;));
+-    else if (NKILLK + NKILLSC &gt; 0)
++    proutn(_(&quot;%d of %d Klingons have been killed&quot;), 
++	   ((game.inkling + game.incom + game.inscom) - (game.state.remkl + game.state.remcom + game.state.nscrem)), 
++	   (game.inkling + game.incom + game.inscom));
++    if (game.incom - game.state.remcom)
++	prout(_(&quot;, including %d Commander%s.&quot;), game.incom - game.state.remcom, (game.incom - game.state.remcom)==1?&quot;&quot;:_(&quot;s&quot;));
++    else if (game.inkling - game.state.remkl + (game.inscom - game.state.nscrem) &gt; 0)
+ 	prout(_(&quot;, but no Commanders.&quot;));
+     else
+ 	prout(&quot;.&quot;);
+@@ -344,7 +346,7 @@
+     );
+ 
+     RQ(9,
+-        prstat(_(&quot;Klingons Left&quot;), &quot;%d&quot;, KLINGREM);
++        prstat(_(&quot;Klingons Left&quot;), &quot;%d&quot;, game.state.remkl + game.state.remcom + game.state.nscrem);
+     );
+ 
+     RQ(10,
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-29 09:39:24 UTC (rev 648)
++++ trunk/src/setup.c	2006-09-30 09:00:49 UTC (rev 649)
+@@ -379,7 +379,7 @@
+ 	prout(_(&quot;a deadly Klingon invasion force. As captain of the United&quot;));
+ 	prout(_(&quot;Starship U.S.S. Enterprise, it is your mission to seek out&quot;));
+ 	prout(_(&quot;and destroy this invasion force of %d battle cruisers.&quot;),
+-	      INKLINGTOT);
++	      (game.inkling + game.incom + game.inscom));
+ 	prout(_(&quot;You have an initial allotment of %d stardates to complete&quot;), (int)game.intime);
+ 	prout(_(&quot;your mission.  As you proceed you may be given more time.&quot;));
+ 	skip(1);
+@@ -389,7 +389,7 @@
+     else {
+ 	prout(_(&quot;Stardate %d.&quot;), (int)game.state.date);
+ 	skip(1);
+-	prout(_(&quot;%d Klingons.&quot;), INKLINGTOT);
++	prout(_(&quot;%d Klingons.&quot;), game.inkling + game.incom + game.inscom);
+ 	prout(_(&quot;An unknown number of Romulans.&quot;));
+ 	if (game.state.nscrem)
+ 	    prout(_(&quot;And one (GULP) Super-Commander.&quot;));
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-29 09:39:24 UTC (rev 648)
++++ trunk/src/sst.h	2006-09-30 09:00:49 UTC (rev 649)
+@@ -113,14 +113,6 @@
+     } chart[GALSIZE+1][GALSIZE+1]; 	// the starchart (subscript 0 not used)
+ } snapshot;				// Data that is snapshot
+ 
+-#define NKILLK (game.inkling - game.state.remkl)
+-#define NKILLC (game.incom - game.state.remcom)
+-#define NKILLSC (game.inscom - game.state.nscrem)
+-#define NKILLROM (game.inrom - game.state.nromrem)
+-#define KLINGREM (game.state.remkl + game.state.remcom + game.state.nscrem)
+-#define INKLINGTOT (game.inkling + game.incom + game.inscom)
+-#define KLINGKILLED (INKLINGTOT - KLINGREM)
+-
+ /* game options */
+ #define OPTION_ALL	0xffffffff
+ #define OPTION_TTY	0x00000001	/* old interface */
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000115.html">[Sst-commit-watch] r648 - trunk/src
+</A></li>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#116">[ date ]</a>
+              <a href="thread.html#116">[ thread ]</a>
+              <a href="subject.html#116">[ subject ]</a>
+              <a href="author.html#116">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

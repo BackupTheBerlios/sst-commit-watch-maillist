@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r565 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r565%20-%20trunk/src&In-Reply-To=%3C200609150155.k8F1tPbh028152%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000031.html">
+   <LINK REL="Next"  HREF="000033.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r565 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r565%20-%20trunk/src&In-Reply-To=%3C200609150155.k8F1tPbh028152%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r565 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 15 03:55:25 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000031.html">[Sst-commit-watch] r564 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000033.html">[Sst-commit-watch] r566 - in trunk: doc src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#32">[ date ]</a>
+              <a href="thread.html#32">[ thread ]</a>
+              <a href="subject.html#32">[ subject ]</a>
+              <a href="author.html#32">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-15 03:55:24 +0200 (Fri, 15 Sep 2006)
+New Revision: 565
+
+Modified:
+   trunk/src/xio.c
+Log:
+Temporarily make this standalone.
+
+
+Modified: trunk/src/xio.c
+===================================================================
+--- trunk/src/xio.c	2006-09-14 23:02:52 UTC (rev 564)
++++ trunk/src/xio.c	2006-09-15 01:55:24 UTC (rev 565)
+@@ -13,9 +13,14 @@
+  *    1. Button pushes should be able to insert commands at the buffer's
+  *       current insertion point.
+  *    2. When a user finishes a command with Return, a callback should
+- *       receive the line of input types.
++ *       receive the line of input typed.
++ * 
++ * All the input passed to the game in back of this will be lines full
++ * of commands generated either by typing into the text buffer directly 
++ * or by button presses that generate text unto the buffer.
+  */
+ #include &lt;stdlib.h&gt;
++#include &lt;stdio.h&gt;
+ #include &lt;X11/Intrinsic.h&gt;
+ #include &lt;X11/StringDefs.h&gt;
+ #include &lt;X11/Shell.h&gt;
+@@ -23,7 +28,9 @@
+ #include &lt;X11/Xaw/Form.h&gt;
+ #include &lt;X11/Xaw/Command.h&gt;
+ #include &lt;X11/Xaw/AsciiText.h&gt;
+-#include &quot;sst.h&quot;
++//#include &quot;sst.h&quot;
++#define OPTION_PLANETS	1
++#define OPTION_PROBE	2
+ 
+ static XtAppContext app_context;
+ static Widget toplevel, text, form; 
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000031.html">[Sst-commit-watch] r564 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000033.html">[Sst-commit-watch] r566 - in trunk: doc src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#32">[ date ]</a>
+              <a href="thread.html#32">[ thread ]</a>
+              <a href="subject.html#32">[ subject ]</a>
+              <a href="author.html#32">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

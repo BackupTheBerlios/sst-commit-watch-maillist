@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r773 - in trunk: doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r773%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C200610171747.k9HHlc7F003168%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000239.html">
+   <LINK REL="Next"  HREF="000241.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r773 - in trunk: doc src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r773%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C200610171747.k9HHlc7F003168%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r773 - in trunk: doc src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 17 19:47:38 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000239.html">[Sst-commit-watch] r772 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000241.html">[Sst-commit-watch] r774 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#240">[ date ]</a>
+              <a href="thread.html#240">[ thread ]</a>
+              <a href="subject.html#240">[ subject ]</a>
+              <a href="author.html#240">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-17 19:47:37 +0200 (Tue, 17 Oct 2006)
+New Revision: 773
+
+Modified:
+   trunk/doc/HACKING
+   trunk/src/sst.py
+Log:
+More documentation improvements.
+
+
+Modified: trunk/doc/HACKING
+===================================================================
+--- trunk/doc/HACKING	2006-10-17 17:31:52 UTC (rev 772)
++++ trunk/doc/HACKING	2006-10-17 17:47:37 UTC (rev 773)
+@@ -245,3 +245,25 @@
+ in C, I introduced a struct; in Python, the class has a complete
+ repertoire of vector-algebra operations.
+ 
++There's one weird archeological detail about the nav code that
++deserves a remark.  This program originally required input in terms of
++a (clock) direction and distance -- essentially, directions were real
++numbers modulo 12 with zero being north.  Somewhere in history, it was
++changed to Cartesian coordinates.  But the bearing method still computes
++polar coordinates in clockface units -- that's the reason for the
++wacky constant 1.90985, inherited straight from the ancestral FORTRAN.
++Elsewhere, there were a bunch of computations, now centralized in the
++course object, that looked like (15.0 - bearing)*0.5235988; this is a 
++conversion from clockface units to radians with zero on the X axis.
++
++As a previous maintainer, probably Tom Almy, observed: Probably
++&quot;manual&quot; input should still be done this way -- it's a real pain if
++the computer isn't working! Manual mode is still confusing because it
++involves giving x and y motions, yet the coordinates are always
++displayed y - x, where +y is downward!
++
++Because I think he's arguably right, I haven't ripped out all the
++clockface-to-radian conversions.  For this reason, and others, the 
++trig code is still a bit wacky and obscure.  Modify with caution
++and test thoroughly.
++
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-17 17:31:52 UTC (rev 772)
++++ trunk/src/sst.py	2006-10-17 17:47:37 UTC (rev 773)
+@@ -3530,14 +3530,6 @@
+ 	prout(_(&quot;Lt. Uhura- \&quot;Captain, an important message from the starbase:\&quot;&quot;))
+ 	attackreport(False)
+ 	game.iseenit = True
+- 
+-# This program originally required input in terms of a (clock)
+-# direction and distance. Somewhere in history, it was changed to
+-# cartesian coordinates. So we need to convert.  Probably
+-# &quot;manual&quot; input should still be done this way -- it's a real
+-# pain if the computer isn't working! Manual mode is still confusing
+-# because it involves giving x and y motions, yet the coordinates
+-# are always displayed y - x, where +y is downward!
+ 
+ def cartesian(loc1=None, loc2=None):
+     if loc1 is None:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000239.html">[Sst-commit-watch] r772 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000241.html">[Sst-commit-watch] r774 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#240">[ date ]</a>
+              <a href="thread.html#240">[ thread ]</a>
+              <a href="subject.html#240">[ subject ]</a>
+              <a href="author.html#240">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

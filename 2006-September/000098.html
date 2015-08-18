@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r631 - trunk/doc
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r631%20-%20trunk/doc&In-Reply-To=%3C200609241420.k8OEKFXa031545%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000097.html">
+   <LINK REL="Next"  HREF="000099.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r631 - trunk/doc</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r631%20-%20trunk/doc&In-Reply-To=%3C200609241420.k8OEKFXa031545%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r631 - trunk/doc">stsp at mail.berlios.de
+       </A><BR>
+    <I>Sun Sep 24 16:20:15 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000097.html">[Sst-commit-watch] r630 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000099.html">[Sst-commit-watch] r632 - in trunk: po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#98">[ date ]</a>
+              <a href="thread.html#98">[ thread ]</a>
+              <a href="subject.html#98">[ subject ]</a>
+              <a href="author.html#98">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2006-09-24 16:20:15 +0200 (Sun, 24 Sep 2006)
+New Revision: 631
+
+Modified:
+   trunk/doc/Makefile.am
+   trunk/doc/Makefile.in
+Log:
+fix makehelp.py invocation
+
+Modified: trunk/doc/Makefile.am
+===================================================================
+--- trunk/doc/Makefile.am	2006-09-24 11:04:28 UTC (rev 630)
++++ trunk/doc/Makefile.am	2006-09-24 14:20:15 UTC (rev 631)
+@@ -9,7 +9,7 @@
+ sst-doc.txt: sst-doc.xml
+ 	xmlto -m sst-layer.xsl txt sst-doc.xml
+ sst.doc: sst-doc.txt
+-	makehelp.py &gt;sst.doc
++	./makehelp.py &gt;sst.doc
+ 
+ sst-doc.html: sst-doc.xml
+ 	xmlto xhtml-nochunks sst-doc.xml
+
+Modified: trunk/doc/Makefile.in
+===================================================================
+--- trunk/doc/Makefile.in	2006-09-24 11:04:28 UTC (rev 630)
++++ trunk/doc/Makefile.in	2006-09-24 14:20:15 UTC (rev 631)
+@@ -391,7 +391,7 @@
+ sst-doc.txt: sst-doc.xml
+ 	xmlto -m sst-layer.xsl txt sst-doc.xml
+ sst.doc: sst-doc.txt
+-	makehelp.py &gt;sst.doc
++	./makehelp.py &gt;sst.doc
+ 
+ sst-doc.html: sst-doc.xml
+ 	xmlto xhtml-nochunks sst-doc.xml
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000097.html">[Sst-commit-watch] r630 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000099.html">[Sst-commit-watch] r632 - in trunk: po src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#98">[ date ]</a>
+              <a href="thread.html#98">[ thread ]</a>
+              <a href="subject.html#98">[ subject ]</a>
+              <a href="author.html#98">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

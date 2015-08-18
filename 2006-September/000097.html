@@ -1,0 +1,697 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r630 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r630%20-%20trunk/src&In-Reply-To=%3C200609241104.k8OB4TIU025818%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000096.html">
+   <LINK REL="Next"  HREF="000098.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r630 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r630%20-%20trunk/src&In-Reply-To=%3C200609241104.k8OB4TIU025818%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r630 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Sun Sep 24 13:04:29 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000096.html">[Sst-commit-watch] r629 - in trunk: . po src
+</A></li>
+        <LI>Next message: <A HREF="000098.html">[Sst-commit-watch] r631 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#97">[ date ]</a>
+              <a href="thread.html#97">[ thread ]</a>
+              <a href="subject.html#97">[ subject ]</a>
+              <a href="author.html#97">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-24 13:04:28 +0200 (Sun, 24 Sep 2006)
+New Revision: 630
+
+Modified:
+   trunk/src/sst.py
+Log:
+Trial Python now incorporates ai.c
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-09-22 17:09:23 UTC (rev 629)
++++ trunk/src/sst.py	2006-09-24 11:04:28 UTC (rev 630)
+@@ -15,21 +15,8 @@
+ MAXKLQUAD	= 9
+ FOREVER 	= 1e30
+ 
+-# Feature vakues
+-IHR = 'R',
+-IHK = 'K',
+-IHC = 'C',
+-IHS = 'S',
+-IHSTAR = '*',
+-IHP = 'P',
+-IHW = '@',
+-IHB = 'B',
+-IHBLANK = ' ',
+-IHDOT = '.',
++# These types have not been dealt with yet 
+ IHQUEST = '?',
+-IHE = 'E',
+-IHF = 'F',
+-IHT = 'T',
+ IHWEB = '#',
+ IHMATER0 = '-',
+ IHMATER1 = 'o',
+@@ -45,16 +32,98 @@
+         return self.x != None and self.y != None
+     def __eq__(self, other):
+         return self.x == other.y and self.x == other.y
++    def __add__(self, other):
++        return coord(self.x+self.x, self.y+self.y)
++    def __sub__(self, other):
++        return coord(self.x-self.x, self.y-self.y)
+     def distance(self, other):
+         return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
++    def sgn(self):
++        return coord(self.x / abs(x), self.y / abs(y));
++    def __hash__(self):
++        return hash((x, y))
++    def __str__(self):
++        return &quot;%d - %d&quot; % (self.x, self.y)
+ 
+-class planet:
++class feature:
++    &quot;A feature in the current quadrant (ship, star, black hole, etc).&quot; 
++    def __init__(self):
++        self.type = None	# name of feature type
++        self.location = None	# location
++    def distance(self):
++        return self.location.distance(game.sector)
++    def __str__(self):
++        return self.name[0]
++
++empty = None	# Value of empty space in game.quad
++
++class ship(feature):
++    &quot;An enemy ship in the current quadrant.&quot; 
++    def __init__(self):
++        feature.__init__(self)
++        self.type = None	# klingon, romulan, commander,
++        			# supercommander, tholian
++        self.power = None	# power
++        if self.type in (&quot;Klingon&quot;, &quot;Commander&quot;, &quot;Super-Commander&quot;):
++            game.remkl += 1
++        elif self.type == &quot;Romulan&quot;:
++            game.romrem += 1
++    def __del__(self):
++        if self.type in (&quot;Klingon&quot;, &quot;Commander&quot;, &quot;Super-Commander&quot;):
++            game.remkl -= 1
++        elif self.type == &quot;Romulan&quot;:
++            game.romrem -= 1
++    def sectormove(self, dest):
++        &quot;Move this ship within the current quadrant.&quot; 
++        if self.location:
++            game.quad[self.location] = None
++        game.quad[dest] = self
++        self.location = dest
++
++class planet(feature):
++    &quot;A planet.  May be inhabited or not, may hold dilithium crystals or not.&quot;
+     def __init(self):
+-        self.w = coord()
++        feature.__init__(self)
+         self.name = None
+         self.crystals = None	# &quot;absent&quot;, &quot;present&quot;, or &quot;mined&quot;
++        self.inhabited = False
+         self.known = &quot;unknown&quot;	# Other values: &quot;known&quot; and &quot;shuttle down&quot;
++    def __str__(self):
++        if self.inhabited:
++            return '@'
++        else:
++            return 'P'
+ 
++class star(feature):
++    &quot;A star.  Has no state, just knows how to identify iself.&quot;
++    def __init(self):
++        feature.__init__(self)
++    def __str__(self):
++        return '*'
++
++class web(feature):
++    &quot;A bit of Tholian web.  Has no state, just knows how to identify iself.&quot;
++    def __init(self):
++        feature.__init__(self)
++    def __str__(self):
++        return '*'
++
++class blackhole(feature):
++    &quot;A black hole.  Has no hair, just knows how to identify iself.&quot;
++    def __init(self):
++        feature.__init__(self)
++    def __str__(self):
++        return '*'
++
++class starbase(feature):
++    &quot;Starbases also have no features.&quot;
++    def __init(self):
++        feature.__init__(self)
++    def __del__(self):
++        game.state.bases.remove(self.location)
++    def __str__(self):
++        return 'B'
++
+ class quadrant:
+     def __init__(self):
+         self.stars = None
+@@ -65,6 +134,15 @@
+         self.supernova = None
+         self.charted = None
+         self.status = &quot;secure&quot;	# Other valuues: &quot;distressed&quot;, &quot;enslaved&quot;
++    def enemies(self):
++        &quot;List enemies in this quadrant.&quot;
++        lst = []
++        for feature in self.quad.values:
++            if not isinstance(feature, ship):
++                continue
++            if feature.name not in (&quot;Enterprise&quot;, &quot;Faerie Queene&quot;):
++                lst.append(feature)
++        return lst
+ 
+ class page:
+     &quot;A chart page.  The starchart is a 2D array of these.&quot;
+@@ -116,7 +194,7 @@
+         self.future = []		# future events
+         self.passwd = None		# Self Destruct password
+         # Coordinate members start here
+-	self.ks = {}			# enemy sector locations
++	self.enemies = {}			# enemy sector locations
+ 	self.quadrant = None		# where we are
+         self.sector = None
+ 	self.tholian = None		# coordinates of Tholian
+@@ -170,7 +248,6 @@
+ 	self.nkinks = None		# count of energy-barrier crossings
+ 	self.iplnet = None		# planet # in quadrant
+ 	self.inplan = None		# initial planets
+-	self.nenhere = None		# number of enemies in quadrant
+ 	self.irhere = None		# Romulans in quadrant
+ 	self.isatb = None		# =1 if super commander is attacking base
+ 	self.tourn = None		# tournament number
+@@ -201,4 +278,463 @@
+ 	self.probeiny = None		#
+ 	self.height = None		# height of orbit around planet
+ 
++def communicating():
++    &quot;Are we in communication with Starfleet Command?&quot;
++    return (not damaged(&quot;DRADIO&quot;)) or game.condition == docked
+ 
++# Code corresponding to ai.c begins here
++
++def tryexit(look, ship, irun):
++    # a bad guy attempts to bug out of the quadrant
++    iq = coord()
++    iq.x = game.quadrant.x+(look.x+(QUADSIZE-1))/QUADSIZE - 1
++    iq.y = game.quadrant.y+(look.y+(QUADSIZE-1))/QUADSIZE - 1
++    if not valid_quadrant(iq) or \
++	game.state.galaxy[iq].supernova or \
++        game.state.galaxy[iq].klingons &gt; 8:
++	return False;	# no can do -- neg energy, supernovae, or &gt;8 Klingons
++    if ship.type == &quot;Romulan&quot;:
++        return False	# Romulans cannot escape
++    if not irun:
++	# avoid intruding on another commander's territory
++        if ship.type == &quot;Commander&quot;:
++            if iq in gamestate.kcmdr:
++                return False
++	    # refuse to leave if currently attacking starbase:
++            if game.battle == game.quadrant:
++                return False;
++	# don't leave if over 1000 units of energy
++        if ship.power &gt; 1000.0:
++            return false;
++    # Print escape message and move out of quadrant.
++    # We know this if either short or long range sensors are working
++    if not damaged(&quot;DSRSENS&quot;) or not damaged(&quot;DLRSENS&quot;) or game.condition==&quot;docked&quot;:
++	crmena(True, &quot;sector&quot;, ship)
++	prout(&quot; escapes to quadrant %s (and regains strength).&quot; % iq)
++    # handle local matters related to escape
++    game.quad[ship.location] = None;
++    if game.condition != &quot;docked&quot;:
++        newcnd()
++    # Handle global matters related to escape
++    game.state.galaxy[game.quadrant].klingons -= 1
++    game.state.galaxy[iq].klingons += 1
++    if ship.type == &quot;Super-Commander&quot;:
++	game.ishere = False
++	game.iscate = False
++	game.ientesc = False
++	game.isatb = 0
++	schedule(&quot;FSCMOVE&quot;, 0.2777)
++	unschedule(&quot;FSCDBAS&quot;)
++	game.state.kscmdr = iq
++    else:
++        for (n, cmdr) in enumerate(game.state.kcmdr):
++            if cmdr == game.quadrant:
++		game.state.kcmdr[n] = iq
++		break
++	game.comhere = False
++    return True		# successful exit
++
++def sgn(n): n / abs(n)
++
++'''
++Algorithm for moving bad guys:
++
++ * Enterprise has &quot;force&quot; based on condition of phaser and photon torpedoes.
++ If both are operating full strength, force is 1000. If both are damaged,
++ force is -1000. Having shields down subtracts an additional 1000.
++
++ * Enemy has forces equal to the energy of the attacker plus
++ 100*(K+R) + 500*(C+S) - 400 for novice through good levels OR
++ 346*K + 400*R + 500*(C+S) - 400 for expert and emeritus.
++
++ Attacker Initial energy levels (nominal):
++ Klingon   Romulan   Commander   Super-Commander
++ Novice    400        700        1200        
++ Fair      425        750        1250
++ Good      450        800        1300        1750
++ Expert    475        850        1350        1875
++ Emeritus  500        900        1400        2000
++ VARIANCE   75        200         200         200
++
++ Enemy vessels only move prior to their attack. In Novice - Good games
++ only commanders move. In Expert games, all enemy vessels move if there
++ is a commander present. In Emeritus games all enemy vessels move.
++
++ *  If Enterprise is not docked, an agressive action is taken if enemy
++ forces are 1000 greater than Enterprise.
++
++ Agressive action on average cuts the distance between the ship and
++ the enemy to 1/4 the original.
++
++ *  At lower energy advantage, movement units are proportional to the
++ advantage with a 650 advantage being to hold ground, 800 to move forward
++ 1, 950 for two, 150 for back 4, etc. Variance of 100.
++
++ If docked, is reduced by roughly 1.75*game.skill, generally forcing a
++ retreat, especially at high skill levels.
++
++ *  Motion is limited to skill level, except for SC hi-tailing it out.
++'''
++
++def movebaddy(ship):
++    # tactical movement for the bad guys
++    bugout = False
++    # This should probably be just game.comhere + game.ishere
++    if game.skill &gt;= SKILL_EXPERT:
++        nbaddys = int((game.comhere*2 + game.ishere*2+game.klhere*1.23+game.irhere*1.5)/2.0)
++    else:
++	nbaddys = game.comhere + game.ishere
++    dist1 = ship.distance()
++    mdist = round(dist1 + 0.5)		# Nearest integer distance
++    # If SC, check with spy to see if should high-tail it
++    if ship.type == &quot;Super-Commander&quot; and \
++           (ship.power &lt;= 500.0 or (game.condition==docked and not damaged(&quot;DPHOTON&quot;))):
++	bugout = True;
++	motion = -QUADSIZE;
++    else:
++	# decide whether to advance, retreat, or hold position
++	forces = ship.power + 100.0*len(game.quad.enemies()) + 400*(nbaddys-1)
++        if not game.shldup:
++            forces += 1000.0 		# Good for enemy if shield is down!
++        if not damaged(&quot;DPHASER&quot;) or not damaged(&quot;DPHOTON&quot;):
++            if damaged(DPHASER):
++		forces += 300.0
++	    else:
++		forces -= 0.2*(game.energy - 2500.0);
++	    if damaged(&quot;DPHOTON&quot;):
++		forces += 300.0
++	    else:
++		forces -= 50.0*game.torps
++	else:
++	    # phasers and photon tubes both out!
++	    forces += 1000.0
++	motion = 0;
++        if forces &lt;= 1000.0 and game.condition != &quot;docked&quot;:	# Typical case
++	    motion = ((forces+200.0*Rand())/150.0) - 5.0
++	else:
++            if forces &gt; 1000.0:	# Very strong -- move in for kill
++		motion = (1.0-square(Rand()))*dist1 + 1.0
++	    if game.condition == &quot;docked&quot; and &quot;base&quot; in game.options:
++                 # protected by base -- back off !
++		motion -= game.skill * (2.0-Rand()**2)
++	if idebug:
++	    proutn(&quot;=== MOTION = %1.2f, FORCES = %1.2f, &quot;, motion, forces)
++	# don't move if no motion
++        if motion == 0:
++            return
++	# Limit motion according to skill
++        if abs(motion) &gt; game.skill:
++            if motion &lt; 0:
++                motion = -game.kill
++            else:
++                motion = game.skill
++    # calculate preferred number of steps
++    nsteps = abs(motion)
++    if motion &gt; 0 and nsteps &gt; mdist: # don't overshoot
++        nsteps = mdist
++    if nsteps &gt; QUADSIZE: # This shouldn't be necessary
++        nsteps = QUADSIZE
++    if nsteps &lt; 1:  # This shouldn't be necessary
++        nsteps = 1
++    if idebug:
++	proutn(&quot;NSTEPS = %d:&quot;, nsteps)
++    # Compute preferred values of delta X and Y
++    me = game.sector - com;
++    if 2.0 * abs(me.x) &lt; abs(me.y):
++        me.x = 0;
++    if 2.0 * abs(me.y) &lt; abs(game.sector.x-com.x):
++        me.y = 0;
++    if me.x != 0: me.x = sgn(me.x*motion)
++    if me.y != 0: me.y = sgn(me.y*motion)
++    next = com;
++    # main move loop
++    for ll in range(nsteps):
++        if idebug:
++	    proutn(&quot; %d&quot;, ll+1)
++	# Check if preferred position available
++	look = next + me
++	krawl = me.sgn()
++	success = False
++	attempts = 0 # Settle meysterious hang problem
++        while attempts &lt; 20 and not success:
++            attempts += 1
++            if look.x &lt; 1 or look.x &gt; QUADSIZE:
++                if motion &lt; 0 and tryexit(look, ship, bugout):
++		    return
++                if krawl.x == me.x or me.y == 0:
++                    break
++		look.x = next.x + krawl.x
++		krawl.x = -krawl.x
++	    elif look.y &lt; 1 or look.y &gt; QUADSIZE:
++                if motion &lt; 0 and tryexit(look, ship, bugout):
++                    return
++                if krawl.y == me.y or me.x == 0:
++                    break
++                look.y = next.y + krawl.y
++                krawl.y = -krawl.y
++	    elif &quot;ramming&quot; in game.options and game.quad[look] != IHDOT:
++		# See if we should ram ship
++                if game.quad[look] == game.ship and ienm in (IHC, IHS):
++		    ram(true, ienm, com)
++		    return
++                if krawl.x != me.x and me.y != 0:
++		    look.x = next.x + krawlx
++		    krawl.x = -krawl.x
++		elif krawly != me.y and me.x != 0:
++		    look.y = next.y + krawly
++		    krawl.y = -krawl.y
++		else:
++                    break # we have failed
++	    else:
++                success = True
++        if success:
++	    next = look
++            if idebug:
++		proutn(str(next))
++	else:
++            break # done early
++    if idebug:
++	prout(&quot;&quot;)
++    # Put ship in place within same quadrant
++    if next != ship.location:
++	# it moved
++        if not damaged(&quot;DSRSENS&quot;) or game.condition == &quot;docked&quot;:
++	    proutn(&quot;*** %s from sector %s&quot; % (ship, ship.location))
++            if ship.distance() &lt; dist1:
++                prout(&quot; advances to sector %s&quot; % ship.location)
++            else:
++                proutn(&quot; retreats to sector %s&quot; % ship.location)
++        ship.sectormove(next)
++
++def movcom(): 
++    &quot;Allow enemies to move.&quot;
++    for enemy in self.quad.enemies():
++        if enemy.type == &quot;Commander&quot;:
++            movebaddy(enemy)
++            break
++    for enemy in self.quad.enemies():
++        if enemy.type == &quot;Super-Commander&quot;:
++            movebaddy(enemy)
++            break
++    # Ff skill level is high, move other Klingons and Romulans too!
++    # Move these last so they can base their actions on what the
++    # commander(s) do.
++    if game.skill &gt;= SKILL_EXPERT and &quot;movebaddy&quot; in game.options: 
++        for enemy in self.quad.enemies():
++            if enemy.type in (&quot;Klingon&quot;, &quot;Romulan&quot;):
++                movebaddy(enemy)
++                break
++
++def movescom(ship, avoid):
++    # commander movement helper
++    global ipage
++    if game.state.kscmdr == game.quadrant or \
++	game.state.galaxy[iq].supernova or \
++        game.state.galaxy[iq].klingons &gt; 8: 
++	return True
++    if avoid:
++	# Avoid quadrants with bases if we want to avoid Enterprise
++        for base in game.state.starbases:
++            if base.location == ship.location:
++		return True
++    if game.justin and not game.iscate:
++        return True
++    # Super-Commander has scooted, Remove him from current quadrant.
++    if game.state.kscmdr == game.quadrant:
++	game.iscate = False
++	game.isatb = 0
++	game.ientesc = False
++	unschedule(&quot;FSCDBAS&quot;)
++        if game.condition != &quot;docked&quot;:
++            newcnd()
++        ship.sectormove(None)
++    # do the actual move
++    game.state.galaxy[game.state.kscmdr].klingons -= 1
++    game.state.kscmdr = iq
++    game.state.galaxy[game.state.kscmdr].klingons += 1
++    # check for a helpful planet in the destination quadrant
++    for planet in game.state.plnets:
++	if planet.location == game.state.kscmdr and planet.crystals==&quot;present&quot;:
++	    # destroy the planet
++	    game.state.plnets.remove(planet)
++            if communicating():
++                if not ipage:
++                    pause_game(True)
++		ipage = true
++		prout(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;)
++		proutn(_(&quot;   a planet in &quot;))
++		proutn(cramlc(quadrant, game.state.kscmdr))
++		prout(&quot; has been destroyed&quot;)
++		prout(&quot;   by the Super-commander.\&quot;&quot;)
++	    break
++    return False # looks good!
++			
++def scom():
++    # move the Super Commander
++    if (idebug):
++        prout(&quot;== SCOM&quot;)
++
++    # Decide on being active or passive
++    passive = ((NKILLC+NKILLK)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) \
++               or (game.state.date-game.indate) &lt; 3.0)
++    if not game.iscate and passive:
++	# compute move away from Enterprise
++	idelta = game.state.kscmdr - game.quadrant
++        if distance(game.state.kscmdr) &gt; 2.0:
++	    # circulate in space
++	    idelta,x = game.state.kscmdr.y-game.quadrant.y
++	    idelta,y = game.quadrant.x-game.state.kscmdr.x
++    else:
++        if len(game.state.bases):
++            unschedule(&quot;FSCMOVE&quot;)
++	    return
++	sc = game.state.kscmdr
++	# compute distances to starbases
++        game.starbases.sort(lambda x, y: cmp(distance(x, game.quadrant), distance(y, game.quadrant)))
++	# look for nearest base without a commander, no Enterprise, and
++	# without too many Klingons, and not already under attack.
++        nearest = filter(game.starbases,
++                         lambda x: game.state.galaxy[x].supernova \
++                         and game.state.galaxy[x].klingons &lt;= 8)
++        if game.quadrant in nearest:
++            nearest.remove(game.quadrant)
++        if game.battle in nearest:
++            nearest.remove(game.battle)
++        # if there is a commander, and no other base is appropriate,
++        # we will take the one with the commander
++        nocmd = filter(lambda x: x.location not in game.state.kcmdr, nearest)
++        if len(nocmd):
++            nearest = nocmd
++        ibq = nearest[0]
++        if len(nearest) == 0:
++            return	# Nothing suitable -- wait until next time
++	# decide how to move toward base
++	idelta = ibq - game.state.kscmdr
++    # maximum movement is 1 quadrant in either or both axis
++    delta = delta.sgn()
++    # try moving in both x and y directions
++    iq = game.state.kscmdr + idelta
++    if movescom(iq, passive):
++	# failed -- try some other maneuvers
++        if ideltax==0 or ideltay==0:
++	    # attempt angle move
++            if ideltax != 0:
++		iq.y = game.state.kscmdr.y + 1
++                if movescom(iq, passive):
++		    iq.y = game.state.kscmdr.y - 1
++		    movescom(iq, passive)
++	    else:
++		iq.x = game.state.kscmdr.x + 1
++                if movescom(iq, passive):
++		    iq.x = game.state.kscmdr.x - 1
++		    movescom(iq, passive)
++	else:
++	    # try moving just in x or y
++	    iq.y = game.state.kscmdr.y
++            if movescom(iq, passive):
++		iq.y = game.state.kscmdr.y + ideltay
++		iq.x = game.state.kscmdr.x
++		movescom(iq, passive)
++    # check for a base
++    if game.state.rembase == 0:
++	unschedule(&quot;FSCMOVE&quot;)
++    else:
++        for ibq in game.bases:
++            if ibq == game.state.kscmdr and game.state.kscmdr == game.battle:
++                # attack the base
++                if passive:
++                    return # no, don't attack base!
++                game.iseenit = false
++                game.isatb = 1
++                schedule(&quot;FSCDBAS&quot;, 1.0 +2.0*Rand())
++                if is_scheduled(&quot;FCDBAS&quot;):
++                    postpone(&quot;FSCDBAS&quot;, scheduled(&quot;FCDBAS&quot;)-game.state.date)
++                if not communicating():
++                    return # no warning
++                game.iseenit = True
++                if not ipage:
++                    pause_game(true)
++                ipage = True
++                proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;))
++                proutn(cramlc(quadrant, game.state.kscmdr))
++                skip(1)
++                prout(&quot;   reports that it is under attack from the Klingon Super-commander.&quot;)
++                proutn(&quot;   It can survive until stardate %d.\&quot;&quot;,
++                       int(scheduled(FSCDBAS)))
++                if not game.resting:
++                    return
++                prout(&quot;Mr. Spock-  \&quot;Captain, shall we cancel the rest period?\&quot;&quot;)
++                if ja() == false:
++                    return
++                game.resting = False
++                game.optime = 0.0 # actually finished
++                return
++    # Check for intelligence report
++    if (Rand() &gt; 0.2 or not communicating() or
++        not game.state.galaxy[game.state.kscmdr].charted):
++	return
++    if ipage:
++        pause_game(true)
++        ipage = true
++    prout(_(&quot;Lt. Uhura-  \&quot;Captain, Starfleet Intelligence reports&quot;))
++    proutn(_(&quot;   the Super-commander is in &quot;))
++    proutn(cramlc(quadrant, game.state.kscmdr))
++    prout(&quot;.\&quot;&quot;)
++    return
++
++def movetho(void):
++    &quot;Move the Tholian (an instance of ship type pointed at by game.tholian).&quot; 
++    if not game.tholian or game.justin:
++        return
++    next = coord()
++    if game.tholian.location.x == 1 and game.tholian.location.y == 1:
++	next.x = 1
++        next.y = QUADSIZE
++    elif game.tholian.location.x == 1 and game.tholian.location.y == QUADSIZE:
++	next.x = next.y = QUADSIZE
++    elif game.tholian.location.x == QUADSIZE and game.tholian.location.y == QUADSIZE:
++	next.x = QUADSIZE
++        next.y = 1
++    elif game.tholian.location.x == QUADSIZE and game.tholian.location.y == 1:
++	next.x = next.y = 1
++    else:
++	# something is wrong!
++	game.tholian = None
++	return
++    # Do nothing if we are blocked
++    if game.quad[next] != empty and not isinstance(game.quad[next]. web):
++        return
++    # Now place some web
++    im = (next - game.tholian.location).sgn()
++    if game.tholian.x != next.x:
++	# move in x axis
++	while game.tholian.location.x != next.x:
++	    game.tholian.location.x += im.x
++            if game.quad[game.tholian.location] == empty:
++                game.quad[game.tholian.location] = web()
++    elif game.tholian.y != next.y:
++	# move in y axis
++	while game.tholian.y != next.y:
++	    game.tholian.y += im.y
++            if game.quad[game.tholian.location] == empty:
++                game.quad[game.tholian.location] = web()
++    # web is done, move ship
++    game.tholian.movesector(next)
++    # check to see if all holes plugged
++    for i in range(1, QUADSIZE+1):
++	if (not isinstance(game.quad[(1,i)],web)) and game.quad[(1,i)]!=game.tholian:
++            return
++        if (not isinstance(game.quad[(QUADSIZE,i)],web)) and game.quad[(QUADSIZE,i)]!=game.tholian:
++            return
++        if (not isinstance(game.quad[(i,1)],web)) and game.quad[(i,1)]!=game.tholian:
++            return
++        if (not isinstance(game.quad[(i.QUADSIZE)],web)) and game.quad[(i,QUADSIZE)]!=game.tholian:
++            return
++    # All plugged up -- Tholian splits
++    game.quad[game.tholian] = web()
++    ship.movesector(None)
++    crmena(True, IHT, sector, game.tholian)
++    prout(&quot; completes web.&quot;)
++    game.tholian = None
++    return
++
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000096.html">[Sst-commit-watch] r629 - in trunk: . po src
+</A></li>
+	<LI>Next message: <A HREF="000098.html">[Sst-commit-watch] r631 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#97">[ date ]</a>
+              <a href="thread.html#97">[ thread ]</a>
+              <a href="subject.html#97">[ subject ]</a>
+              <a href="author.html#97">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

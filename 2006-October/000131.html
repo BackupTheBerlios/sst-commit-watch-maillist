@@ -1,0 +1,597 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r664 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r664%20-%20trunk/src&In-Reply-To=%3C200610041637.k94GbGZG029459%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000130.html">
+   <LINK REL="Next"  HREF="000132.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r664 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r664%20-%20trunk/src&In-Reply-To=%3C200610041637.k94GbGZG029459%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r664 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Oct  4 18:37:16 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000130.html">[Sst-commit-watch] r663 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000132.html">[Sst-commit-watch] r665 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#131">[ date ]</a>
+              <a href="thread.html#131">[ thread ]</a>
+              <a href="subject.html#131">[ subject ]</a>
+              <a href="author.html#131">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-04 18:37:14 +0200 (Wed, 04 Oct 2006)
+New Revision: 664
+
+Modified:
+   trunk/src/sst.py
+Log:
+planets.c ode incorporated into Python translation.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-04 16:19:35 UTC (rev 663)
++++ trunk/src/sst.py	2006-10-04 16:37:14 UTC (rev 664)
+@@ -34,6 +34,26 @@
+ def invalidate(w):	w.x = w.y = 0
+ def is_valid(w):	return (w.x != 0 and w.y != 0)
+ 
++# How to represent features
++IHR = 'R',
++IHK = 'K',
++IHC = 'C',
++IHS = 'S',
++IHSTAR = '*',
++IHP = 'P',
++IHW = '@',
++IHB = 'B',
++IHBLANK = ' ',
++IHDOT = '.',
++IHQUEST = '?',
++IHE = 'E',
++IHF = 'F',
++IHT = 'T',
++IHWEB = '#',
++IHMATER0 = '-',
++IHMATER1 = 'o',
++IHMATER2 = '0'
++
+ class coord:
+     def __init(self, x=None, y=None):
+         self.x = x
+@@ -64,27 +84,9 @@
+         self.pclass = None	# could be &quot;&quot;M&quot;, &quot;N&quot;, &quot;O&quot;, or &quot;destroyed&quot;
+         self.crystals = None	# could be &quot;mined&quot;, &quot;present&quot;, &quot;absent&quot;
+         self.known = None	# could be &quot;unknown&quot;, &quot;known&quot;, &quot;shuttle_down&quot;
++    def __str__(self):
++        return self.name
+ 
+-# How to represent features
+-IHR = 'R',
+-IHK = 'K',
+-IHC = 'C',
+-IHS = 'S',
+-IHSTAR = '*',
+-IHP = 'P',
+-IHW = '@',
+-IHB = 'B',
+-IHBLANK = ' ',
+-IHDOT = '.',
+-IHQUEST = '?',
+-IHE = 'E',
+-IHF = 'F',
+-IHT = 'T',
+-IHWEB = '#',
+-IHMATER0 = '-',
+-IHMATER1 = 'o',
+-IHMATER2 = '0'
+-
+ NOPLANET = None
+ class quadrant:
+     def __init(self):
+@@ -4650,3 +4652,463 @@
+     game.warpfac=5.0
+     game.wfacsq=25.0
+     return
++
++# Code from planets.c begins here.
++
++def consumeTime():
++    # abort a lengthy operation if an event interrupts it 
++    game.ididit = True
++    events()
++    if game.alldone or game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova or game.justin: 
++	return True
++    return False
++
++def survey():
++    # report on (uninhabited) planets in the galaxy 
++    iknow = False
++    skip(1)
++    chew()
++    prout(_(&quot;Spock-  \&quot;Planet report follows, Captain.\&quot;&quot;))
++    skip(1)
++    for i in range(game.inplan):
++	if game.state.planets[i].pclass == destroyed:
++	    continue
++	if (game.state.planets[i].known != &quot;unknown&quot; \
++            and game.state.planets[i].inhabited == UNINHABITED) \
++            or idebug:
++	    iknow = True
++	    if idebug and game.state.planets[i].known==&quot;unknown&quot;:
++		proutn(&quot;(Unknown) &quot;)
++	    proutn(cramlc(quadrant, game.state.planets[i].w))
++	    proutn(_(&quot;   class &quot;))
++	    proutn(game.state.planets[i].pclass)
++	    proutn(&quot;   &quot;)
++	    if game.state.planets[i].crystals != present:
++		proutn(_(&quot;no &quot;))
++	    prout(_(&quot;dilithium crystals present.&quot;))
++	    if game.state.planets[i].known==&quot;shuttle_down&quot;: 
++		prout(_(&quot;    Shuttle Craft Galileo on surface.&quot;))
++    if not iknow:
++	prout(_(&quot;No information available.&quot;))
++
++def orbit():
++    # enter standard orbit 
++    skip(1)
++    chew()
++    if game.inorbit:
++	prout(_(&quot;Already in standard orbit.&quot;))
++	return
++    if damaged(DWARPEN) and damaged(DIMPULS):
++	prout(_(&quot;Both warp and impulse engines damaged.&quot;))
++	return
++    if not is_valid(game.plnet) or abs(game.sector.x-game.plnet.x) &gt; 1 or abs(game.sector.y-game.plnet.y) &gt; 1:
++	crmshp()
++	prout(_(&quot; not adjacent to planet.&quot;))
++	skip(1)
++	return
++    game.optime = 0.02+0.03*Rand()
++    prout(_(&quot;Helmsman Sulu-  \&quot;Entering standard orbit, Sir.\&quot;&quot;))
++    newcnd()
++    if consumeTime():
++	return
++    game.height = (1400.0+7200.0*Rand())
++    prout(_(&quot;Sulu-  \&quot;Entered orbit at altitude %.2f kilometers.\&quot;&quot;) % game.height)
++    game.inorbit = True
++    game.ididit = True
++
++def sensor():
++    # examine planets in this quadrant 
++    if damaged(DSRSENS):
++	if game.options &amp; OPTION_TTY:
++	    prout(_(&quot;Short range sensors damaged.&quot;))
++	return
++    if not is_valid(game.plnet):
++	if game.options &amp; OPTION_TTY:
++	    prout(_(&quot;Spock- \&quot;No planet in this quadrant, Captain.\&quot;&quot;))
++	return
++    if game.state.planets[game.iplnet].known == &quot;unknown&quot;:
++	prout(_(&quot;Spock-  \&quot;Sensor scan for Quadrant %s-&quot;) % game.quadrant)
++	skip(1)
++	prout(_(&quot;         Planet at Sector %s is of class %s.&quot;) %
++	      (sector,game.plnet, game.state.planets[game.iplnet]))
++	if game.state.planets[game.iplnet].known==&quot;shuttle_down&quot;: 
++	    prout(_(&quot;         Sensors show Galileo still on surface.&quot;))
++	proutn(_(&quot;         Readings indicate&quot;))
++	if game.state.planets[game.iplnet].crystals != present:
++	    proutn(_(&quot; no&quot;))
++	prout(_(&quot; dilithium crystals present.\&quot;&quot;))
++	if game.state.planets[game.iplnet].known == &quot;unknown&quot;:
++	    game.state.planets[game.iplnet].known = &quot;known&quot;
++
++def beam():
++    # use the transporter 
++    nrgneed = 0
++    chew()
++    skip(1)
++    if damaged(DTRANSP):
++	prout(_(&quot;Transporter damaged.&quot;))
++	if not damaged(DSHUTTL) and (game.state.planets[game.iplnet].known==&quot;shuttle_down&quot; or game.iscraft == &quot;onship&quot;):
++	    skip(1)
++	    proutn(_(&quot;Spock-  \&quot;May I suggest the shuttle craft, Sir?\&quot; &quot;))
++	    if ja() == True:
++		shuttle()
++	return
++    if not game.inorbit:
++	crmshp()
++	prout(_(&quot; not in standard orbit.&quot;))
++	return
++    if game.shldup:
++	prout(_(&quot;Impossible to transport through shields.&quot;))
++	return
++    if game.state.planets[game.iplnet].known==&quot;unknown&quot;:
++	prout(_(&quot;Spock-  \&quot;Captain, we have no information on this planet&quot;))
++	prout(_(&quot;  and Starfleet Regulations clearly state that in this situation&quot;))
++	prout(_(&quot;  you may not go down.\&quot;&quot;))
++	return
++    if not game.landed and game.state.planets[game.iplnet].crystals==absent:
++	prout(_(&quot;Spock-  \&quot;Captain, I fail to see the logic in&quot;))
++	prout(_(&quot;  exploring a planet with no dilithium crystals.&quot;))
++	proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;))
++	if ja() == False:
++	    chew()
++	    return
++    if not (game.options &amp; OPTION_PLAIN):
++	nrgneed = 50 * game.skill + game.height / 100.0
++	if nrgneed &gt; game.energy:
++    	    prout(_(&quot;Engineering to bridge--&quot;))
++	    prout(_(&quot;  Captain, we don't have enough energy for transportation.&quot;))
++	    return
++	if not game.landed and nrgneed * 2 &gt; game.energy:
++    	    prout(_(&quot;Engineering to bridge--&quot;))
++	    prout(_(&quot;  Captain, we have enough energy only to transport you down to&quot;))
++	    prout(_(&quot;  the planet, but there wouldn't be an energy for the trip back.&quot;))
++	    if game.state.planets[game.iplnet].known == &quot;shuttle_down&quot;:
++		prout(_(&quot;  Although the Galileo shuttle craft may still be on a surface.&quot;))
++	    proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;))
++	    if ja() == False:
++		chew()
++		return
++    if game.landed:
++	# Coming from planet 
++	if game.state.planets[game.iplnet].known==&quot;shuttle_down&quot;:
++	    proutn(_(&quot;Spock-  \&quot;Wouldn't you rather take the Galileo?\&quot; &quot;))
++	    if ja() == True:
++		chew()
++		return
++	    prout(_(&quot;Your crew hides the Galileo to prevent capture by aliens.&quot;))
++	prout(_(&quot;Landing party assembled, ready to beam up.&quot;))
++	skip(1)
++	prout(_(&quot;Kirk whips out communicator...&quot;))
++	prouts(_(&quot;BEEP  BEEP  BEEP&quot;))
++	skip(2)
++	prout(_(&quot;\&quot;Kirk to enterprise-  Lock on coordinates...energize.\&quot;&quot;))
++    else:
++	# Going to planet 
++	prout(_(&quot;Scotty-  \&quot;Transporter room ready, Sir.\&quot;&quot;))
++	skip(1)
++	prout(_(&quot;Kirk and landing party prepare to beam down to planet surface.&quot;))
++	skip(1)
++	prout(_(&quot;Kirk-  \&quot;Energize.\&quot;&quot;))
++    game.ididit = True
++    skip(1)
++    prouts(&quot;WWHOOOIIIIIRRRRREEEE.E.E.  .  .  .  .   .    .&quot;)
++    skip(2)
++    if Rand() &gt; 0.98:
++	prouts(&quot;BOOOIIIOOOIIOOOOIIIOIING . . .&quot;)
++	skip(2)
++	prout(_(&quot;Scotty-  \&quot;Oh my God!  I've lost them.\&quot;&quot;))
++	finish(FLOST)
++	return
++    prouts(&quot;.    .   .  .  .  .  .E.E.EEEERRRRRIIIIIOOOHWW&quot;)
++    game.landed = not game.landed
++    game.energy -= nrgneed
++    skip(2)
++    prout(_(&quot;Transport complete.&quot;))
++    if game.landed and game.state.planets[game.iplnet].known==&quot;shuttle_down&quot;:
++	prout(_(&quot;The shuttle craft Galileo is here!&quot;))
++    if not game.landed and game.imine:
++	game.icrystl = True
++	game.cryprob = 0.05
++    game.imine = False
++    return
++
++def mine():
++    # strip-mine a world for dilithium 
++    skip(1)
++    chew()
++    if not game.landed:
++	prout(_(&quot;Mining party not on planet.&quot;))
++	return
++    if game.state.planets[game.iplnet].crystals == mined:
++	prout(_(&quot;This planet has already been strip-mined for dilithium.&quot;))
++	return
++    elif game.state.planets[game.iplnet].crystals == absent:
++	prout(_(&quot;No dilithium crystals on this planet.&quot;))
++	return
++    if game.imine:
++	prout(_(&quot;You've already mined enough crystals for this trip.&quot;))
++	return
++    if game.icrystl and game.cryprob == 0.05:
++	proutn(_(&quot;With all those fresh crystals aboard the &quot;))
++	crmshp()
++	skip(1)
++	prout(_(&quot;there's no reason to mine more at this time.&quot;))
++	return
++    game.optime = (0.1+0.2*Rand())*game.state.planets[game.iplnet].pclass
++    if consumeTime():
++	return
++    prout(_(&quot;Mining operation complete.&quot;))
++    game.state.planets[game.iplnet].crystals = mined
++    game.imine = game.ididit = True
++
++def usecrystals():
++    # use dilithium crystals 
++    game.ididit = False
++    skip(1)
++    chew()
++    if not game.icrystl:
++	prout(_(&quot;No dilithium crystals available.&quot;))
++	return
++    if game.energy &gt;= 1000:
++	prout(_(&quot;Spock-  \&quot;Captain, Starfleet Regulations prohibit such an operation&quot;))
++	prout(_(&quot;  except when Condition Yellow exists.&quot;))
++	return
++    prout(_(&quot;Spock- \&quot;Captain, I must warn you that loading&quot;))
++    prout(_(&quot;  raw dilithium crystals into the ship's power&quot;))
++    prout(_(&quot;  system may risk a severe explosion.&quot;))
++    proutn(_(&quot;  Are you sure this is wise?\&quot; &quot;))
++    if ja() == False:
++	chew()
++	return
++    skip(1)
++    prout(_(&quot;Engineering Officer Scott-  \&quot;(GULP) Aye Sir.&quot;))
++    prout(_(&quot;  Mr. Spock and I will try it.\&quot;&quot;))
++    skip(1)
++    prout(_(&quot;Spock-  \&quot;Crystals in place, Sir.&quot;))
++    prout(_(&quot;  Ready to activate circuit.\&quot;&quot;))
++    skip(1)
++    prouts(_(&quot;Scotty-  \&quot;Keep your fingers crossed, Sir!\&quot;&quot;))
++    skip(1)
++    if Rand() &lt;= game.cryprob:
++	prouts(_(&quot;  \&quot;Activating now! - - No good!  It's***&quot;))
++	skip(2)
++	prouts(_(&quot;***RED ALERT!  RED A*L********************************&quot;))
++	skip(1)
++	stars()
++	prouts(_(&quot;******************   KA-BOOM!!!!   *******************&quot;))
++	skip(1)
++	kaboom()
++	return
++    game.energy += 5000.0*(1.0 + 0.9*Rand())
++    prouts(_(&quot;  \&quot;Activating now! - - &quot;))
++    prout(_(&quot;The instruments&quot;))
++    prout(_(&quot;   are going crazy, but I think it's&quot;))
++    prout(_(&quot;   going to work!!  Congratulations, Sir!\&quot;&quot;))
++    game.cryprob *= 2.0
++    game.ididit = True
++
++def shuttle():
++    # use shuttlecraft for planetary jaunt 
++    chew()
++    skip(1)
++    if damaged(DSHUTTL):
++	if game.damage[DSHUTTL] == -1.0:
++	    if game.inorbit and game.state.planets[game.iplnet].known == &quot;shuttle_down&quot;:
++		prout(_(&quot;Ye Faerie Queene has no shuttle craft bay to dock it at.&quot;))
++	    else:
++		prout(_(&quot;Ye Faerie Queene had no shuttle craft.&quot;))
++	elif game.damage[DSHUTTL] &gt; 0:
++	    prout(_(&quot;The Galileo is damaged.&quot;))
++	else: # game.damage[DSHUTTL] &lt; 0  
++	    prout(_(&quot;Shuttle craft is now serving Big Macs.&quot;))
++	return
++    if not game.inorbit:
++	crmshp()
++	prout(_(&quot; not in standard orbit.&quot;))
++	return
++    if (game.state.planets[game.iplnet].known != &quot;shuttle_down&quot;) and game.iscraft != &quot;onship&quot;:
++	prout(_(&quot;Shuttle craft not currently available.&quot;))
++	return
++    if not game.landed and game.state.planets[game.iplnet].known==&quot;shuttle_down&quot;:
++	prout(_(&quot;You will have to beam down to retrieve the shuttle craft.&quot;))
++	return
++    if game.shldup or game.condition == &quot;docked&quot;:
++	prout(_(&quot;Shuttle craft cannot pass through shields.&quot;))
++	return
++    if game.state.planets[game.iplnet].known==&quot;unknown&quot;:
++	prout(_(&quot;Spock-  \&quot;Captain, we have no information on this planet&quot;))
++	prout(_(&quot;  and Starfleet Regulations clearly state that in this situation&quot;))
++	prout(_(&quot;  you may not fly down.\&quot;&quot;))
++	return
++    game.optime = 3.0e-5*game.height
++    if game.optime &gt;= 0.8*game.state.remtime:
++	prout(_(&quot;First Officer Spock-  \&quot;Captain, I compute that such&quot;))
++	proutn(_(&quot;  a maneuver would require approximately %2d%% of our&quot;) % \
++	       int(100*game.optime/game.state.remtime))
++	prout(_(&quot;remaining time.&quot;))
++	proutn(_(&quot;Are you sure this is wise?\&quot; &quot;))
++	if ja() == False:
++	    game.optime = 0.0
++	    return
++    if game.landed:
++	# Kirk on planet 
++	if game.iscraft == &quot;onship&quot;:
++	    # Galileo on ship! 
++	    if not damaged(DTRANSP):
++		proutn(_(&quot;Spock-  \&quot;Would you rather use the transporter?\&quot; &quot;))
++		if ja() == True:
++		    beam()
++		    return
++		proutn(_(&quot;Shuttle crew&quot;))
++	    else:
++		proutn(_(&quot;Rescue party&quot;))
++	    prout(_(&quot; boards Galileo and swoops toward planet surface.&quot;))
++	    game.iscraft = &quot;offship&quot;
++	    skip(1)
++	    if consumeTime():
++		return
++	    game.state.planets[game.iplnet].known=&quot;shuttle_down&quot;
++	    prout(_(&quot;Trip complete.&quot;))
++	    return
++	else:
++	    # Ready to go back to ship 
++	    prout(_(&quot;You and your mining party board the&quot;))
++	    prout(_(&quot;shuttle craft for the trip back to the Enterprise.&quot;))
++	    skip(1)
++	    prouts(_(&quot;The short hop begins . . .&quot;))
++	    skip(1)
++	    game.state.planets[game.iplnet].known=&quot;known&quot;
++	    game.icraft = True
++	    skip(1)
++	    game.landed = False
++	    if consumeTime():
++		return
++	    game.iscraft = &quot;onship&quot;
++	    game.icraft = False
++	    if game.imine:
++		game.icrystl = True
++		game.cryprob = 0.05
++	    game.imine = False
++	    prout(_(&quot;Trip complete.&quot;))
++	    return
++    else:
++	# Kirk on ship 
++	# and so is Galileo 
++	prout(_(&quot;Mining party assembles in the hangar deck,&quot;))
++	prout(_(&quot;ready to board the shuttle craft \&quot;Galileo\&quot;.&quot;))
++	skip(1)
++	prouts(_(&quot;The hangar doors open; the trip begins.&quot;))
++	skip(1)
++	game.icraft = True
++	game.iscraft = &quot;offship&quot;
++	if consumeTime():
++	    return
++	game.state.planets[game.iplnet].known = &quot;shuttle_down&quot;
++	game.landed = True
++	game.icraft = False
++	prout(_(&quot;Trip complete.&quot;))
++	return
++
++def deathray():
++    # use the big zapper 
++    r = Rand()
++	
++    game.ididit = False
++    skip(1)
++    chew()
++    if game.ship != IHE:
++	prout(_(&quot;Ye Faerie Queene has no death ray.&quot;))
++	return
++    if game.nenhere==0:
++	prout(_(&quot;Sulu-  \&quot;But Sir, there are no enemies in this quadrant.\&quot;&quot;))
++	return
++    if damaged(DDRAY):
++	prout(_(&quot;Death Ray is damaged.&quot;))
++	return
++    prout(_(&quot;Spock-  \&quot;Captain, the 'Experimental Death Ray'&quot;))
++    prout(_(&quot;  is highly unpredictible.  Considering the alternatives,&quot;))
++    proutn(_(&quot;  are you sure this is wise?\&quot; &quot;))
++    if ja() == False:
++	return
++    prout(_(&quot;Spock-  \&quot;Acknowledged.\&quot;&quot;))
++    skip(1)
++    game.ididit = True
++    prouts(_(&quot;WHOOEE ... WHOOEE ... WHOOEE ... WHOOEE&quot;))
++    skip(1)
++    prout(_(&quot;Crew scrambles in emergency preparation.&quot;))
++    prout(_(&quot;Spock and Scotty ready the death ray and&quot;))
++    prout(_(&quot;prepare to channel all ship's power to the device.&quot;))
++    skip(1)
++    prout(_(&quot;Spock-  \&quot;Preparations complete, sir.\&quot;&quot;))
++    prout(_(&quot;Kirk-  \&quot;Engage!\&quot;&quot;))
++    skip(1)
++    prouts(_(&quot;WHIRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR&quot;))
++    skip(1)
++    dprob = .30
++    if game.options &amp; OPTION_PLAIN:
++	dprob = .5
++    if r &gt; dprob:
++	prouts(_(&quot;Sulu- \&quot;Captain!  It's working!\&quot;&quot;))
++	skip(2)
++	while game.nenhere &gt; 0:
++	    deadkl(game.ks[1], game.quad[game.ks[1].x][game.ks[1].y],game.ks[1])
++	prout(_(&quot;Ensign Chekov-  \&quot;Congratulations, Captain!\&quot;&quot;))
++	if (game.state.remkl + game.state.remcom + game.state.nscrem) == 0:
++	    finish(FWON)    
++	if (game.options &amp; OPTION_PLAIN) == 0:
++	    prout(_(&quot;Spock-  \&quot;Captain, I believe the `Experimental Death Ray'&quot;))
++	    if Rand() &lt;= 0.05:
++		prout(_(&quot;   is still operational.\&quot;&quot;))
++	    else:
++		prout(_(&quot;   has been rendered nonfunctional.\&quot;&quot;))
++		game.damage[DDRAY] = 39.95
++	return
++    r = Rand()	# Pick failure method 
++    if r &lt;= .30:
++	prouts(_(&quot;Sulu- \&quot;Captain!  It's working!\&quot;&quot;))
++	skip(1)
++	prouts(_(&quot;***RED ALERT!  RED ALERT!&quot;))
++	skip(1)
++	prout(_(&quot;***MATTER-ANTIMATTER IMPLOSION IMMINENT!&quot;))
++	skip(1)
++	prouts(_(&quot;***RED ALERT!  RED A*L********************************&quot;))
++	skip(1)
++	stars()
++	prouts(_(&quot;******************   KA-BOOM!!!!   *******************&quot;))
++	skip(1)
++	kaboom()
++	return
++    if r &lt;= .55:
++	prouts(_(&quot;Sulu- \&quot;Captain!  Yagabandaghangrapl, brachriigringlanbla!\&quot;&quot;))
++	skip(1)
++	prout(_(&quot;Lt. Uhura-  \&quot;Graaeek!  Graaeek!\&quot;&quot;))
++	skip(1)
++	prout(_(&quot;Spock-  \&quot;Fascinating!  . . . All humans aboard&quot;))
++	prout(_(&quot;  have apparently been transformed into strange mutations.&quot;))
++	prout(_(&quot;  Vulcans do not seem to be affected.&quot;))
++	skip(1)
++	prout(_(&quot;Kirk-  \&quot;Raauch!  Raauch!\&quot;&quot;))
++	finish(FDRAY)
++	return
++    if r &lt;= 0.75:
++	intj
++	prouts(_(&quot;Sulu- \&quot;Captain!  It's   --WHAT?!?!\&quot;&quot;))
++	skip(2)
++	proutn(_(&quot;Spock-  \&quot;I believe the word is&quot;))
++	prouts(_(&quot; *ASTONISHING*&quot;))
++	prout(_(&quot; Mr. Sulu.&quot;))
++	for i in range(1, QUADSIZE+1):
++	    for j in range(1, QUADSIZE+1):
++		if game.quad[i][j] == IHDOT:
++		    game.quad[i][j] = IHQUEST
++	prout(_(&quot;  Captain, our quadrant is now infested with&quot;))
++	prouts(_(&quot; - - - - - -  *THINGS*.&quot;))
++	skip(1)
++	prout(_(&quot;  I have no logical explanation.\&quot;&quot;))
++	return
++    prouts(_(&quot;Sulu- \&quot;Captain!  The Death Ray is creating tribbles!\&quot;&quot;))
++    skip(1)
++    prout(_(&quot;Scotty-  \&quot;There are so many tribbles down here&quot;))
++    prout(_(&quot;  in Engineering, we can't move for 'em, Captain.\&quot;&quot;))
++    finish(FTRIBBLE)
++    return
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000130.html">[Sst-commit-watch] r663 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000132.html">[Sst-commit-watch] r665 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#131">[ date ]</a>
+              <a href="thread.html#131">[ thread ]</a>
+              <a href="subject.html#131">[ subject ]</a>
+              <a href="author.html#131">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

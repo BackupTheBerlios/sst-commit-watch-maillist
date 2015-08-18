@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r788 - in trunk: doc src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2010-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r788%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C20100913154911.9FB92481034%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000256.html">
+   <LINK REL="Next"  HREF="000258.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r788 - in trunk: doc src</H1>
+    <B>esr at mail.berlios.de</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r788%20-%20in%20trunk%3A%20doc%20src&In-Reply-To=%3C20100913154911.9FB92481034%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r788 - in trunk: doc src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep 13 17:49:11 CEST 2010</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000256.html">[Sst-commit-watch] r787 - trunk/doc
+</A></li>
+        <LI>Next message: <A HREF="000258.html">[Sst-commit-watch] r789 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#257">[ date ]</a>
+              <a href="thread.html#257">[ thread ]</a>
+              <a href="subject.html#257">[ subject ]</a>
+              <a href="author.html#257">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2010-09-13 17:49:11 +0200 (Mon, 13 Sep 2010)
+New Revision: 788
+
+Modified:
+   trunk/doc/sst.xml
+   trunk/src/sst.py
+Log:
+Enable envirinment variable TMPDIR to set the log temporary directory. 
+
+
+Modified: trunk/doc/sst.xml
+===================================================================
+--- trunk/doc/sst.xml	2010-09-13 15:31:34 UTC (rev 787)
++++ trunk/doc/sst.xml	2010-09-13 15:49:11 UTC (rev 788)
+@@ -66,19 +66,20 @@
+ &lt;refsect1 id='files'&gt;&lt;title&gt;FILES&lt;/title&gt;
+ &lt;variablelist&gt;
+ &lt;varlistentry&gt;
+-&lt;term&gt;/usr/share/doc/sst/sst.doc&lt;/term&gt;
++&lt;term&gt;&lt;filename&gt;/usr/share/doc/sst/sst.doc&lt;/filename&gt;&lt;/term&gt;
+ &lt;listitem&gt;
+ &lt;para&gt;Documentation file.&lt;/para&gt;
+ &lt;/listitem&gt;
+ &lt;/varlistentry&gt;
+ &lt;varlistentry&gt;
+-&lt;term&gt;/usr/tmp/sst-input.log&lt;/term&gt;
++&lt;term&gt;&lt;filename&gt;$TMPDIR/sst-input.log&lt;/filename&gt;&lt;/term&gt;
+ &lt;listitem&gt;
+-&lt;para&gt;Where user input is saved to (send this with your bug reports).&lt;/para&gt;
++&lt;para&gt;Where user input is saved to (send this with your bug reports).
++If TMPDIR is not set is defaults to &lt;filename&gt;/tmp&lt;/filename&gt;.&lt;/para&gt;
+ &lt;/listitem&gt;
+ &lt;/varlistentry&gt;
+ &lt;varlistentry&gt;
+-&lt;term&gt;emsave.trk&lt;/term&gt;
++&lt;term&gt;&lt;filename&gt;emsave.trk&lt;/filename&gt;&lt;/term&gt;
+ &lt;listitem&gt;
+ &lt;para&gt;Save file produced by EMEXIT command.&lt;/para&gt;
+ &lt;/listitem&gt;
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2010-09-13 15:31:34 UTC (rev 787)
++++ trunk/src/sst.py	2010-09-13 15:49:11 UTC (rev 788)
+@@ -6197,8 +6197,12 @@
+                 sys.stderr.write(&quot;usage: sst [-t] [-x] [startcommand...].\n&quot;)
+                 raise SystemExit, 1
+         # where to save the input in case of bugs
++        if &quot;TMPDIR&quot; in os.environ:
++            tmpdir = os.environ['TMPDIR']
++        else:
++            tmpdir = &quot;/tmp&quot;
+         try:
+-            logfp = open(&quot;/tmp/sst-input.log&quot;, &quot;w&quot;)
++            logfp = open(os.path.join(tmpdir, &quot;sst-input.log&quot;), &quot;w&quot;)
+         except IOError:
+             sys.stderr.write(&quot;sst: warning, can't open logfile\n&quot;)
+             sys.exit(1)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000256.html">[Sst-commit-watch] r787 - trunk/doc
+</A></li>
+	<LI>Next message: <A HREF="000258.html">[Sst-commit-watch] r789 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#257">[ date ]</a>
+              <a href="thread.html#257">[ thread ]</a>
+              <a href="subject.html#257">[ subject ]</a>
+              <a href="author.html#257">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

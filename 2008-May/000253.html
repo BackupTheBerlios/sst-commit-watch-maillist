@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r786 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2008-May/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r786%20-%20trunk/src&In-Reply-To=%3C200805081151.m48BpojQ000014%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000252.html">
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r786 - trunk/src</H1>
+    <B>stsp at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r786%20-%20trunk/src&In-Reply-To=%3C200805081151.m48BpojQ000014%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r786 - trunk/src">stsp at mail.berlios.de
+       </A><BR>
+    <I>Thu May  8 13:51:50 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000252.html">[Sst-commit-watch] r785 - trunk/src
+</A></li>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#253">[ date ]</a>
+              <a href="thread.html#253">[ thread ]</a>
+              <a href="subject.html#253">[ subject ]</a>
+              <a href="author.html#253">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: stsp
+Date: 2008-05-08 13:51:50 +0200 (Thu, 08 May 2008)
+New Revision: 786
+
+Modified:
+   trunk/src/reports.c
+Log:
+forgotten piece of the prev commit.
+
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2008-05-08 11:15:44 UTC (rev 785)
++++ trunk/src/reports.c	2008-05-08 11:51:50 UTC (rev 786)
+@@ -154,9 +154,7 @@
+ 		proutn(&quot;  -1&quot;);
+ 	    else {
+ 		game.state.galaxy[x][y].charted = true;
+-		game.state.chart[x][y].klingons = game.state.galaxy[x][y].klingons;
+-		game.state.chart[x][y].starbase = game.state.galaxy[x][y].starbase;
+-		game.state.chart[x][y].stars = game.state.galaxy[x][y].stars;
++		rechart();
+ 		if (game.state.galaxy[x][y].supernova) 
+ 		    proutn(&quot; ***&quot;);
+ 		else
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000252.html">[Sst-commit-watch] r785 - trunk/src
+</A></li>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#253">[ date ]</a>
+              <a href="thread.html#253">[ thread ]</a>
+              <a href="subject.html#253">[ subject ]</a>
+              <a href="author.html#253">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

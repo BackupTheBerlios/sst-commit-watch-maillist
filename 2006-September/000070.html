@@ -1,0 +1,481 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r603 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r603%20-%20trunk/src&In-Reply-To=%3C200609192130.k8JLUGj8013250%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000069.html">
+   <LINK REL="Next"  HREF="000071.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r603 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r603%20-%20trunk/src&In-Reply-To=%3C200609192130.k8JLUGj8013250%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r603 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 19 23:30:16 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000069.html">[Sst-commit-watch] r602 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000071.html">[Sst-commit-watch] r604 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#70">[ date ]</a>
+              <a href="thread.html#70">[ thread ]</a>
+              <a href="subject.html#70">[ subject ]</a>
+              <a href="author.html#70">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-19 23:30:15 +0200 (Tue, 19 Sep 2006)
+New Revision: 603
+
+Modified:
+   trunk/src/finish.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+More type cleanup and explanatory comments.
+
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-19 21:00:29 UTC (rev 602)
++++ trunk/src/finish.c	2006-09-19 21:30:15 UTC (rev 603)
+@@ -2,7 +2,8 @@
+ #include &lt;string.h&gt;
+ #include &lt;time.h&gt;
+ 
+-void dstrct() 
++void selfdestruct(void)
++/* self-destruct maneuver */
+ {
+     /* Finish with a BANG! */
+     chew();
+@@ -69,7 +70,8 @@
+ }
+ 				
+ 
+-void finish(FINTYPE ifin) 
++void finish(FINTYPE ifin)
++/* end the game, with appropriate notfications */
+ {
+     bool igotit = false;
+     game.alldone = true;
+@@ -313,6 +315,7 @@
+ }
+ 
+ void score(void) 
++/* compute player's score */
+ {
+     double timused = game.state.date - game.indate;
+     int ithperd, iwon, klship;
+@@ -392,7 +395,9 @@
+     prout(_(&quot;TOTAL SCORE                               %5d&quot;), iscore);
+ }
+ 
+-void plaque(void) {
++void plaque(void)
++/* emit winner's commemmorative plaque */
++{
+ 	FILE *fp=NULL;
+ 	time_t t;
+ 	char *timestring;
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-19 21:00:29 UTC (rev 602)
++++ trunk/src/moving.c	2006-09-19 21:30:15 UTC (rev 603)
+@@ -711,7 +711,7 @@
+ 	}
+ 	prout(_(&quot;SUCCEEDS!&quot;));
+ 	if (game.imine) {
+-	    game.imine = 0;
++	    game.imine = false;
+ 	    proutn(_(&quot;The crystals mined were &quot;));
+ 	    if (Rand() &lt;= 0.25) {
+ 		prout(_(&quot;lost.&quot;));
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-19 21:00:29 UTC (rev 602)
++++ trunk/src/planets.c	2006-09-19 21:30:15 UTC (rev 603)
+@@ -2,30 +2,18 @@
+ 
+ static char *classes[] = {&quot;M&quot;,&quot;N&quot;,&quot;O&quot;};
+ 
+-static int consumeTime(void) 
++static bool consumeTime(void)
++/* abort a lengthy operation if an event interrupts it */
+ {
+-/* I think most of this avoidance was caused by overlay scheme.
+-   Let's see what happens if all events can occur here */
+-
+-//  double asave;
+-    game.ididit = 1;
+-#if 0
+-    /* Don't worry about this */
+-    if (scheduled(FTBEAM) &lt;= game.state.date+game.optime &amp;&amp; game.state.remcom != 0 &amp;&amp; game.condit != IHDOCKED) {
+-	/* We are about to be tractor beamed -- operation fails */
+-	return 1;
+-    }
+-#endif
+-//	asave = scheduled(FSNOVA);
+-//	unschedule(FSNOVA); /* defer supernovas */
+-    events();	/* Used to avoid if FSCMOVE is scheduled within time */
+-//	schedule(FSNOVA, asave-game.state.time);
+-    /*fails if game over, quadrant super-novas or we've moved to new quadrant*/
+-    if (game.alldone || game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova || game.justin != 0) return 1;
+-    return 0;
++    game.ididit = true;
++    events();
++    if (game.alldone || game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova || game.justin) 
++	return true;
++    return false;
+ }
+ 
+ void preport(void) 
++/* report on (uninhabited) planets in the galaxy */
+ {
+     bool iknow = false;
+     int i;
+@@ -51,10 +39,11 @@
+ 		prout(_(&quot;    Shuttle Craft Galileo on surface.&quot;));
+ 	}
+     }
+-    if (iknow==0) prout(_(&quot;No information available.&quot;));
++    if (!iknow) prout(_(&quot;No information available.&quot;));
+ }
+ 
+-void orbit(void) 
++void orbit(void)
++/* enter standard orbit */
+ {
+     skip(1);
+     chew();
+@@ -82,7 +71,8 @@
+     game.ididit = true;
+ }
+ 
+-void sensor(void) 
++void sensor(void)
++/* examine planets in this quadrant */
+ {
+     skip(1);
+     chew();
+@@ -110,6 +100,7 @@
+ }
+ 
+ void beam(void) 
++/* use the transporter */
+ {
+     chew();
+     skip(1);
+@@ -171,7 +162,7 @@
+ 	skip(1);
+ 	prout(_(&quot;Kirk-  \&quot;Energize.\&quot;&quot;));
+     }
+-    game.ididit=1;
++    game.ididit = true;
+     skip(1);
+     prouts(&quot;WWHOOOIIIIIRRRRREEEE.E.E.  .  .  .  .   .    .&quot;);
+     skip(2);
+@@ -189,15 +180,16 @@
+     if (game.landed==1 &amp;&amp; game.state.plnets[game.iplnet].known==shuttle_down) {
+ 	prout(_(&quot;The shuttle craft Galileo is here!&quot;));
+     }
+-    if (game.landed!=1 &amp;&amp; game.imine==1) {
++    if (game.landed!=1 &amp;&amp; game.imine) {
+ 	game.icrystl = 1;
+ 	game.cryprob = 0.05;
+     }
+-    game.imine = 0;
++    game.imine = false;
+     return;
+ }
+ 
+ void mine(void) 
++/* strip-mine a world for dilithium */
+ {
+     skip(1);
+     chew();
+@@ -213,7 +205,7 @@
+ 	prout(_(&quot;No dilithium crystals on this planet.&quot;));
+ 	return;
+     }
+-    if (game.imine == 1) {
++    if (game.imine) {
+ 	prout(_(&quot;You've already mined enough crystals for this trip.&quot;));
+ 	return;
+     }
+@@ -228,13 +220,13 @@
+     if (consumeTime()) return;
+     prout(_(&quot;Mining operation complete.&quot;));
+     game.state.plnets[game.iplnet].crystals = MINED;
+-    game.imine = 1;
+-    game.ididit=1;
++    game.imine = game.ididit = true;
+ }
+ 
+-void usecrystals(void) 
++void usecrystals(void)
++/* use dilithium crystals */
+ {
+-    game.ididit=0;
++    game.ididit = false;
+     skip(1);
+     chew();
+     if (game.icrystl!=1) {
+@@ -280,10 +272,11 @@
+     prout(_(&quot;   are going crazy, but I think it's&quot;));
+     prout(_(&quot;   going to work!!  Congratulations, Sir!\&quot;&quot;));
+     game.cryprob *= 2.0;
+-    game.ididit=1;
++    game.ididit = true;
+ }
+ 
+ void shuttle(void) 
++/* use shuttlecraft for planetary jaunt */
+ {
+     chew();
+     skip(1);
+@@ -370,11 +363,11 @@
+ 	    if (consumeTime()) return;
+ 	    game.iscraft = 1;
+ 	    game.icraft = 0;
+-	    if (game.imine!=0) {
++	    if (game.imine) {
+ 		game.icrystl = 1;
+ 		game.cryprob = 0.05;
+ 	    }
+-	    game.imine = 0;
++	    game.imine = false;
+ 	    prout(_(&quot;Trip complete.&quot;));
+ 	    return;
+ 	}
+@@ -398,11 +391,12 @@
+     }
+ }
+ 
+-void deathray(void) 
++void deathray(void)
++/* use the big zapper */
+ {
+     double dprob, r = Rand();
+ 	
+-    game.ididit = 0;
++    game.ididit = false;
+     skip(1);
+     chew();
+     if (game.ship != IHE) {
+@@ -423,7 +417,7 @@
+     if (ja() == false) return;
+     prout(_(&quot;Spock-  \&quot;Acknowledged.\&quot;&quot;));
+     skip(1);
+-    game.ididit=1;
++    game.ididit = true;
+     prouts(_(&quot;WHOOEE ... WHOOEE ... WHOOEE ... WHOOEE&quot;));
+     skip(1);
+     prout(_(&quot;Crew scrambles in emergency preparation.&quot;));
+@@ -511,6 +505,7 @@
+ }
+ 
+ char *systemname(int pindx)
++/* return the name of a given solar system */
+ {
+     static char copy[BUFSIZ];
+     /* the below array should not be static, or it won't gettextize
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-19 21:00:29 UTC (rev 602)
++++ trunk/src/reports.c	2006-09-19 21:30:15 UTC (rev 603)
+@@ -3,7 +3,8 @@
+ #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+ 
+-void attakreport(bool curt) 
++void attakreport(bool curt)
++/* report status of bases under attack */
+ {
+     if (!curt) {
+ 	if (is_scheduled(FCDBAS)) {
+@@ -28,7 +29,8 @@
+ }
+ 	
+ 
+-void report(void) 
++void report(void)
++/* report on general game status */
+ {
+     char *s1,*s2,*s3;
+ 
+@@ -114,6 +116,7 @@
+ }
+ 	
+ void lrscan(void) 
++/* long-range sensor scan */
+ {
+     int x, y;
+     chew();
+@@ -150,6 +153,7 @@
+ }
+ 
+ void dreprt(void) 
++/* damage report */
+ {
+     bool jdam = false;
+     int i;
+@@ -185,7 +189,8 @@
+ 	    }
+ }
+ 
+-void chart(bool title) 
++void chart(bool title)
++/* display the star chart */ 
+ {
+     int i,j;
+     chew();
+@@ -232,6 +237,7 @@
+ }
+ 
+ static void sectscan(int goodScan, int i, int j) 
++/* light up an individual dot in a sector */
+ {
+     if (goodScan || (abs(i-game.sector.x)&lt;= 1 &amp;&amp; abs(j-game.sector.y) &lt;= 1)){
+ 	if ((game.quad[i][j]==IHMATER0)||(game.quad[i][j]==IHMATER1)||(game.quad[i][j]==IHMATER2)||(game.quad[i][j]==IHE)||(game.quad[i][j]==IHF)){
+@@ -252,7 +258,8 @@
+ 	proutn(&quot;- &quot;);
+ }
+ 
+-static void status(int req) 
++static void status(int req)
++/* print status report lines */
+ {
+     char *cp = NULL;
+     int t, dam = 0;
+@@ -330,7 +337,8 @@
+     }
+ }
+ 		
+-int srscan(int l) 
++int srscan(int l)
++/* short-range scan */
+ {
+     /* the &quot;sy&quot; request is undocumented */
+     static char requests[][3] =
+@@ -406,6 +414,7 @@
+ 			
+ 			
+ void eta(void)
++/* use computer to get estimated time of arrival for a warp jump */
+ {
+     int ix1, ix2, iy1, iy2;
+     bool wfl, prompt = false;
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-19 21:00:29 UTC (rev 602)
++++ trunk/src/setup.c	2006-09-19 21:30:15 UTC (rev 603)
+@@ -208,7 +208,7 @@
+     prout(&quot;the Faerie Queene, which is antiquated but,&quot;);
+     prout(&quot;still useable.&quot;);
+     if (game.icrystl!=0) prout(&quot;The dilithium crystals have been moved.&quot;);
+-    game.imine=0;
++    game.imine = false;
+     game.iscraft=0; /* Galileo disappears */
+     /* Resupply ship */
+     game.condit=IHDOCKED;
+@@ -253,8 +253,8 @@
+     game.battle.x = game.battle.y = 0;
+     game.state.date = game.indate = 100.0*(int)(31.0*Rand()+20.0);
+     game.nkinks = game.nhelp = game.casual = game.abandoned = 0;
+-    game.resting = false;
+-    game.isatb = game.iscate = game.imine = game.icrystl = game.icraft = game.state.nplankl = 0;
++    game.resting = game.imine = false;
++    game.isatb = game.iscate = game.icrystl = game.icraft = game.state.nplankl = 0;
+     game.state.starkl = game.state.basekl = 0;
+     game.iscraft = 1;
+     game.landed = -1;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-19 21:00:29 UTC (rev 602)
++++ trunk/src/sst.c	2006-09-19 21:30:15 UTC (rev 603)
+@@ -531,7 +531,7 @@
+ 	    abandn();
+ 	    break;
+ 	case DESTRUCT:			// Self Destruct
+-	    dstrct();
++	    selfdestruct();
+ 	    break;
+ 	case SAVE:			// Save Game
+ 	    freeze(false);
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-19 21:00:29 UTC (rev 602)
++++ trunk/src/sst.h	2006-09-19 21:30:15 UTC (rev 603)
+@@ -215,6 +215,7 @@
+ 	neutz,		// Romulan Neutral Zone
+ 	isarmed,	// probe is armed
+ 	inorbit,	// orbiting a planet
++	imine,		// mining
+ 	thawed;		// thawed game
+     int inkling,	// initial number of klingons
+ 	inbase,		// initial number of bases
+@@ -237,7 +238,6 @@
+ 	shldchg,	// shield is changing (affects efficiency)
+ 	landed,		// party on planet (1), on ship (-1)
+ 	iplnet,		// planet # in quadrant
+-	imine,		// mining
+ 	inplan,		// initial planets
+ 	nenhere,	// number of enemies in quadrant
+ 	ishere,		// super-commander in quandrant
+@@ -352,7 +352,7 @@
+ void mayday(void);
+ void abandn(void);
+ void finish(FINTYPE);
+-void dstrct(void);
++void selfdestruct(void);
+ void kaboom(void);
+ void freeze(bool);
+ int thaw(void);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000069.html">[Sst-commit-watch] r602 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000071.html">[Sst-commit-watch] r604 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#70">[ date ]</a>
+              <a href="thread.html#70">[ thread ]</a>
+              <a href="subject.html#70">[ subject ]</a>
+              <a href="author.html#70">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

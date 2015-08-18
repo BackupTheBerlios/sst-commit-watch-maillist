@@ -1,0 +1,269 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r626 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r626%20-%20trunk/src&In-Reply-To=%3C200609221138.k8MBctrY025660%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000092.html">
+   <LINK REL="Next"  HREF="000094.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r626 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r626%20-%20trunk/src&In-Reply-To=%3C200609221138.k8MBctrY025660%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r626 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 22 13:38:55 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000092.html">[Sst-commit-watch] r625 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000094.html">[Sst-commit-watch] r627 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#93">[ date ]</a>
+              <a href="thread.html#93">[ thread ]</a>
+              <a href="subject.html#93">[ subject ]</a>
+              <a href="author.html#93">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-22 13:38:54 +0200 (Fri, 22 Sep 2006)
+New Revision: 626
+
+Modified:
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/setup.c
+   trunk/src/sst.h
+Log:
+Abstract away the operations involving a sentinel value for coordinates.
+Besides making the code more readable, the seniinel may change someday 
+if we go zero-origin everywhere.
+
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-21 18:16:38 UTC (rev 625)
++++ trunk/src/battle.c	2006-09-22 11:38:54 UTC (rev 626)
+@@ -387,7 +387,7 @@
+ 	    q-&gt;planet = NOPLANET;
+ 	    DESTROY(&amp;game.state.plnets[game.iplnet]);
+ 	    game.iplnet = 0;
+-	    game.plnet.x = game.plnet.y = 0;
++	    invalidate(game.plnet);
+ 	    game.quad[w.x][w.y] = IHDOT;
+ 	    if (game.landed) {
+ 		/* captain perishes on planet */
+@@ -401,7 +401,7 @@
+ 	    q-&gt;planet = NOPLANET;
+ 	    DESTROY(&amp;game.state.plnets[game.iplnet]);
+ 	    game.iplnet = 0;
+-	    game.plnet.x = game.plnet.y = 0;
++	    invalidate(game.plnet);
+ 	    game.quad[w.x][w.y] = IHDOT;
+ 	    if (game.landed) {
+ 		/* captain perishes on planet */
+@@ -719,7 +719,7 @@
+     else if (type == IHQUEST) {
+ 	/* Killed a Thingy */
+ 	iqhere = iqengry = false;
+-	thing.x =thing.y = 0;
++	invalidate(thing);
+     }
+     else {
+ 	/* Some type of a Klingon */
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-21 18:16:38 UTC (rev 625)
++++ trunk/src/events.c	2006-09-22 11:38:54 UTC (rev 626)
+@@ -317,7 +317,7 @@
+ 		if (i &gt; game.state.remcom || game.state.rembase == 0 ||
+ 		    !game.state.galaxy[game.battle.x][game.battle.y].starbase) {
+ 		    /* No action to take after all */
+-		    game.battle.x = game.battle.y = 0;
++		    invalidate(game.battle);
+ 		    break;
+ 		}
+ 	    }
+@@ -358,9 +358,8 @@
+ 		game.battle = hold;
+ 		game.isatb = 0;
+ 	    }
+-	    else {
+-		game.battle.x = game.battle.y = 0;
+-	    }
++	    else
++		invalidate(game.battle);
+ 	    break;
+ 	case FSCMOVE: /* Supercommander moves */
+ 	    schedule(FSCMOVE, 0.2777);
+@@ -676,7 +675,8 @@
+ 			crmena(true, IHP, sector, scratch);
+ 			prout(_(&quot; destroyed.&quot;));
+ 			DESTROY(&amp;game.state.plnets[game.iplnet]);
+-			game.iplnet = game.plnet.x = game.plnet.y = 0;
++			game.iplnet = 0;
++			invalidate(game.plnet);
+ 			if (game.landed) {
+ 			    finish(FPNOVA);
+ 			    return;
+@@ -690,7 +690,7 @@
+ 				break;
+ 			game.state.baseq[i] = game.state.baseq[game.state.rembase];
+ 			game.state.rembase--;
+-			game.base.x = game.base.y = 0;
++			invalidate(game.base);
+ 			game.state.basekl++;
+ 			newcnd();
+ 			crmena(true, IHB, sector, scratch);
+@@ -875,7 +875,7 @@
+ 	for (l = 1; l &lt;= maxloop; l++) {
+ 	    if (same(game.state.kcmdr[l], nq)) {
+ 		game.state.kcmdr[l] = game.state.kcmdr[game.state.remcom];
+-		game.state.kcmdr[game.state.remcom].x = game.state.kcmdr[game.state.remcom].y = 0;
++		invalidate(game.state.kcmdr[game.state.remcom]);
+ 		game.state.remcom--;
+ 		kldead--;
+ 		if (game.state.remcom==0) unschedule(FTBEAM);
+@@ -902,7 +902,7 @@
+ 	for (loop = 1; loop &lt;= maxloop; loop++)
+ 	    if (same(game.state.baseq[loop], nq)) {
+ 		game.state.baseq[loop] = game.state.baseq[game.state.rembase];
+-		game.state.baseq[game.state.rembase].x = game.state.baseq[game.state.rembase].y = 0;
++		invalidate(game.state.baseq[game.state.rembase]);
+ 		game.state.rembase--;
+ 		break;
+ 	    }
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-21 18:16:38 UTC (rev 625)
++++ trunk/src/moving.c	2006-09-22 11:38:54 UTC (rev 626)
+@@ -219,7 +219,7 @@
+ 	prout(_(&quot;You must first leave standard orbit.&quot;));
+ 	return;
+     }
+-    if (game.base.x==0 || abs(game.sector.x-game.base.x) &gt; 1 || abs(game.sector.y-game.base.y) &gt; 1) {
++    if (!is_valid(game.base) || abs(game.sector.x-game.base.x) &gt; 1 || abs(game.sector.y-game.base.y) &gt; 1) {
+ 	crmshp();
+ 	prout(_(&quot; not adjacent to base.&quot;));
+ 	return;
+@@ -793,7 +793,7 @@
+ 	game.isatb = 0;
+ 	unschedule(FCDBAS);
+ 	unschedule(FSCDBAS);
+-	game.battle.x = game.battle.y = 0;
++	invalidate(game.battle);
+ 
+ 	/* Make sure Galileo is consistant -- Snapshot may have been taken
+ 	   when on planet, which would give us two Galileos! */
+@@ -987,7 +987,7 @@
+ 	    break;
+ 	}
+     }
+-    if (game.sector.x==0){
++    if (!is_valid(game.sector)){
+ 	prout(_(&quot;You have been lost in space...&quot;));
+ 	finish(FMATERIALIZE);
+ 	return;
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-21 18:16:38 UTC (rev 625)
++++ trunk/src/planets.c	2006-09-22 11:38:54 UTC (rev 626)
+@@ -55,7 +55,7 @@
+ 	prout(_(&quot;Both warp and impulse engines damaged.&quot;));
+ 	return;
+     }
+-    if (game.plnet.x == 0 || abs(game.sector.x-game.plnet.x) &gt; 1 || abs(game.sector.y-game.plnet.y) &gt; 1) {
++    if (!is_valid(game.plnet) || abs(game.sector.x-game.plnet.x) &gt; 1 || abs(game.sector.y-game.plnet.y) &gt; 1) {
+ 	crmshp();
+ 	prout(_(&quot; not adjacent to planet.&quot;));
+ 	skip(1);
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-21 18:16:38 UTC (rev 625)
++++ trunk/src/setup.c	2006-09-22 11:38:54 UTC (rev 626)
+@@ -212,7 +212,7 @@
+     for (i=0; i &lt; NDEVICES; i++) 
+ 	game.damage[i] = 0.0;
+     // Set up assorted game parameters
+-    game.battle.x = game.battle.y = 0;
++    invalidate(game.battle);
+     game.state.date = game.indate = 100.0*(int)(31.0*Rand()+20.0);
+     game.nkinks = game.nhelp = game.casual = game.abandoned = 0;
+     game.iscate = game.resting = game.imine = game.icrystl = game.icraft = false;
+@@ -366,7 +366,7 @@
+ 	thing = randplace(GALSIZE);
+     }
+     else
+-	thing.x = thing.y = 0;
++	invalidate(thing);
+ 
+     skip(2);
+     game.state.snap = false;
+@@ -562,10 +562,10 @@
+     struct quadrant *q;
+ 
+     game.justin = true;
+-    game.base.x = game.base.y = 0;
++    invalidate(game.base);
+     game.klhere = 0;
+     game.comhere = false;
+-    game.plnet.x = game.plnet.y = 0;
++    invalidate(game.plnet);
+     game.ishere = false;
+     game.irhere = 0;
+     game.iplnet = 0;
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-21 18:16:38 UTC (rev 625)
++++ trunk/src/sst.h	2006-09-22 11:38:54 UTC (rev 626)
+@@ -45,6 +45,8 @@
+ #define square(i)		((i)*(i))
+ #define same(c1, c2)		((c1.x == c2.x) &amp;&amp; (c1.y == c2.y))
+ #define distance(c1, c2)	sqrt(square(c1.x - c2.x) + square(c1.y - c2.y))
++#define invalidate(w)		w.x = w.y = 0
++#define is_valid(w)		(w.x == 0 || w.y == 0)
+ 
+ typedef struct {
+     coord w;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000092.html">[Sst-commit-watch] r625 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000094.html">[Sst-commit-watch] r627 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#93">[ date ]</a>
+              <a href="thread.html#93">[ thread ]</a>
+              <a href="subject.html#93">[ subject ]</a>
+              <a href="author.html#93">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

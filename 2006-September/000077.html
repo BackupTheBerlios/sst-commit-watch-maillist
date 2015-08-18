@@ -1,0 +1,501 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r610 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r610%20-%20trunk/src&In-Reply-To=%3C200609200518.k8K5I83r021646%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000076.html">
+   <LINK REL="Next"  HREF="000078.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r610 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r610%20-%20trunk/src&In-Reply-To=%3C200609200518.k8K5I83r021646%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r610 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 07:18:08 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000076.html">[Sst-commit-watch] r609 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000078.html">[Sst-commit-watch] r611 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#77">[ date ]</a>
+              <a href="thread.html#77">[ thread ]</a>
+              <a href="subject.html#77">[ subject ]</a>
+              <a href="author.html#77">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 07:18:07 +0200 (Wed, 20 Sep 2006)
+New Revision: 610
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/finish.c
+   trunk/src/moving.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+More boolean-chasing and coord applications.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-20 04:35:23 UTC (rev 609)
++++ trunk/src/ai.c	2006-09-20 05:18:07 UTC (rev 610)
+@@ -1,19 +1,19 @@
+ #include &quot;sst.h&quot;
+ 
+-static bool tryexit(int lookx, int looky, int ienm, int loccom, int irun) 
++static bool tryexit(coord look, int ienm, int loccom, bool irun) 
+ /* a bad guy attempts to bug out */
+ {
+     int n;
+     coord iq;
+ 
+-    iq.x = game.quadrant.x+(lookx+(QUADSIZE-1))/QUADSIZE - 1;
+-    iq.y = game.quadrant.y+(looky+(QUADSIZE-1))/QUADSIZE - 1;
++    iq.x = game.quadrant.x+(look.x+(QUADSIZE-1))/QUADSIZE - 1;
++    iq.y = game.quadrant.y+(look.y+(QUADSIZE-1))/QUADSIZE - 1;
+     if (!VALID_QUADRANT(iq.x,iq.y) ||
+ 	game.state.galaxy[iq.x][iq.y].supernova ||
+ 	game.state.galaxy[iq.x][iq.y].klingons &gt; 8)
+ 	return false; /* no can do -- neg energy, supernovae, or &gt;8 Klingons */
+     if (ienm == IHR) return false; /* Romulans cannot escape! */
+-    if (irun == 0) {
++    if (!irun) {
+ 	/* avoid intruding on another commander's territory */
+ 	if (ienm == IHC) {
+ 	    for_commanders(n)
+@@ -60,7 +60,7 @@
+ 		break;
+ 	    }
+ 	}
+-	game.comhere = 0;
++	game.comhere = false;
+     }
+     return true; /* success */
+ }
+@@ -69,11 +69,10 @@
+ static void movebaddy(coord com, int loccom, int ienm)
+ /* tactical movement for the bad guys */
+ {
+-    int motion, mdist, nsteps, mx, my, lookx, looky, ll;
+-    coord next;
+-    int irun = 0;
++    int motion, mdist, nsteps, mx, my, ll;
++    coord next, look;
+     int krawlx, krawly;
+-    bool success;
++    bool success, irun = false;
+     int attempts;
+     /* This should probably be just game.comhere + game.ishere */
+     int nbaddys = game.skill &gt;= SKILL_EXPERT ?
+@@ -87,7 +86,7 @@
+     /* If SC, check with spy to see if should hi-tail it */
+     if (ienm==IHS &amp;&amp;
+ 	(game.kpower[loccom] &lt;= 500.0 || (game.condit==IHDOCKED &amp;&amp; !damaged(DPHOTON)))) {
+-	irun = 1;
++	irun = true;
+ 	motion = -QUADSIZE;
+     }
+     else {
+@@ -183,40 +182,40 @@
+ 	if (idebug)
+ 	    proutn(&quot; %d&quot;, ll+1);
+ 	/* Check if preferred position available */
+-	lookx = next.x + mx;
+-	looky = next.y + my;
++	look.x = next.x + mx;
++	look.y = next.y + my;
+ 	krawlx = mx &lt; 0 ? 1 : -1;
+ 	krawly = my &lt; 0 ? 1 : -1;
+ 	success = false;
+ 	attempts = 0; /* Settle mysterious hang problem */
+ 	while (attempts++ &lt; 20 &amp;&amp; !success) {
+-	    if (lookx &lt; 1 || lookx &gt; QUADSIZE) {
+-		if (motion &lt; 0 &amp;&amp; tryexit(lookx, looky, ienm, loccom, irun))
++	    if (look.x &lt; 1 || look.x &gt; QUADSIZE) {
++		if (motion &lt; 0 &amp;&amp; tryexit(look, ienm, loccom, irun))
+ 		    return;
+ 		if (krawlx == mx || my == 0) break;
+-		lookx = next.x + krawlx;
++		look.x = next.x + krawlx;
+ 		krawlx = -krawlx;
+ 	    }
+-	    else if (looky &lt; 1 || looky &gt; QUADSIZE) {
+-		if (motion &lt; 0 &amp;&amp; tryexit(lookx, looky, ienm, loccom, irun))
++	    else if (look.y &lt; 1 || look.y &gt; QUADSIZE) {
++		if (motion &lt; 0 &amp;&amp; tryexit(look, ienm, loccom, irun))
+ 		    return;
+ 		if (krawly == my || mx == 0) break;
+-		looky = next.y + krawly;
++		look.y = next.y + krawly;
+ 		krawly = -krawly;
+ 	    }
+-	    else if ((game.options &amp; OPTION_RAMMING) &amp;&amp; game.quad[lookx][looky] != IHDOT) {
++	    else if ((game.options &amp; OPTION_RAMMING) &amp;&amp; game.quad[look.x][look.y] != IHDOT) {
+ 		/* See if we should ram ship */
+-		if (game.quad[lookx][looky] == game.ship &amp;&amp;
++		if (game.quad[look.x][look.y] == game.ship &amp;&amp;
+ 		    (ienm == IHC || ienm == IHS)) {
+ 		    ram(true, ienm, com);
+ 		    return;
+ 		}
+ 		if (krawlx != mx &amp;&amp; my != 0) {
+-		    lookx = next.x + krawlx;
++		    look.x = next.x + krawlx;
+ 		    krawlx = -krawlx;
+ 		}
+ 		else if (krawly != my &amp;&amp; mx != 0) {
+-		    looky = next.y + krawly;
++		    look.y = next.y + krawly;
+ 		    krawly = -krawly;
+ 		}
+ 		else break; /* we have failed */
+@@ -224,8 +223,7 @@
+ 	    else success = true;
+ 	}
+ 	if (success) {
+-	    next.x = lookx;
+-	    next.y = looky;
++	    next = look;
+ 	    if (idebug)
+ 		proutn(cramlc(neither, next));
+ 	}
+@@ -237,10 +235,9 @@
+     /* Put commander in place within same quadrant */
+     game.quad[com.x][com.y] = IHDOT;
+     game.quad[next.x][next.y] = ienm;
+-    if (next.x != com.x || next.y != com.y) {
++    if (!same(next, com)) {
+ 	/* it moved */
+-	game.ks[loccom].x = next.x;
+-	game.ks[loccom].y = next.y;
++	game.ks[loccom] = next;
+ 	game.kdist[loccom] = game.kavgd[loccom] = distance(game.sector, next);
+ 	if (!damaged(DSRSENS) || game.condit == IHDOCKED) {
+ 	    proutn(&quot;***&quot;);
+@@ -485,14 +482,14 @@
+ 	if (same(ibq, game.state.kscmdr) &amp;&amp; same(game.state.kscmdr, game.battle)) {
+ 	    /* attack the base */
+ 	    if (flag) return; /* no, don't attack base! */
+-	    game.iseenit = 0;
++	    game.iseenit = false;
+ 	    game.isatb = 1;
+ 	    schedule(FSCDBAS, 1.0 +2.0*Rand());
+ 	    if (is_scheduled(FCDBAS)) 
+ 		postpone(FSCDBAS, scheduled(FCDBAS)-game.state.date);
+ 	    if (damaged(DRADIO) &amp;&amp; game.condit != IHDOCKED)
+ 		return; /* no warning */
+-	    game.iseenit = 1;
++	    game.iseenit = true;
+ 	    if (*ipage == 0)  pause_game(1);
+ 	    *ipage=1;
+ 	    proutn(_(&quot;Lt. Uhura-  \&quot;Captain, the starbase in &quot;));
+@@ -586,7 +583,6 @@
+     crmena(true, IHT, sector, game.tholian);
+     prout(_(&quot; completes web.&quot;));
+     game.ithere = false;
+-    game.tholian.x = game.tholian.y = 0;
+     game.nenhere--;
+     return;
+ }
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-20 04:35:23 UTC (rev 609)
++++ trunk/src/battle.c	2006-09-20 05:18:07 UTC (rev 610)
+@@ -390,7 +390,6 @@
+ 	    if (h1 &gt;= 600) {
+ 		game.quad[w.x][w.y] = IHDOT;
+ 		game.ithere = false;
+-		game.tholian.x = game.tholian.y = 0;
+ 		deadkl(w, iquad, w);
+ 		return;
+ 	    }
+@@ -403,7 +402,6 @@
+ 	    prout(_(&quot; disappears.&quot;));
+ 	    game.quad[w.x][w.y] = IHWEB;
+ 	    game.ithere = false;
+-	    game.tholian.x = game.tholian.y = 0;
+ 	    game.nenhere--;
+ 	    dropin(IHBLANK);
+ 	    return;
+@@ -488,7 +486,7 @@
+     if (game.ithere) movetho();
+ 
+     if (game.neutz) { /* The one chance not to be attacked */
+-	game.neutz = 0;
++	game.neutz = false;
+ 	return;
+     }
+     if ((((game.comhere || game.ishere) &amp;&amp; !game.justin) || game.skill == SKILL_EMERITUS) &amp;&amp; torps_ok) movcom();
+@@ -645,7 +643,7 @@
+ 	game.klhere--;
+ 	switch (type) {
+ 	case IHC:
+-	    game.comhere = 0;
++	    game.comhere = false;
+ 	    for_commanders (i)
+ 		if (game.state.kcmdr[i].x==game.quadrant.x &amp;&amp; game.state.kcmdr[i].y==game.quadrant.y) break;
+ 	    game.state.kcmdr[i] = game.state.kcmdr[game.state.remcom];
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-20 04:35:23 UTC (rev 609)
++++ trunk/src/events.c	2006-09-20 05:18:07 UTC (rev 610)
+@@ -141,9 +141,9 @@
+ 	    prout(_(&quot;Lt. Uhura- \&quot;Captain, the sub-space radio is working and&quot;));
+ 	    prout(_(&quot;   surveillance reports are coming in.&quot;));
+ 	    skip(1);
+-	    if (game.iseenit==0) {
++	    if (!game.iseenit) {
+ 		attakreport(false);
+-		game.iseenit = 1;
++		game.iseenit = true;
+ 	    }
+ 	    rechart();
+ 	    prout(_(&quot;   The star chart is now up to date.\&quot;&quot;));
+@@ -283,10 +283,10 @@
+ 	    if (game.isatb) /* extra time if SC already attacking */
+ 		postpone(FCDBAS, scheduled(FSCDBAS)-game.state.date);
+ 	    game.future[FBATTAK].date = game.future[FCDBAS].date + expran(0.3*game.intime);
+-	    game.iseenit = 0;
++	    game.iseenit = false;
+ 	    if (!damaged(DRADIO) &amp;&amp; game.condit != IHDOCKED) 
+ 		break; /* No warning :-( */
+-	    game.iseenit = 1;
++	    game.iseenit = true;
+ 	    if (!ipage) pause_game(1);
+ 	    ipage = true;
+ 	    skip(1);
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-20 04:35:23 UTC (rev 609)
++++ trunk/src/finish.c	2006-09-20 05:18:07 UTC (rev 610)
+@@ -142,7 +142,7 @@
+ 			proutn(_(&quot;Do you want your Commodore Emeritus Citation printed? &quot;));
+ 			chew();
+ 			if (ja() == true) {
+-			    igotit = 1;
++			    igotit = true;
+ 			}
+ 		    }
+ 		}
+@@ -152,7 +152,7 @@
+ 	    prout(_(&quot;LIVE LONG AND PROSPER.&quot;));
+ 	}
+ 	score();
+-	if (igotit != 0) plaque();
++	if (igotit) plaque();
+ 	return;
+     case FDEPLETE: // Federation Resources Depleted
+ 	prout(_(&quot;Your time has run out and the Federation has been&quot;));
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-20 04:35:23 UTC (rev 609)
++++ trunk/src/moving.c	2006-09-20 05:18:07 UTC (rev 610)
+@@ -233,11 +233,11 @@
+     game.lsupres = game.inlsr;
+     game.state.crew = FULLCREW;
+     if (!damaged(DRADIO) &amp;&amp;
+-	(is_scheduled(FCDBAS) || game.isatb == 1) &amp;&amp; game.iseenit == 0) {
++	(is_scheduled(FCDBAS) || game.isatb == 1) &amp;&amp; !game.iseenit) {
+ 	/* get attack report from base */
+ 	prout(_(&quot;Lt. Uhura- \&quot;Captain, an important message from the starbase:\&quot;&quot;));
+ 	attakreport(false);
+-	game.iseenit = 1;
++	game.iseenit = true;
+     }
+ }
+ 
+@@ -774,7 +774,8 @@
+ void timwrp() 
+ /* let's do the time warp again */
+ {
+-    int l, gotit;
++    int l;
++    bool gotit;
+     prout(_(&quot;***TIME WARP ENTERED.&quot;));
+     if (game.state.snap &amp;&amp; Rand() &lt; 0.5) {
+ 	/* Go back in time */
+@@ -798,10 +799,10 @@
+ 
+ 	/* Make sure Galileo is consistant -- Snapshot may have been taken
+ 	   when on planet, which would give us two Galileos! */
+-	gotit = 0;
++	gotit = false;
+ 	for (l = 0; l &lt; game.inplan; l++) {
+ 	    if (game.state.plnets[l].known == shuttle_down) {
+-		gotit = 1;
++		gotit = true;
+ 		if (game.iscraft==1 &amp;&amp; game.ship==IHE) {
+ 		    prout(_(&quot;Checkov-  \&quot;Security reports the Galileo has disappeared, Sir!&quot;));
+ 		    game.iscraft = 0;
+@@ -810,7 +811,7 @@
+ 	}
+ 	/* Likewise, if in the original time the Galileo was abandoned, but
+ 	   was on ship earlier, it would have vanished -- lets restore it */
+-	if (game.iscraft==0 &amp;&amp; gotit==0 &amp;&amp; game.damage[DSHUTTL] &gt;= 0.0) {
++	if (game.iscraft==0 &amp;&amp; !gotit &amp;&amp; game.damage[DSHUTTL] &gt;= 0.0) {
+ 	    prout(_(&quot;Checkov-  \&quot;Security reports the Galileo has reappeared in the dock!\&quot;&quot;));
+ 	    game.iscraft = 1;
+ 	}
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-20 04:35:23 UTC (rev 609)
++++ trunk/src/reports.c	2006-09-20 05:18:07 UTC (rev 610)
+@@ -75,7 +75,7 @@
+ 	/* Don't report this if not seen and
+ 	   either the radio is dead or not at base! */
+ 	attakreport(false);
+-	game.iseenit = 1;
++	game.iseenit = true;
+     }
+     if (game.casual) prout(_(&quot;%d casualt%s suffered so far.&quot;),
+ 		      game.casual, game.casual==1? &quot;y&quot; : &quot;ies&quot;);
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-20 04:35:23 UTC (rev 609)
++++ trunk/src/setup.c	2006-09-20 05:18:07 UTC (rev 610)
+@@ -607,7 +607,7 @@
+     game.justin = true;
+     game.base.x = game.base.y = 0;
+     game.klhere = 0;
+-    game.comhere = 0;
++    game.comhere = false;
+     game.plnet.x = game.plnet.y = 0;
+     game.ishere = false;
+     game.irhere = 0;
+@@ -620,7 +620,7 @@
+     game.ithere = false;
+     iqhere = false;
+     iqengry = false;
+-    game.iseenit = 0;
++    game.iseenit = false;
+     if (game.iscate) {
+ 	// Attempt to escape Super-commander, so tbeam back!
+ 	game.iscate = 0;
+@@ -654,7 +654,7 @@
+ 	if (i &lt;= game.state.remcom) {
+ 	    game.quad[w.x][w.y] = IHC;
+ 	    game.kpower[game.klhere] = 950.0+400.0*Rand()+50.0*game.skill;
+-	    game.comhere = 1;
++	    game.comhere = true;
+ 	}
+ 
+ 	// If we need a super-commander, promote a Klingon
+@@ -692,7 +692,7 @@
+ 
+     // Check for RNZ
+     if (game.irhere &gt; 0 &amp;&amp; game.klhere == 0 &amp;&amp; (q-&gt;planet == NOPLANET || game.state.plnets[q-&gt;planet].inhabited == UNINHABITED)) {
+-	game.neutz = 1;
++	game.neutz = true;
+ 	if (!damaged(DRADIO)) {
+ 	    skip(1);
+ 	    prout(&quot;LT. Uhura- \&quot;Captain, an urgent message.&quot;);
+@@ -735,8 +735,7 @@
+ 	    game.quad[game.tholian.x][game.tholian.y] = IHT;
+ 	    game.ithere = true;
+ 	    game.nenhere++;
+-	    game.ks[game.nenhere].x = game.tholian.x;
+-	    game.ks[game.nenhere].y = game.tholian.y;
++	    game.ks[game.nenhere] = game.tholian;
+ 	    game.kdist[game.nenhere] = game.kavgd[game.nenhere] =
+ 		distance(game.sector, game.tholian);
+ 	    game.kpower[game.nenhere] = Rand()*400.0 +100.0 +25.0*game.skill;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-20 04:35:23 UTC (rev 609)
++++ trunk/src/sst.c	2006-09-20 05:18:07 UTC (rev 610)
+@@ -403,7 +403,7 @@
+ 	drawmaps(1);
+ 	for(;;)  { /* get a command */
+ 	    hitme = false;
+-	    game.justin = 0;
++	    game.justin = false;
+ 	    game.optime = 0.0;
+ 	    i = -1;
+ 	    chew();
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-20 04:35:23 UTC (rev 609)
++++ trunk/src/sst.h	2006-09-20 05:18:07 UTC (rev 610)
+@@ -212,6 +212,7 @@
+ 	alive,		// we are alive (not killed)
+ 	justin,		// just entered quadrant
+ 	shldup,		// shields are up
++	comhere,	// commander here
+ 	ishere,		// super-commander in quadrant
+ 	ientesc,	// attempted escape from supercommander
+ 	ithere,		// Tholian is here 
+@@ -223,6 +224,7 @@
+ 	inorbit,	// orbiting a planet
+ 	imine,		// mining
+ 	icrystl,	// dilithium crystals aboard
++	iseenit,	// seen base attack report
+ 	thawed;		// thawed game
+     int inkling,	// initial number of klingons
+ 	inbase,		// initial number of bases
+@@ -238,7 +240,6 @@
+ 	length,		// length of game
+ 	skill,		// skill level
+ 	klhere,		// klingons here
+-	comhere,	// commanders here
+ 	casual,		// causalties
+ 	nhelp,		// calls for help
+ 	nkinks,		// count of energy-barrier crossings
+@@ -253,7 +254,6 @@
+ 	iscate,		// super commander is here
+ 	iattak,		// attack recursion elimination (was cracks[4])
+ 	tourn,		// tournament number
+-	iseenit,	// seen base attack report
+ 	proben,		// number of moves for probe
+ 	nprobes;	// number of probes available
+     double inresor,	// initial resources
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000076.html">[Sst-commit-watch] r609 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000078.html">[Sst-commit-watch] r611 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#77">[ date ]</a>
+              <a href="thread.html#77">[ thread ]</a>
+              <a href="subject.html#77">[ subject ]</a>
+              <a href="author.html#77">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

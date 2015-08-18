@@ -1,0 +1,289 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r604 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r604%20-%20trunk/src&In-Reply-To=%3C200609192203.k8JM37xJ015903%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000070.html">
+   <LINK REL="Next"  HREF="000072.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r604 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r604%20-%20trunk/src&In-Reply-To=%3C200609192203.k8JM37xJ015903%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r604 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 00:03:07 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000070.html">[Sst-commit-watch] r603 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000072.html">[Sst-commit-watch] r605 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#71">[ date ]</a>
+              <a href="thread.html#71">[ thread ]</a>
+              <a href="subject.html#71">[ subject ]</a>
+              <a href="author.html#71">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 00:03:07 +0200 (Wed, 20 Sep 2006)
+New Revision: 604
+
+Modified:
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/sst.c
+Log:
+More boolean cleanups and explanator comments.
+
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-19 21:30:15 UTC (rev 603)
++++ trunk/src/battle.c	2006-09-19 22:03:07 UTC (rev 604)
+@@ -6,7 +6,7 @@
+     int key;
+     enum {NONE, SHUP, SHDN, NRG} action = NONE;
+ 
+-    game.ididit = 0;
++    game.ididit = false;
+ 
+     if (i == 2) action = SHUP;
+     else {
+@@ -80,7 +80,7 @@
+ 	game.shldup=false;
+ 	game.shldchg=1;
+ 	prout(_(&quot;Shields lowered.&quot;));
+-	game.ididit=1;
++	game.ididit = true;
+ 	return;
+     case NRG:
+ 	while (scan() != IHREAL) {
+@@ -109,7 +109,7 @@
+ 	    prout(_(&quot;Engineering to bridge--&quot;));
+ 	    prout(_(&quot;  Scott here. Power circuit problem, Captain.&quot;));
+ 	    prout(_(&quot;  I can't drain the shields.&quot;));
+-	    game.ididit = 0;
++	    game.ididit = false;
+ 	    return;
+ 	}
+ 	if (game.shield+aaitem &lt; 0) {
+@@ -733,7 +733,7 @@
+     double r, dummy;
+     int key, n, i, osuabor;
+ 
+-    game.ididit = 0;
++    game.ididit = false;
+ 
+     if (damaged(DPHOTON)) {
+ 	prout(_(&quot;Photon tubes damaged.&quot;));
+@@ -822,7 +822,7 @@
+ 	    if (targetcheck(targ[i][1], targ[i][2], &amp;course[i])) return;
+ 	}
+     }
+-    game.ididit = 1;
++    game.ididit = true;
+     /* Loop for moving &lt;n&gt; torpedoes */
+     osuabor = 0;
+     for (i = 1; i &lt;= n &amp;&amp; !osuabor; i++) {
+@@ -1069,7 +1069,7 @@
+ 	    }
+ 	    if (powrem &gt; 0.0) extra += powrem;
+ 	    hittem(hits);
+-	    game.ididit=1;
++	    game.ididit = true;
+ 	}
+ 	if (extra &gt; 0 &amp;&amp; game.alldone == 0) {
+ 	    if (game.ithere) {
+@@ -1181,7 +1181,7 @@
+ 	    if (checkshctrl(rpow)) return;
+ 	}
+ 	hittem(hits);
+-	game.ididit=1;
++	game.ididit = true;
+     case NOTSET:;	/* avoid gcc warning */
+     }
+     /* Say shield raised or malfunction, if necessary */
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-19 21:30:15 UTC (rev 603)
++++ trunk/src/events.c	2006-09-19 22:03:07 UTC (rev 604)
+@@ -42,6 +42,7 @@
+ }
+ 
+ static bool cancelrest(void)
++/* rest period is interrupted by event */
+ {
+     if (game.resting) {
+ 	skip(1);
+@@ -57,6 +58,7 @@
+ }
+ 
+ void events(void) 
++/* run through the event queue looking for things to do */
+ {
+     int istract=0, evcode, i=0, j, k, l;
+     double fintim = game.state.date + game.optime, datemin, xtime, repair, yank=0;
+@@ -543,11 +545,12 @@
+ 
+ 				
+ void wait(void) 
++/* wait on events */
+ {
+     int key;
+     double temp, delay, origTime;
+ 
+-    game.ididit = 0;
++    game.ididit = false;
+     for (;;) {
+ 	key = scan();
+ 	if (key  != IHEOL) break;
+@@ -584,7 +587,7 @@
+ 	if (game.optime &lt; delay) attack(0);
+ 	if (game.alldone) return;
+ 	events();
+-	game.ididit = 1;
++	game.ididit = true;
+ 	if (game.alldone) return;
+ 	delay -= temp;
+ 	/* Repair Deathray if long rest at starbase */
+@@ -599,6 +602,7 @@
+ }
+ 
+ void nova(int ix, int iy) 
++/* star goes nova */
+ {
+     static double course[] =
+ 	{0.0, 10.5, 12.0, 1.5, 9.0, 0.0, 3.0, 7.5, 6.0, 4.5};
+@@ -782,10 +786,11 @@
+ 	
+ 	
+ void snova(int insx, int insy) 
++/* star goes supernova */
+ {
+     int comdead, nsx, nsy, num=0, kldead, iscdead;
+     int nrmdead, npdead;
+-    int incipient=0;
++    bool incipient = false;
+     coord nq;
+ 
+     nq.x = nq.y = 0;
+@@ -835,7 +840,7 @@
+ 	}
+ 	else {
+ 	    /* we are in the quadrant! */
+-	    incipient = 1;
++	    incipient = true;
+ 	    num = Rand()* game.state.galaxy[nq.x][nq.y].stars + 1;
+ 	    for_sectors(nsx) {
+ 		for_sectors(nsy) {
+@@ -849,7 +854,7 @@
+ 	}
+     }
+     else {
+-	incipient = 1;
++	incipient = true;
+     }
+ 
+     if (incipient) {
+@@ -900,18 +905,18 @@
+     game.state.nromrem -= nrmdead;
+     npdead = num - nrmdead*10;
+     if (npdead) {
+-	int l;
+-	for (l = 0; l &lt; game.inplan; l++)
+-	    if (same(game.state.plnets[l].w, nq)) {
+-		DESTROY(&amp;game.state.plnets[l]);
++	int loop;
++	for (loop = 0; loop &lt; game.inplan; loop++)
++	    if (same(game.state.plnets[loop].w, nq)) {
++		DESTROY(&amp;game.state.plnets[loop]);
+ 	    }
+     }
+     /* Destroy any base in supernovaed quadrant */
+     if (game.state.rembase) {
+-	int maxloop = game.state.rembase, l;
+-	for (l = 1; l &lt;= maxloop; l++)
+-	    if (same(game.state.baseq[l], nq)) {
+-		game.state.baseq[l] = game.state.baseq[game.state.rembase];
++	int maxloop = game.state.rembase, loop;
++	for (loop = 1; loop &lt;= maxloop; loop++)
++	    if (same(game.state.baseq[loop], nq)) {
++		game.state.baseq[loop] = game.state.baseq[game.state.rembase];
+ 		game.state.baseq[game.state.rembase].x = game.state.baseq[game.state.rembase].y = 0;
+ 		game.state.rembase--;
+ 		break;
+@@ -927,7 +932,7 @@
+     if (same(game.quadrant, nq) || !damaged(DRADIO) || game.condit == IHDOCKED)
+ 	game.state.galaxy[nq.x][nq.y].supernova = true;
+     /* If supernova destroys last Klingons give special message */
+-    if (KLINGREM==0 &amp;&amp; (nq.x != game.quadrant.x || nq.y != game.quadrant.y)) {
++    if (KLINGREM==0 &amp;&amp; !same(nq, game.quadrant)) {
+ 	skip(2);
+ 	if (insx == 0) prout(_(&quot;Lucky you!&quot;));
+ 	proutn(_(&quot;A supernova in %s has just destroyed the last Klingons.&quot;),
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-19 21:30:15 UTC (rev 603)
++++ trunk/src/moving.c	2006-09-19 22:03:07 UTC (rev 604)
+@@ -235,7 +235,7 @@
+     }
+     game.condit = IHDOCKED;
+     if (verbose) prout(_(&quot;Docked.&quot;));
+-    game.ididit=true;
++    game.ididit = true;
+     if (game.energy &lt; game.inenrg) game.energy = game.inenrg;
+     game.shield = game.inshld;
+     game.torps = game.intorps;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-19 21:30:15 UTC (rev 603)
++++ trunk/src/sst.c	2006-09-19 22:03:07 UTC (rev 604)
+@@ -409,7 +409,7 @@
+ 		makechart();
+ 		continue;
+ 	    }
+-	    game.ididit=0;
++	    game.ididit = false;
+ 	    clrscr();
+ 	    setwnd(message_window);
+ 	    clrscr();
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000070.html">[Sst-commit-watch] r603 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000072.html">[Sst-commit-watch] r605 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#71">[ date ]</a>
+              <a href="thread.html#71">[ thread ]</a>
+              <a href="subject.html#71">[ subject ]</a>
+              <a href="author.html#71">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

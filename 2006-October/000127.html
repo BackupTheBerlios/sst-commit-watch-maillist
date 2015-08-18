@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r660 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r660%20-%20trunk/src&In-Reply-To=%3C200610040205.k9425p98026506%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000126.html">
+   <LINK REL="Next"  HREF="000128.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r660 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r660%20-%20trunk/src&In-Reply-To=%3C200610040205.k9425p98026506%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r660 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Oct  4 04:05:51 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000126.html">[Sst-commit-watch] r659 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000128.html">[Sst-commit-watch] r661 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#127">[ date ]</a>
+              <a href="thread.html#127">[ thread ]</a>
+              <a href="subject.html#127">[ subject ]</a>
+              <a href="author.html#127">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-04 04:05:50 +0200 (Wed, 04 Oct 2006)
+New Revision: 660
+
+Modified:
+   trunk/src/finish.c
+Log:
+Correct minor bug in figure-of-merit scoring (inhabited-planet kills
+weren't being figured in) and make the code clearer.
+
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-10-04 01:37:55 UTC (rev 659)
++++ trunk/src/finish.c	2006-10-04 02:05:50 UTC (rev 660)
+@@ -90,8 +90,13 @@
+ 	game.gamewon = true;
+ 	if (game.alive) {
+ 	    double badpt;
+-	    badpt = 5.0*game.state.starkl + game.casual + 10.0*game.state.nplankl +
+-		45.*game.nhelp+100.*game.state.basekl+3.*game.abandoned;
++	    badpt = 5.0*game.state.starkl \
++		+ game.casual \
++		+ 10.0*game.state.nplankl \
++		+ 300.0*game.state.nworldkl \
++		+ 45.0*game.nhelp \
++		+ 100.0*game.state.basekl \
++		+ 3.0*game.abandoned;
+ 	    if (game.ship == IHF)
+ 		badpt += 100.0;
+ 	    else if (game.ship == 0)
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000126.html">[Sst-commit-watch] r659 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000128.html">[Sst-commit-watch] r661 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#127">[ date ]</a>
+              <a href="thread.html#127">[ thread ]</a>
+              <a href="subject.html#127">[ subject ]</a>
+              <a href="author.html#127">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,678 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r587 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r587%20-%20trunk/src&In-Reply-To=%3C200609180818.k8I8Ippb020839%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000053.html">
+   <LINK REL="Next"  HREF="000055.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r587 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r587%20-%20trunk/src&In-Reply-To=%3C200609180818.k8I8Ippb020839%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r587 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep 18 10:18:51 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000053.html">[Sst-commit-watch] r586 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000055.html">[Sst-commit-watch] r588 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#54">[ date ]</a>
+              <a href="thread.html#54">[ thread ]</a>
+              <a href="subject.html#54">[ subject ]</a>
+              <a href="author.html#54">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-18 10:18:50 +0200 (Mon, 18 Sep 2006)
+New Revision: 587
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/finish.c
+   trunk/src/io.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/reports.c
+   trunk/src/setup.c
+   trunk/src/sst.c
+   trunk/src/sst.h
+Log:
+New debug-mode support.  Get rid of DEBUG, the instrumentation is cheap and
+we want to cut down on the possibilities for unanticipated logic changes due
+to configuration vagaries.  Take the debugging bit out of the game structure.
+Start on the logger.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/ai.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -154,12 +154,8 @@
+ 	    if (game.condit==IHDOCKED &amp;&amp; (game.options &amp; OPTION_BASE)) /* protected by base -- back off ! */
+ 		motion -= game.skill*(2.0-square(Rand()));
+ 	}
+-#ifdef DEBUG
+-	if (game.idebug) {
+-	    proutn(&quot;MOTION = %1.2f&quot;, motion);
+-	    proutn(&quot;  FORCES = %1.2f&quot;, forces);
+-	}
+-#endif
++	if (idebug)
++	    proutn(&quot;=== MOTION = %1.2f, FORCES = %1.2f, &quot;, motion, forces);
+ 	/* don't move if no motion */
+ 	if (motion==0) return;
+ 	/* Limit motion according to skill */
+@@ -170,11 +166,9 @@
+     if (motion &gt; 0 &amp;&amp; nsteps &gt; mdist) nsteps = mdist; /* don't overshoot */
+     if (nsteps &gt; QUADSIZE) nsteps = QUADSIZE; /* This shouldn't be necessary */
+     if (nsteps &lt; 1) nsteps = 1; /* This shouldn't be necessary */
+-#ifdef DEBUG
+-    if (game.idebug) {
+-	prout(&quot;NSTEPS = %d&quot;, nsteps);
++    if (idebug) {
++	proutn(&quot;NSTEPS = %d:&quot;, nsteps);
+     }
+-#endif
+     /* Compute preferred values of delta X and Y */
+     mx = game.sector.x - com.x;
+     my = game.sector.y - com.y;
+@@ -185,11 +179,8 @@
+     next = com;
+     /* main move loop */
+     for (ll = 0; ll &lt; nsteps; ll++) {
+-#ifdef DEBUG
+-	if (game.idebug) {
+-	    prout(&quot;%d&quot;, ll+1);
+-	}
+-#endif
++	if (idebug)
++	    proutn(&quot; %d&quot;, ll+1);
+ 	/* Check if preferred position available */
+ 	lookx = next.x + mx;
+ 	looky = next.y + my;
+@@ -234,14 +225,14 @@
+ 	if (success) {
+ 	    next.x = lookx;
+ 	    next.y = looky;
+-#ifdef DEBUG
+-	    if (game.idebug) {
+-		prout(cramlc(neither, next));
+-	    }
+-#endif
++	    if (idebug)
++		proutn(cramlc(neither, next));
+ 	}
+ 	else break; /* done early */
++	
+     }
++    if (idebug)
++	prout(&quot;&quot;);
+     /* Put commander in place within same quadrant */
+     game.quad[com.x][com.y] = IHDOT;
+     game.quad[next.x][next.y] = ienm;
+@@ -267,9 +258,7 @@
+     coord w; 
+     int i;
+ 
+-#ifdef DEBUG
+-    if (game.idebug) prout(&quot;MOVCOM&quot;);
+-#endif
++    if (idebug) prout(&quot;== MOVCOM&quot;);
+ 
+     /* Figure out which Klingon is the commander (or Supercommander)
+        and do move */
+@@ -302,7 +291,7 @@
+     sortkl();
+ }
+ 
+-static int movescom(coord iq, int flag, int *ipage) 
++static bool movescom(coord iq, int flag, int *ipage) 
+ {
+     int i;
+ 
+@@ -315,7 +304,7 @@
+ 	for_starbases(i)
+ 	    if (game.state.baseq[i].x==iq.x &amp;&amp; game.state.baseq[i].y==iq.y) return 1;
+     }
+-    if (game.justin &amp;&amp; !game.iscate) return 1;
++    if (game.justin &amp;&amp; !game.iscate) return true;
+     /* do the move */
+     game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].klingons--;
+     game.state.kscmdr = iq;
+@@ -358,7 +347,7 @@
+ 	    break;
+ 	}
+     }
+-    return 0; /* looks good! */
++    return false; /* looks good! */
+ }
+ 			
+ void scom(int *ipage)
+@@ -368,10 +357,9 @@
+     int basetbl[BASEMAX+1];
+     double bdist[BASEMAX+1];
+     int flag;
+-#ifdef DEBUG
+-    if (game.idebug) prout(&quot;SCOM&quot;);
+-#endif
+ 
++    if (idebug) prout(&quot;== SCOM&quot;);
++
+     /* Decide on being active or passive */
+     flag = ((NKILLC+NKILLK)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) ||
+ 	    (game.state.date-game.indate) &lt; 3.0);
+@@ -497,7 +485,7 @@
+ 	    /* attack the base */
+ 	    if (flag) return; /* no, don't attack base! */
+ 	    game.iseenit = 0;
+-	    game.isatb=1;
++	    game.isatb = 1;
+ 	    schedule(FSCDBAS, 1.0 +2.0*Rand());
+ 	    if (is_scheduled(FCDBAS)) 
+ 		postpone(FSCDBAS, scheduled(FCDBAS)-game.state.date);
+@@ -522,9 +510,7 @@
+     }
+     /* Check for intelligence report */
+     if (
+-#ifdef DEBUG
+-	game.idebug==0 &amp;&amp;
+-#endif
++	!idebug &amp;&amp;
+ 	(Rand() &gt; 0.2 ||
+ 	 (game.damage[DRADIO] &gt; 0.0 &amp;&amp; game.condit != IHDOCKED) ||
+ 	 !game.state.galaxy[game.state.kscmdr.x][game.state.kscmdr.y].charted))
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/battle.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -469,9 +469,7 @@
+ 
+     game.iattak = 1;
+     if (game.alldone) return;
+-#ifdef DEBUG
+-    if (game.idebug) prout(&quot;ATTACK!&quot;);
+-#endif
++    if (idebug) prout(&quot;=== ATTACK!&quot;);
+ 
+     if (game.ithere) movetho();
+ 
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/events.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -38,9 +38,7 @@
+     int radio_was_broken;
+     struct quadrant *pdest;
+ 
+-#ifdef DEBUG
+-    if (game.idebug) prout(&quot;EVENTS&quot;);
+-#endif
++    if (idebug) prout(&quot;=== EVENTS&quot;);
+ 
+     radio_was_broken = (game.damage[DRADIO] != 0.0);
+ 
+@@ -298,7 +296,8 @@
+ 		proutn(_(&quot;   the starbase in &quot;));
+ 		proutn(cramlc(quadrant, game.battle));
+ 		prout(_(&quot; has been destroyed by&quot;));
+-		if (game.isatb==2) prout(_(&quot;the Klingon Super-Commander&quot;));
++		if (game.isatb == 2) 
++		    prout(_(&quot;the Klingon Super-Commander&quot;));
+ 		else prout(_(&quot;a Klingon Commander&quot;));
+ 		game.state.chart[game.battle.x][game.battle.y].starbase = false;
+ 	    }
+@@ -323,8 +322,8 @@
+ 	case FSCMOVE: /* Supercommander moves */
+ 	    schedule(FSCMOVE, 0.2777);
+ 	    if (game.ientesc+istract==0 &amp;&amp;
+-		game.isatb!=1 &amp;&amp;
+-		(game.iscate!=1 || game.justin==1)) scom(&amp;ipage);
++		game.isatb != 1 &amp;&amp;
++		(game.iscate != 1 || !game.justin)) scom(&amp;ipage);
+ 	    break;
+ 	case FDSPROB: /* Move deep space probe */
+ 	    schedule(FDSPROB, 0.01);
+@@ -775,15 +774,13 @@
+ 		}
+ 		if (num &lt;=0) break;
+ 	    }
+-#ifdef DEBUG
+-	    if (game.idebug) {
+-		proutn(&quot;Super nova here?&quot;);
++	    if (idebug) {
++		proutn(&quot;=== Super nova here?&quot;);
+ 		if (ja()==1) {
+ 		    nq.x = game.quadrant.x;
+ 		    nq.y = game.quadrant.y;
+ 		}
+ 	    }
+-#endif
+ 	}
+ 
+ 	if (nq.x != game.quadrant.y || nq.y != game.quadrant.y || game.justin != 0) {
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/finish.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -71,8 +71,8 @@
+ 
+ void finish(FINTYPE ifin) 
+ {
+-    int igotit = 0;
+-    game.alldone = 1;
++    bool igotit = false;
++    game.alldone = true;
+     skip(3);
+     prout(_(&quot;It is stardate %.1f.&quot;), game.state.date);
+     skip(1);
+@@ -84,7 +84,7 @@
+ 
+ 	prout(_(&quot;You have smashed the Klingon invasion fleet and saved&quot;));
+ 	prout(_(&quot;the Federation.&quot;));
+-	game.gamewon=1;
++	game.gamewon = true;
+ 	if (game.alive) {
+ 	    double badpt;
+ 	    badpt = 5.0*game.state.starkl + game.casual + 10.0*game.state.nplankl +
+@@ -134,11 +134,7 @@
+ 		    break;
+ 		}
+ 		if (game.skill &gt;= SKILL_EXPERT) {
+-		    if (game.thawed
+-#ifdef DEBUG
+-			&amp;&amp; !game.idebug
+-#endif
+-			)
++		    if (game.thawed &amp;&amp; !idebug)
+ 			prout(_(&quot;You cannot get a citation, so...&quot;));
+ 		    else {
+ 			proutn(_(&quot;Do you want your Commodore Emeritus Citation printed? &quot;));
+
+Modified: trunk/src/io.c
+===================================================================
+--- trunk/src/io.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/io.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -27,6 +27,8 @@
+ 	(void)endwin();
+ 	putchar('\n');
+     }
++    if (logfp)
++	fclose(logfp);
+ }
+ 
+ void iostart(void) 
+@@ -203,6 +205,8 @@
+     } else {
+ 	fgets(line, max, stdin);
+     }
++    if (logfp)
++	fputs(line, logfp);
+     line[strlen(line)-1] = '\0';
+ }
+ 
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/moving.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -565,13 +565,11 @@
+ 	}
+ 	/* Decide if time warp will occur */
+ 	if (0.5*game.dist*pow(7.0,game.warpfac-10.0) &gt; Rand()) twarp=1;
+-#ifdef DEBUG
+-	if (game.idebug &amp;&amp;game.warpfac==10 &amp;&amp; twarp==0) {
++	if (idebug &amp;&amp; game.warpfac==10 &amp;&amp; twarp==0) {
+ 	    blooey=0;
+-	    proutn(&quot;Force time warp? &quot;);
++	    proutn(&quot;=== Force time warp? &quot;);
+ 	    if (ja()==1) twarp=1;
+ 	}
+-#endif
+ 	if (blooey || twarp) {
+ 	    /* If time warp or engine damage, check path */
+ 	    /* If it is obstructed, don't do warp or damage */
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/planets.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -27,7 +27,8 @@
+ 
+ void preport(void) 
+ {
+-    int iknow = 0, i;
++    bool iknow = false;
++    int i;
+     skip(1);
+     chew();
+     prout(&quot;Spock-  \&quot;Planet report follows, Captain.\&quot;&quot;);
+@@ -35,14 +36,11 @@
+     for (i = 0; i &lt; game.inplan; i++) {
+ 	if ((game.state.plnets[i].known != unknown
+ 	    &amp;&amp; game.state.plnets[i].crystals != 0)
+-#ifdef DEBUG
+-	    || ( game.idebug &amp;&amp; game.state.plnets[i].x !=0)
+-#endif
++	    || (idebug &amp;&amp; game.state.plnets[i].w.x !=0)
+ 	    ) {
+-	    iknow = 1;
+-#ifdef DEBUG
+-	    if (game.idebug &amp;&amp; game.state.plnets[i].known==unknown) proutn(&quot;(Unknown) &quot;);
+-#endif
++	    iknow = true;
++	    if (idebug &amp;&amp; game.state.plnets[i].known==unknown)
++		proutn(&quot;(Unknown) &quot;);
+ 	    proutn(cramlc(quadrant, game.state.plnets[i].w));
+ 	    proutn(&quot;   class &quot;);
+ 	    proutn(classes[game.state.plnets[i].pclass]);
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/reports.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -21,7 +21,7 @@
+     } else {
+         if (is_scheduled(FCDBAS))
+ 	    proutn(&quot;Base in %i - %i attacked by C. Alive until %.1f&quot;, game.battle.x, game.battle.y, scheduled(FCDBAS));
+-        if (game.isatb == 1)
++        if (game.isatb)
+ 	    proutn(&quot;Base in %i - %i attacked by S. Alive until %.1f&quot;, game.state.kscmdr.x, game.state.kscmdr.y, scheduled(FSCDBAS));
+     }
+     clreol();
+
+Modified: trunk/src/setup.c
+===================================================================
+--- trunk/src/setup.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/setup.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -195,9 +195,6 @@
+ {
+     int i,j, krem, klumper;
+     int ix, iy;
+-#ifdef DEBUG
+-    game.idebug = 0;
+-#endif
+     //  Decide how many of everything
+     if (choose(needprompt)) return; // frozen game
+     // Prepare the Enterprise
+@@ -279,16 +276,14 @@
+ 		double distq = square(ix-game.state.baseq[j].x) + square(iy-game.state.baseq[j].y);
+ 		if (distq &lt; 6.0*(BASEMAX+1-game.inbase) &amp;&amp; Rand() &lt; 0.75) {
+ 		    contflag = true;
+-#ifdef DEBUG
+-		    prout(&quot;DEBUG: Abandoning base #%d at %d-%d&quot;, i, ix, iy);
+-#endif
++		    if (idebug)
++			prout(&quot;=== Abandoning base #%d at %d-%d&quot;, i, ix, iy);
+ 		    break;
+ 		}
+-#ifdef DEBUG
+ 		else if (distq &lt; 6.0 * (BASEMAX+1-game.inbase)) {
+-		    prout(&quot;DEBUG: saving base #%d, close to #%d&quot;, i, j);
++		    if (idebug)
++			prout(&quot;=== Saving base #%d, close to #%d&quot;, i, j);
+ 		}
+-#endif
+ 	    }
+ 	} while (contflag);
+ 			
+@@ -300,7 +295,8 @@
+     // Position ordinary Klingon Battle Cruisers
+     krem = game.inkling;
+     klumper = 0.25*game.skill*(9.0-game.length)+1.0;
+-    if (klumper &gt; 9) klumper = 9; // Can't have more than 9 in quadrant
++    if (klumper &gt; 9) 
++	klumper = 9; // Can't have more than 9 in quadrant
+     do {
+ 	double r = Rand();
+ 	int klump = (1.0 - r*r)*klumper;
+@@ -312,20 +308,20 @@
+ 	game.state.galaxy[ix][iy].klingons += klump;
+     } while (krem &gt; 0);
+     // Position Klingon Commander Ships
+-#ifdef DEBUG
++#ifdef ODEBUG
+     klumper = 1;
+-#endif
++#endif /* ODEBUG */
+     for (i = 1; i &lt;= game.incom; i++) {
+ 	do {
+ 	    do { /* IF debugging, put commanders by bases, always! */
+-#ifdef DEBUG
++#ifdef ODEBUG
+ 		if (game.idebug &amp;&amp; klumper &lt;= game.inbase) {
+ 		    ix = game.state.baseq[klumper].x;
+ 		    iy = game.state.baseq[klumper].y;
+ 		    klumper++;
+ 		}
+ 		else
+-#endif
++#endif /* ODEBUG */
+ 		    iran(GALSIZE, &amp;ix, &amp;iy);
+ 	    }
+ 	    while ((!game.state.galaxy[ix][iy].klingons &amp;&amp; Rand() &lt; 0.75)||
+@@ -508,9 +504,11 @@
+ 	    prout(&quot;\&quot;?&quot;);
+     }
+     setpassword();
+-#ifdef DEBUG
+-    if (strcmp(game.passwd, &quot;debug&quot;)==0) game.idebug = 1;
+-#endif
++    if (strcmp(game.passwd, &quot;debug&quot;)==0) {
++	idebug = true;
++	logfp = fopen(&quot;sst-input.log&quot;, &quot;w&quot;);
++	fputs(&quot;=== Debug mode enabled\n&quot;, stdout);
++    }
+ 
+     // Use parameters to generate initial values of things
+     game.damfac = 0.5 * game.skill;
+@@ -687,9 +685,6 @@
+ 	if ((game.skill &lt; SKILL_GOOD &amp;&amp; Rand() &lt;= 0.02) ||   /* Lighten up if skill is low */
+ 	    (game.skill == SKILL_GOOD &amp;&amp; Rand() &lt;= 0.05) ||
+ 	    (game.skill &gt; SKILL_GOOD &amp;&amp; Rand() &lt;= 0.08)
+-    #ifdef DEBUG
+-	    || strcmp(game.passwd, &quot;tholianx&quot;)==0
+-    #endif
+ 	    ) {
+ 	    do {
+ 		game.tholian.x = Rand() &gt; 0.5 ? QUADSIZE : 1;
+
+Modified: trunk/src/sst.c
+===================================================================
+--- trunk/src/sst.c	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/sst.c	2006-09-18 08:18:50 UTC (rev 587)
+@@ -166,10 +166,14 @@
+ struct game game;
+ coord thing;
+ int iqhere, iqengry;
+-int iscore, iskill; // Common PLAQ
++int iscore, iskill;	// Common PLAQ
+ double aaitem;
+ double perdate;
+ char citem[10];
++int seed;		// the random-number seed
++bool idebug;		// debug mode
++bool randready;		// Has the random-number generator initialized?
++FILE *logfp;
+ 
+ char *device[NDEVICES] = {
+ 	&quot;S. R. Sensors&quot;,
+@@ -529,9 +533,7 @@
+ 	    if (game.ididit) hitme = true;
+ 	    break;
+ 	case DEBUGCMD:			// What do we want for debug???
+-#ifdef DEBUG
+ 	    debugme();
+-#endif
+ 	    break;
+ 	case MAYDAY:			// Call for help
+ 	    mayday();
+@@ -539,9 +541,6 @@
+ 	    break;
+ 	case QUIT:
+ 	    game.alldone = 1;		// quit the game
+-#ifdef DEBUG
+-	    if (game.idebug) score();
+-#endif
+ 	    break;
+ 	case HELP:
+ 	    helpme();	// get help
+@@ -550,9 +549,6 @@
+ 	commandhook(commands[i].name, false);
+ 	for (;;) {
+ 	    if (game.alldone) break;		// Game has ended
+-#ifdef DEBUG
+-	    if (game.idebug) prout(&quot;2500&quot;);
+-#endif
+ 	    if (game.optime != 0.0) {
+ 		events();
+ 		if (game.alldone) break;	// Events did us in
+@@ -574,6 +570,7 @@
+ 	}
+ 	if (game.alldone) break;
+     }
++    if (idebug) prout(&quot;=== Ending&quot;);
+ }
+ 
+ 
+@@ -609,9 +606,6 @@
+     }
+     for(;;) { /* Play a game */
+ 	setwnd(fullscreen_window);
+-#ifdef DEBUG
+-	prout(&quot;INITIAL OPTIONS: %0lx&quot;, game.options);
+-#endif /* DEBUG */
+ 	clrscr();
+ 	prelim();
+ 	setup(line[0] == '\0');
+@@ -702,8 +696,17 @@
+     return -avrage*log(1e-7 + Rand());
+ }
+ 
+-double Rand(void) {
+-	return rand()/(1.0 + (double)RAND_MAX);
++double Rand(void) 
++{
++    if (!randready) {
++	if (seed == 0)
++	    seed = (unsigned)time(NULL);
++	if (idebug)
++	    fprintf(logfp, &quot;seed %d\n&quot;, seed);
++	srand(seed);
++	randready = true;
++    }
++    return rand()/(1.0 + (double)RAND_MAX);
+ }
+ 
+ void iran(int size, int *i, int *j) 
+@@ -808,14 +811,13 @@
+ 
+ }
+ 
+-#ifdef DEBUG
+ void debugme(void) 
+ {
+     proutn(&quot;Reset levels? &quot;);
+     if (ja() != 0) {
+-	if (energy &lt; game.inenrg) energy = game.inenrg;
+-	shield = game.inshld;
+-	torps = game.intorps;
++	if (game.energy &lt; game.inenrg) game.energy = game.inenrg;
++	game.shield = game.inshld;
++	game.torps = game.intorps;
+ 	game.lsupres = game.inlsr;
+     }
+     proutn(&quot;Reset damage? &quot;);
+@@ -827,8 +829,8 @@
+     }
+     proutn(&quot;Toggle game.idebug? &quot;);
+     if (ja() != 0) {
+-	game.idebug = !game.idebug;
+-	if (game.idebug) prout(&quot;Debug output ON&quot;);
++	idebug = !idebug;
++	if (idebug) prout(&quot;Debug output ON&quot;);
+ 	else prout(&quot;Debug output OFF&quot;);
+     }
+     proutn(&quot;Cause selective damage? &quot;);
+@@ -876,4 +878,3 @@
+ 	atover(1);
+     }
+ }
+-#endif
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-18 08:05:56 UTC (rev 586)
++++ trunk/src/sst.h	2006-09-18 08:18:50 UTC (rev 587)
+@@ -20,8 +20,6 @@
+ #define min(x, y)	((x)&lt;(y)?(x):(y))
+ #define max(x, y)	((x)&gt;(y)?(x):(y))
+ 
+-// #define DEBUG
+-
+ #define PHASEFAC (2.0)
+ #define GALSIZE	(8)
+ #define NINHAB (GALSIZE * GALSIZE / 2)
+@@ -241,9 +239,6 @@
+ 	iscraft,	// =1 if craft on ship, -1 if removed from game
+ 	isatb,		// =1 if super commander is attacking base
+ 	iscate,		// super commander is here
+-#ifdef DEBUG
+-	idebug,		// debug mode
+-#endif
+ 	iattak,		// attack recursion elimination (was cracks[4])
+ 	icrystl,	// dilithium crystals aboard
+ 	tourn,		// tournament number
+@@ -288,6 +283,10 @@
+ extern double perdate;
+ extern double aaitem;
+ extern char citem[10];
++extern int seed;
++extern bool randready;
++extern bool idebug;
++extern FILE *logfp;
+ 
+ /* the Space Thingy's global state should *not* be saved! */
+ extern coord thing;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000053.html">[Sst-commit-watch] r586 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000055.html">[Sst-commit-watch] r588 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#54">[ date ]</a>
+              <a href="thread.html#54">[ thread ]</a>
+              <a href="subject.html#54">[ subject ]</a>
+              <a href="author.html#54">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,354 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r609 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r609%20-%20trunk/src&In-Reply-To=%3C200609200435.k8K4ZO4e001982%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000075.html">
+   <LINK REL="Next"  HREF="000077.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r609 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r609%20-%20trunk/src&In-Reply-To=%3C200609200435.k8K4ZO4e001982%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r609 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 20 06:35:24 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000075.html">[Sst-commit-watch] r608 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000077.html">[Sst-commit-watch] r610 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#76">[ date ]</a>
+              <a href="thread.html#76">[ thread ]</a>
+              <a href="subject.html#76">[ subject ]</a>
+              <a href="author.html#76">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-20 06:35:23 +0200 (Wed, 20 Sep 2006)
+New Revision: 609
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/battle.c
+   trunk/src/events.c
+   trunk/src/finish.c
+   trunk/src/moving.c
+   trunk/src/planets.c
+   trunk/src/sst.h
+Log:
+Still more application of coord type.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-20 03:57:04 UTC (rev 608)
++++ trunk/src/ai.c	2006-09-20 04:35:23 UTC (rev 609)
+@@ -208,7 +208,7 @@
+ 		/* See if we should ram ship */
+ 		if (game.quad[lookx][looky] == game.ship &amp;&amp;
+ 		    (ienm == IHC || ienm == IHS)) {
+-		    ram(1, ienm, com);
++		    ram(true, ienm, com);
+ 		    return;
+ 		}
+ 		if (krawlx != mx &amp;&amp; my != 0) {
+
+Modified: trunk/src/battle.c
+===================================================================
+--- trunk/src/battle.c	2006-09-20 03:57:04 UTC (rev 608)
++++ trunk/src/battle.c	2006-09-20 04:35:23 UTC (rev 609)
+@@ -153,7 +153,7 @@
+     crmena(false, ienm, sector, w);
+     if (ibumpd) proutn(_(&quot; (original position)&quot;));
+     skip(1);
+-    deadkl(w, ienm, game.sector.x, game.sector.y);
++    deadkl(w, ienm, game.sector);
+     proutn(&quot;***&quot;);
+     crmshp();
+     prout(_(&quot; heavily damaged.&quot;));
+@@ -178,7 +178,7 @@
+     return;
+ }
+ 
+-void torpedo(double course, double r, int inx, int iny, double *hit, int i, int n)
++void torpedo(double course, double r, coord in, double *hit, int i, int n)
+ /* let a photon torpedo fly */
+ {
+     int l, iquad=0, ll;
+@@ -186,7 +186,7 @@
+     double ac=course + 0.25*r;
+     double angle = (15.0-ac)*0.5235988;
+     double bullseye = (15.0 - course)*0.5235988;
+-    double deltax=-sin(angle), deltay=cos(angle), x=inx, y=iny, bigger;
++    double deltax=-sin(angle), deltay=cos(angle), x=in.x, y=in.y, bigger;
+     double ang, temp, xx, yy, kp, h1;
+     struct quadrant *q = &amp;game.state.galaxy[game.quadrant.x][game.quadrant.y];
+     coord w, jw;
+@@ -221,8 +221,7 @@
+ 	    crmshp();
+ 	    prout(&quot;.&quot;);
+ 	    *hit = 700.0 + 100.0*Rand() -
+-		1000.0*sqrt(square(w.x-inx)+square(w.y-iny))*
+-		fabs(sin(bullseye-angle));
++		1000.0 * distance(w, in) * fabs(sin(bullseye-angle));
+ 	    *hit = fabs(*hit);
+ 	    newcnd(); /* we're blown out of dock */
+ 	    /* We may be displaced. */
+@@ -243,8 +242,7 @@
+ 		/* can't move into object */
+ 		return;
+ 	    }
+-	    game.sector.x = jw.x;
+-	    game.sector.y = jw.y;
++	    game.sector = jw;
+ 	    crmshp();
+ 	    shoved = true;
+ 	    break;
+@@ -261,16 +259,16 @@
+ 	case IHK:
+ 	    /* find the enemy */
+ 	    for_local_enemies(ll)
+-		if (w.x==game.ks[ll].x &amp;&amp; w.y==game.ks[ll].y) break;
++		if (same(w, game.ks[ll]))
++		    break;
+ 	    kp = fabs(game.kpower[ll]);
+ 	    h1 = 700.0 + 100.0*Rand() -
+-		1000.0*sqrt(square(w.x-inx)+square(w.y-iny))*
+-		fabs(sin(bullseye-angle));
++		1000.0 * distance(w, in) * fabs(sin(bullseye-angle));
+ 	    h1 = fabs(h1);
+ 	    if (kp &lt; h1) h1 = kp;
+ 	    game.kpower[ll] -= (game.kpower[ll]&lt;0 ? -h1 : h1);
+ 	    if (game.kpower[ll] == 0) {
+-		deadkl(w, iquad, w.x, w.y);
++		deadkl(w, iquad, w);
+ 		return;
+ 	    }
+ 	    crmena(true, iquad, sector, w);
+@@ -288,7 +286,7 @@
+ 	    }
+ 	    if (game.quad[jw.x][jw.y]==IHBLANK) {
+ 		prout(_(&quot; buffeted into black hole.&quot;));
+-		deadkl(w, iquad, jw.x, jw.y);
++		deadkl(w, iquad, jw);
+ 		return;
+ 	    }
+ 	    if (game.quad[jw.x][jw.y]!=IHDOT) {
+@@ -297,8 +295,7 @@
+ 		return;
+ 	    }
+ 	    proutn(_(&quot; damaged--&quot;));
+-	    game.ks[ll].x = jw.x;
+-	    game.ks[ll].y = jw.y;
++	    game.ks[ll] = jw;
+ 	    shoved = true;
+ 	    break;
+ 	case IHB: /* Hit a base */
+@@ -366,7 +363,7 @@
+ 		proutn(_(&quot;Mr. Spock-&quot;));
+ 		prouts(_(&quot;  \&quot;Fascinating!\&quot;&quot;));
+ 		skip(1);
+-		deadkl(w, iquad, w.x, w.y);
++		deadkl(w, iquad, w);
+ 	    } else {
+ 		/*
+ 		 * Stas Sergeev added the possibility that
+@@ -388,14 +385,13 @@
+ 	    return;
+ 	case IHT:  /* Hit a Tholian */
+ 	    h1 = 700.0 + 100.0*Rand() -
+-		1000.0*sqrt(square(w.x-inx)+square(w.y-iny))*
+-		fabs(sin(bullseye-angle));
++		1000.0 * distance(w, in) * fabs(sin(bullseye-angle));
+ 	    h1 = fabs(h1);
+ 	    if (h1 &gt;= 600) {
+ 		game.quad[w.x][w.y] = IHDOT;
+ 		game.ithere = false;
+ 		game.tholian.x = game.tholian.y = 0;
+-		deadkl(w, iquad, w.x, w.y);
++		deadkl(w, iquad, w);
+ 		return;
+ 	    }
+ 	    skip(1);
+@@ -536,7 +532,7 @@
+ 	    prout(&quot;  &quot;);
+ 	    r = (Rand()+Rand())*0.5 -0.5;
+ 	    r += 0.002*game.kpower[loop]*r;
+-	    torpedo(course, r, jay.x, jay.y, &amp;hit, 1, 1);
++	    torpedo(course, r, jay, &amp;hit, 1, 1);
+ 	    if (KLINGREM==0) 
+ 		finish(FWON); /* Klingons did themselves in! */
+ 	    if (game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova || game.alldone) 
+@@ -619,14 +615,12 @@
+     return;
+ }
+ 		
+-void deadkl(coord w, int type, int ixx, int iyy)
++void deadkl(coord w, int type, coord mv)
+ /* kill a Klingon, Tholian, Romulan, or Thingy */
+ {
+-    /* Added ixx and iyy allow enemy to &quot;move&quot; before dying */
+-    coord mv;
++    /* Added mv to allow enemy to &quot;move&quot; before dying */
+     int i,j;
+ 
+-    mv.x = ixx; mv.y = iyy;
+     skip(1);
+     crmena(true, type, sector, mv);
+     /* Decide what kind of enemy it is and update approriately */
+@@ -847,7 +841,7 @@
+ 	}
+ 	if (game.shldup || game.condit == IHDOCKED) 
+ 	    r *= 1.0 + 0.0001*game.shield;
+-	torpedo(course[i], r, game.sector.x, game.sector.y, &amp;dummy, i, n);
++	torpedo(course[i], r, game.sector, &amp;dummy, i, n);
+ 	if (game.alldone || game.state.galaxy[game.quadrant.x][game.quadrant.y].supernova)
+ 	    return;
+     }
+@@ -1236,7 +1230,7 @@
+ 	crmena(false,ienm,sector,w);
+ 	skip(1);
+ 	if (kpow == 0) {
+-	    deadkl(w, ienm, w.x, w.y);
++	    deadkl(w, ienm, w);
+ 	    if (KLINGREM==0) finish(FWON);
+ 	    if (game.alldone) return;
+ 	    kk--; /* don't do the increment */
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-20 03:57:04 UTC (rev 608)
++++ trunk/src/events.c	2006-09-20 04:35:23 UTC (rev 609)
+@@ -171,7 +171,7 @@
+ 		 (game.torps &lt; 5 || damaged(DPHOTON)))) {
+ 		/* Tractor-beam her! */
+ 		istract = true;
+-		yank = square(game.state.kscmdr.x-game.quadrant.x) + square(game.state.kscmdr.y-game.quadrant.y);
++		yank = distance(game.state.kscmdr, game.quadrant);
+ 		/********* fall through to FTBEAM code ***********/
+ 	    }
+ 	    else return;
+@@ -714,7 +714,7 @@
+ 			kount++;
+ 			break;
+ 		    case IHK: /* kill klingon */
+-			deadkl(scratch,iquad, scratch.x, scratch.y);
++			deadkl(scratch,iquad, scratch);
+ 			break;
+ 		    case IHC: /* Damage/destroy big enemies */
+ 		    case IHS:
+@@ -723,7 +723,7 @@
+ 			    if (same(game.ks[ll], scratch)) break;
+ 			game.kpower[ll] -= 800.0; /* If firepower is lost, die */
+ 			if (game.kpower[ll] &lt;= 0.0) {
+-			    deadkl(scratch, iquad, scratch.x, scratch.y);
++			    deadkl(scratch, iquad, scratch);
+ 			    break;
+ 			}
+ 			newc.x = scratch.x + scratch.x - hits[mm][1];
+@@ -740,7 +740,7 @@
+ 			    proutn(_(&quot;, blasted into &quot;));
+ 			    crmena(false, IHBLANK, sector, newc);
+ 			    skip(1);
+-			    deadkl(scratch, iquad, newc.x, newc.y);
++			    deadkl(scratch, iquad, newc);
+ 			    break;
+ 			}
+ 			if (iquad1 != IHDOT) {
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-20 03:57:04 UTC (rev 608)
++++ trunk/src/finish.c	2006-09-20 04:35:23 UTC (rev 609)
+@@ -62,7 +62,7 @@
+ 	int l=1;
+ 	while (l &lt;= game.nenhere) {
+ 	    if (game.kpower[l]*game.kdist[l] &lt;= whammo) 
+-		deadkl(game.ks[l], game.quad[game.ks[l].x][game.ks[l].y], game.ks[l].x, game.ks[l].y);
++		deadkl(game.ks[l], game.quad[game.ks[l].x][game.ks[l].y], game.ks[l]);
+ 	    l++;
+ 	}
+     }
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-20 03:57:04 UTC (rev 608)
++++ trunk/src/moving.c	2006-09-20 04:35:23 UTC (rev 609)
+@@ -131,7 +131,7 @@
+ 		case IHR:
+ 		case IHQUEST:
+ 		    game.sector = w;
+-		    ram(0, iquad, game.sector);
++		    ram(false, iquad, game.sector);
+ 		    final = game.sector;
+ 		    break;
+ 		case IHBLANK:
+
+Modified: trunk/src/planets.c
+===================================================================
+--- trunk/src/planets.c	2006-09-20 03:57:04 UTC (rev 608)
++++ trunk/src/planets.c	2006-09-20 04:35:23 UTC (rev 609)
+@@ -436,7 +436,7 @@
+ 	prouts(_(&quot;Sulu- \&quot;Captain!  It's working!\&quot;&quot;));
+ 	skip(2);
+ 	while (game.nenhere &gt; 0)
+-	    deadkl(game.ks[1], game.quad[game.ks[1].x][game.ks[1].y],game.ks[1].x,game.ks[1].y);
++	    deadkl(game.ks[1], game.quad[game.ks[1].x][game.ks[1].y],game.ks[1]);
+ 	prout(_(&quot;Ensign Chekov-  \&quot;Congratulations, Captain!\&quot;&quot;));
+ 	if (KLINGREM == 0) finish(FWON);
+ 	if ((game.options &amp; OPTION_PLAIN) == 0) {
+
+Modified: trunk/src/sst.h
+===================================================================
+--- trunk/src/sst.h	2006-09-20 03:57:04 UTC (rev 608)
++++ trunk/src/sst.h	2006-09-20 04:35:23 UTC (rev 609)
+@@ -383,10 +383,10 @@
+ void imove(void);
+ void ram(bool, int, coord);
+ void crmena(bool, int, enum loctype, coord w);
+-void deadkl(coord, int, int, int);
++void deadkl(coord, int, coord);
+ void timwrp(void);
+ void movcom(void);
+-void torpedo(double, double, int, int, double *, int, int);
++void torpedo(double, double, coord, double *, int, int);
+ void huh(void);
+ void pause_game(int);
+ void nova(coord);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000075.html">[Sst-commit-watch] r608 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000077.html">[Sst-commit-watch] r610 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#76">[ date ]</a>
+              <a href="thread.html#76">[ thread ]</a>
+              <a href="subject.html#76">[ subject ]</a>
+              <a href="author.html#76">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

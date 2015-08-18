@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r763 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r763%20-%20trunk/src&In-Reply-To=%3C200610131208.k9DC8agX003613%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000229.html">
+   <LINK REL="Next"  HREF="000231.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r763 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r763%20-%20trunk/src&In-Reply-To=%3C200610131208.k9DC8agX003613%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r763 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct 13 14:08:36 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000229.html">[Sst-commit-watch] r762 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000231.html">[Sst-commit-watch] r764 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#230">[ date ]</a>
+              <a href="thread.html#230">[ thread ]</a>
+              <a href="subject.html#230">[ subject ]</a>
+              <a href="author.html#230">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-13 14:08:36 +0200 (Fri, 13 Oct 2006)
+New Revision: 763
+
+Modified:
+   trunk/src/sst.py
+Log:
+Navigation is finally subsumed by the course object.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-13 11:39:37 UTC (rev 762)
++++ trunk/src/sst.py	2006-10-13 12:08:36 UTC (rev 763)
+@@ -274,7 +274,8 @@
+             s.j = self.j / abs(self.j)
+         return s
+     def quadrant(self):
+-        return (self / QUADSIZE).roundtogrid()
++        #print &quot;Location %s -&gt; %s&quot; % (self, (self / QUADSIZE).roundtogrid())
++        return self.roundtogrid() / QUADSIZE
+     def sector(self):
+         return self.roundtogrid() % QUADSIZE
+     def scatter(self):
+@@ -3598,19 +3599,10 @@
+         newcnd()
+         drawmaps(0)
+         setwnd(message_window)
+-    w.i = w.j = 0
++
+     if game.inorbit:
+ 	prout(_(&quot;Helmsman Sulu- \&quot;Leaving standard orbit.\&quot;&quot;))
+ 	game.inorbit = False
+-    angle = ((15.0 - course.bearing) * 0.5235988)
+-    deltax = -math.sin(angle)
+-    deltay = math.cos(angle)
+-    if math.fabs(deltax) &gt; math.fabs(deltay):
+-	bigger = math.fabs(deltax)
+-    else:
+-	bigger = math.fabs(deltay)
+-    deltay /= bigger
+-    deltax /= bigger
+     # If tractor beam is to occur, don't move full distance 
+     if game.state.date+game.optime &gt;= scheduled(FTBEAM):
+ 	trbeam = True
+@@ -3619,14 +3611,10 @@
+ 	game.optime = scheduled(FTBEAM) - game.state.date + 1e-5
+     # Move within the quadrant 
+     game.quad[game.sector.i][game.sector.j] = IHDOT
+-    x = game.sector.i
+-    y = game.sector.j
+     for m in range(course.moves):
+-        x += deltax
+-        y += deltay
+-        w.i = int(round(x))
+-        w.j = int(round(y))
+-        if not w.valid_sector():
++        course.next()
++        w = course.sector()
++        if course.origin.quadrant() != course.location.quadrant():
+             # Leaving quadrant -- allow final enemy attack 
+             # Don't do it if being pushed by Nova 
+             if len(game.enemies) != 0 and not novapush:
+@@ -3634,31 +3622,28 @@
+                 for enemy in game.enemies:
+                     finald = (w - enemy.kloc).distance()
+                     enemy.kavgd = 0.5 * (finald + enemy.kdist)
+-                #
+                 # Stas Sergeev added the condition
+                 # that attacks only happen if Klingons
+                 # are present and your skill is good.
+-                # 
+                 if game.skill &gt; SKILL_GOOD and game.klhere &gt; 0 and not game.state.galaxy[game.quadrant.i][game.quadrant.j].supernova:
+                     attack(torps_ok=False)
+                 if game.alldone:
+                     return
+             # check for edge of galaxy 
+-            w = course.final
+             kinks = 0
+             while True:
+                 kink = False
+-                if w.i &lt; 0:
+-                    w.i = -w.i
++                if course.final.i &lt; 0:
++                    course.final.i = -course.final.i
+                     kink = True
+-                if w.j &lt; 0:
+-                    w.j = -w.j
++                if course.final.j &lt; 0:
++                    course.final.j = -course.final.j
+                     kink = True
+-                if w.i &gt;= GALSIZE*QUADSIZE:
+-                    w.i = (GALSIZE*QUADSIZE*2) - w.i
++                if course.final.i &gt;= GALSIZE*QUADSIZE:
++                    course.final.i = (GALSIZE*QUADSIZE*2) - course.final.i
+                     kink = True
+-                if w.j &gt;= GALSIZE*QUADSIZE:
+-                    w.j = (GALSIZE*QUADSIZE*2) - w.j
++                if course.final.j &gt;= GALSIZE*QUADSIZE:
++                    course.final.j = (GALSIZE*QUADSIZE*2) - course.final.j
+                     kink = True
+                 if kink:
+                     kinks += 1
+@@ -3677,10 +3662,8 @@
+             # Compute final position in new quadrant 
+             if trbeam: # Don't bother if we are to be beamed 
+                 return
+-            game.quadrant.i = w.i/QUADSIZE
+-            game.quadrant.j = w.j/QUADSIZE
+-            game.sector.i = w.i - (QUADSIZE*game.quadrant.i)
+-            game.sector.j = w.j - (QUADSIZE*game.quadrant.j)
++            game.quadrant = course.final.quadrant()
++            game.sector = course.final.sector()
+             skip(1)
+             prout(_(&quot;Entering Quadrant %s.&quot;) % game.quadrant)
+             game.quad[game.sector.i][game.sector.j] = game.ship
+@@ -3693,8 +3676,8 @@
+             # object encountered in flight path 
+             stopegy = 50.0*course.distance/game.optime
+             course.distance = (game.sector - w).distance() / (QUADSIZE * 1.0)
++            game.sector = w
+             if iquad in (IHT, IHK, IHC, IHS, IHR, IHQUEST):
+-                game.sector = w
+                 for enemy in game.enemies:
+                     if enemy.kloc == game.sector:
+                         break
+@@ -3730,9 +3713,7 @@
+                 proutn(_(&quot;Emergency stop required &quot;))
+                 prout(_(&quot;%2d units of energy.&quot;) % int(stopegy))
+                 game.energy -= stopegy
+-                final.i = int(round(deltax))
+-                final.j = int(round(deltay))
+-                game.sector = final
++                game.sector = w
+                 if game.energy &lt;= 0:
+                     finish(FNRG)
+                     return
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000229.html">[Sst-commit-watch] r762 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000231.html">[Sst-commit-watch] r764 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#230">[ date ]</a>
+              <a href="thread.html#230">[ thread ]</a>
+              <a href="subject.html#230">[ subject ]</a>
+              <a href="author.html#230">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

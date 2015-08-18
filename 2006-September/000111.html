@@ -1,0 +1,442 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r644 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r644%20-%20trunk/src&In-Reply-To=%3C200609282121.k8SLLYq7026842%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000110.html">
+   <LINK REL="Next"  HREF="000112.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r644 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r644%20-%20trunk/src&In-Reply-To=%3C200609282121.k8SLLYq7026842%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r644 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 28 23:21:34 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000110.html">[Sst-commit-watch] r643 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000112.html">[Sst-commit-watch] r645 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#111">[ date ]</a>
+              <a href="thread.html#111">[ thread ]</a>
+              <a href="subject.html#111">[ subject ]</a>
+              <a href="author.html#111">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-28 23:21:33 +0200 (Thu, 28 Sep 2006)
+New Revision: 644
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/events.c
+   trunk/src/moving.c
+   trunk/src/reports.c
+Log:
+Hack boxed xcomments so they're easier for a mechanical translator 
+to recognize.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-28 10:52:08 UTC (rev 643)
++++ trunk/src/ai.c	2006-09-28 21:21:33 UTC (rev 644)
+@@ -28,8 +28,8 @@
+ 	if (game.kpower[loccom] &gt; 1000.0)
+ 	    return false;
+     }
+-    /* print escape message and move out of quadrant.
+-       We know this if either short or long range sensors are working */
++    // print escape message and move out of quadrant.
++    // We know this if either short or long range sensors are working
+     if (!damaged(DSRSENS) || !damaged(DLRSENS) ||
+ 	game.condition == docked) {
+ 	crmena(true, ienm, sector, game.ks[loccom]);
+@@ -70,7 +70,46 @@
+     return true; /* success */
+ }
+ 
++/*************************************************************************
++The bad-guy movement algorithm:
+ 
++1. Enterprise has &quot;force&quot; based on condition of phaser and photon torpedoes.
++If both are operating full strength, force is 1000. If both are damaged,
++force is -1000. Having shields down subtracts an additional 1000.
++
++2. Enemy has forces equal to the energy of the attacker plus
++100*(K+R) + 500*(C+S) - 400 for novice through good levels OR
++346*K + 400*R + 500*(C+S) - 400 for expert and emeritus.
++
++Attacker Initial energy levels (nominal):
++Klingon   Romulan   Commander   Super-Commander
++Novice    400        700        1200        
++Fair      425        750        1250
++Good      450        800        1300        1750
++Expert    475        850        1350        1875
++Emeritus  500        900        1400        2000
++VARIANCE   75        200         200         200
++
++Enemy vessels only move prior to their attack. In Novice - Good games
++only commanders move. In Expert games, all enemy vessels move if there
++is a commander present. In Emeritus games all enemy vessels move.
++
++3. If Enterprise is not docked, an agressive action is taken if enemy
++forces are 1000 greater than Enterprise.
++
++Agressive action on average cuts the distance between the ship and
++the enemy to 1/4 the original.
++
++4.  At lower energy advantage, movement units are proportional to the
++advantage with a 650 advantage being to hold ground, 800 to move forward
++1, 950 for two, 150 for back 4, etc. Variance of 100.
++
++If docked, is reduced by roughly 1.75*game.skill, generally forcing a
++retreat, especially at high skill levels.
++
++5.  Motion is limited to skill level, except for SC hi-tailing it out.
++**************************************************************************/
++
+ static void movebaddy(coord com, int loccom, feature ienm)
+ /* tactical movement for the bad guys */
+ {
+@@ -96,44 +135,6 @@
+     }
+     else {
+ 	/* decide whether to advance, retreat, or hold position */
+-/* Algorithm:
+- * Enterprise has &quot;force&quot; based on condition of phaser and photon torpedoes.
+- If both are operating full strength, force is 1000. If both are damaged,
+- force is -1000. Having shields down subtracts an additional 1000.
+-
+- * Enemy has forces equal to the energy of the attacker plus
+- 100*(K+R) + 500*(C+S) - 400 for novice through good levels OR
+- 346*K + 400*R + 500*(C+S) - 400 for expert and emeritus.
+-
+- Attacker Initial energy levels (nominal):
+- Klingon   Romulan   Commander   Super-Commander
+- Novice    400        700        1200        
+- Fair      425        750        1250
+- Good      450        800        1300        1750
+- Expert    475        850        1350        1875
+- Emeritus  500        900        1400        2000
+- VARIANCE   75        200         200         200
+-
+- Enemy vessels only move prior to their attack. In Novice - Good games
+- only commanders move. In Expert games, all enemy vessels move if there
+- is a commander present. In Emeritus games all enemy vessels move.
+-
+- *  If Enterprise is not docked, an agressive action is taken if enemy
+- forces are 1000 greater than Enterprise.
+-
+- Agressive action on average cuts the distance between the ship and
+- the enemy to 1/4 the original.
+-
+- *  At lower energy advantage, movement units are proportional to the
+- advantage with a 650 advantage being to hold ground, 800 to move forward
+- 1, 950 for two, 150 for back 4, etc. Variance of 100.
+-
+- If docked, is reduced by roughly 1.75*game.skill, generally forcing a
+- retreat, especially at high skill levels.
+-
+- *  Motion is limited to skill level, except for SC hi-tailing it out.
+- */
+-
+ 	forces = game.kpower[loccom]+100.0*game.nenhere+400*(nbaddys-1);
+ 	if (!game.shldup)
+ 	    forces += 1000; /* Good for enemy if shield is down! */
+@@ -281,8 +282,8 @@
+     if (idebug)
+ 	prout(&quot;== MOVCOM&quot;);
+ 
+-    /* Figure out which Klingon is the commander (or Supercommander)
+-       and do move */
++    // Figure out which Klingon is the commander (or Supercommander)
++    //   and do move
+     if (game.comhere) 
+ 	for_local_enemies(i) {
+ 	    w = game.ks[i];
+@@ -299,9 +300,9 @@
+ 		break;
+ 	    }
+ 	}
+-    /* if skill level is high, move other Klingons and Romulans too!
+-       Move these last so they can base their actions on what the
+-       commander(s) do. */
++    // if skill level is high, move other Klingons and Romulans too!
++    // Move these last so they can base their actions on what the
++    // commander(s) do.
+     if (game.skill &gt;= SKILL_EXPERT &amp;&amp; (game.options &amp; OPTION_MVBADDY)) 
+ 	for_local_enemies(i) {
+ 	    w = game.ks[i];
+@@ -312,7 +313,7 @@
+     sortklings();
+ }
+ 
+-static bool movescom(coord iq, bool flag) 
++static bool movescom(coord iq, bool avoid) 
+ /* commander movement helper */
+ {
+     int i;
+@@ -321,7 +322,7 @@
+ 	game.state.galaxy[iq.x][iq.y].supernova ||
+ 	game.state.galaxy[iq.x][iq.y].klingons &gt; MAXKLQUAD-1) 
+ 	return 1;
+-    if (flag) {
++    if (avoid) {
+ 	/* Avoid quadrants with bases if we want to avoid Enterprise */
+ 	for_starbases(i)
+ 	    if (same(game.state.baseq[i], iq)) 
+@@ -382,15 +383,15 @@
+     coord iq, sc, ibq;
+     int basetbl[BASEMAX+1];
+     double bdist[BASEMAX+1];
+-    bool flag;
++    bool avoid;
+ 
+     if (idebug)
+ 	prout(&quot;== SUPERCOMMANDER&quot;);
+ 
+     /* Decide on being active or passive */
+-    flag = ((NKILLC+NKILLK)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) ||
++    avoid = ((NKILLC+NKILLK)/(game.state.date+0.01-game.indate) &lt; 0.1*game.skill*(game.skill+1.0) ||
+ 	    (game.state.date-game.indate) &lt; 3.0);
+-    if (!game.iscate &amp;&amp; flag) {
++    if (!game.iscate &amp;&amp; avoid) {
+ 	/* compute move away from Enterprise */
+ 	ideltax = game.state.kscmdr.x-game.quadrant.x;
+ 	ideltay = game.state.kscmdr.y-game.quadrant.y;
+@@ -441,7 +442,7 @@
+ 		game.state.galaxy[ibq.x][ibq.y].supernova ||
+ 		game.state.galaxy[ibq.x][ibq.y].klingons &gt; MAXKLQUAD-1) 
+ 		continue;
+-	    /* if there is a commander, an no other base is appropriate,
++	    /* if there is a commander, and no other base is appropriate,
+ 	       we will take the one with the commander */
+ 	    for_commanders (j) {
+ 		if (same(ibq, game.state.kcmdr[j]) &amp;&amp; ifindit!= 2) {
+@@ -476,32 +477,32 @@
+     /* try moving in both x and y directions */
+     iq.x = game.state.kscmdr.x + ideltax;
+     iq.y = game.state.kscmdr.y + ideltax;
+-    if (movescom(iq, flag)) {
++    if (movescom(iq, avoid)) {
+ 	/* failed -- try some other maneuvers */
+ 	if (ideltax==0 || ideltay==0) {
+ 	    /* attempt angle move */
+ 	    if (ideltax != 0) {
+ 		iq.y = game.state.kscmdr.y + 1;
+-		if (movescom(iq, flag)) {
++		if (movescom(iq, avoid)) {
+ 		    iq.y = game.state.kscmdr.y - 1;
+-		    movescom(iq, flag);
++		    movescom(iq, avoid);
+ 		}
+ 	    }
+ 	    else {
+ 		iq.x = game.state.kscmdr.x + 1;
+-		if (movescom(iq, flag)) {
++		if (movescom(iq, avoid)) {
+ 		    iq.x = game.state.kscmdr.x - 1;
+-		    movescom(iq, flag);
++		    movescom(iq, avoid);
+ 		}
+ 	    }
+ 	}
+ 	else {
+ 	    /* try moving just in x or y */
+ 	    iq.y = game.state.kscmdr.y;
+-	    if (movescom(iq, flag)) {
++	    if (movescom(iq, avoid)) {
+ 		iq.y = game.state.kscmdr.y + ideltay;
+ 		iq.x = game.state.kscmdr.x;
+-		movescom(iq, flag);
++		movescom(iq, avoid);
+ 	    }
+ 	}
+     }
+@@ -513,7 +514,7 @@
+ 	ibq = game.state.baseq[i];
+ 	if (same(ibq, game.state.kscmdr) &amp;&amp; same(game.state.kscmdr, game.battle)) {
+ 	    /* attack the base */
+-	    if (flag)
++	    if (avoid)
+ 		return; /* no, don't attack base! */
+ 	    game.iseenit = false;
+ 	    game.isatb = 1;
+@@ -580,7 +581,7 @@
+ 	return;
+     }
+ 
+-    /* Do nothing if we are blocked */
++    /* do nothing if we are blocked */
+     if (game.quad[idx][idy]!= IHDOT &amp;&amp; game.quad[idx][idy]!= IHWEB)
+ 	return;
+     game.quad[game.tholian.x][game.tholian.y] = IHWEB;
+
+Modified: trunk/src/events.c
+===================================================================
+--- trunk/src/events.c	2006-09-28 10:52:08 UTC (rev 643)
++++ trunk/src/events.c	2006-09-28 21:21:33 UTC (rev 644)
+@@ -434,10 +434,10 @@
+ 	    /* try a whole bunch of times to find something suitable */
+ 	    i = 100;
+ 	    do {
+-		/* need a quadrant which is not the current one,
+-		   which has some stars which are inhabited and
+-		   not already under attack, which is not
+-		   supernova'ed, and which has some Klingons in it */
++		// need a quadrant which is not the current one,
++		// which has some stars which are inhabited and
++		// not already under attack, which is not
++		// supernova'ed, and which has some Klingons in it
+ 		w = randplace(GALSIZE);
+ 		q = &amp;game.state.galaxy[w.x][w.y];
+ 	    } while (--i &amp;&amp;
+@@ -488,10 +488,8 @@
+ 	    }
+ 	    break;
+ 	case FREPRO:		/* Klingon reproduces */
+-	    /*
+-	     * If we ever switch to a real event queue, we'll need to
+-	     * explicitly retrieve and restore the x and y.
+-	     */
++	    // If we ever switch to a real event queue, we'll need to
++	    // explicitly retrieve and restore the x and y.
+ 	    ev = schedule(FREPRO, expran(1.0 * game.intime));
+ 	    /* see if current distress call still active */
+ 	    q = &amp;game.state.galaxy[ev-&gt;quadrant.x][ev-&gt;quadrant.y];
+
+Modified: trunk/src/moving.c
+===================================================================
+--- trunk/src/moving.c	2006-09-28 10:52:08 UTC (rev 643)
++++ trunk/src/moving.c	2006-09-28 21:21:33 UTC (rev 644)
+@@ -250,7 +250,7 @@
+ /* 
+  * This program originally required input in terms of a (clock)
+  * direction and distance. Somewhere in history, it was changed to
+- * cartesian coordinates. So we need to convert. I think
++ * cartesian coordinates. So we need to convert.  Probably
+  * &quot;manual&quot; input should still be done this way -- it's a real
+  * pain if the computer isn't working! Manual mode is still confusing
+  * because it involves giving x and y motions, yet the coordinates
+@@ -268,9 +268,8 @@
+     coord incr;
+     bool iprompt = false;
+ 
+-    /* Get course direction and distance. If user types bad values, return
+-       with DIREC = -1.0. */
+-
++    // Get course direction and distance. If user types bad values, return
++    // with DIREC = -1.0.
+     game.direc = -1.0;
+ 	
+     if (game.landed &amp;&amp; !isprobe) {
+@@ -836,8 +835,8 @@
+ 		}
+ 	    }
+ 	}
+-	/* Likewise, if in the original time the Galileo was abandoned, but
+-	   was on ship earlier, it would have vanished -- lets restore it */
++	// Likewise, if in the original time the Galileo was abandoned, but
++	// was on ship earlier, it would have vanished -- let's restore it.
+ 	if (game.iscraft == offship &amp;&amp; !gotit &amp;&amp; game.damage[DSHUTTL] &gt;= 0.0) {
+ 	    prout(_(&quot;Checkov-  \&quot;Security reports the Galileo has reappeared in the dock!\&quot;&quot;));
+ 	    game.iscraft = onship;
+@@ -1066,25 +1065,25 @@
+ }
+ 
+ /*
+-**  Abandon Ship
+-**
+-**	The ship is abandoned.  If your current ship is the Faire
+-**	Queene, or if your shuttlecraft is dead, you're out of
+-**	luck.  You need the shuttlecraft in order for the captain
+-**	(that's you!!) to escape.
+-**
+-**	Your crew can beam to an inhabited starsystem in the
+-**	quadrant, if there is one and if the transporter is working.
+-**	If there is no inhabited starsystem, or if the transporter
+-**	is out, they are left to die in outer space.
+-**
+-**	If there are no starbases left, you are captured by the
+-**	Klingons, who torture you mercilessly.  However, if there
+-**	is at least one starbase, you are returned to the
+-**	Federation in a prisoner of war exchange.  Of course, this
+-**	can't happen unless you have taken some prisoners.
+-**
+-*/
++ *  Abandon Ship
++ *
++ *	The ship is abandoned.  If your current ship is the Faire
++ *	Queene, or if your shuttlecraft is dead, you're out of
++ *	luck.  You need the shuttlecraft in order for the captain
++ *	(that's you!!) to escape.
++ *
++ *	Your crew can beam to an inhabited starsystem in the
++ *	quadrant, if there is one and if the transporter is working.
++ *	If there is no inhabited starsystem, or if the transporter
++ *	is out, they are left to die in outer space.
++ *
++ *	If there are no starbases left, you are captured by the
++ *	Klingons, who torture you mercilessly.  However, if there
++ *	is at least one starbase, you are returned to the
++ *	Federation in a prisoner of war exchange.  Of course, this
++ *	can't happen unless you have taken some prisoners.
++ *
++ */
+ 
+ void abandon(void) 
+ /* abandon ship */
+
+Modified: trunk/src/reports.c
+===================================================================
+--- trunk/src/reports.c	2006-09-28 10:52:08 UTC (rev 643)
++++ trunk/src/reports.c	2006-09-28 21:21:33 UTC (rev 644)
+@@ -82,8 +82,8 @@
+     else
+ 	prout(_(&quot;There are %d bases.&quot;), game.inbase);
+     if (!damaged(DRADIO) || game.condition == docked || game.iseenit) {
+-	/* Don't report this if not seen and
+-	   either the radio is dead or not at base! */
++	// Don't report this if not seen and
++	// either the radio is dead or not at base!
+ 	attackreport(false);
+ 	game.iseenit = true;
+     }
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000110.html">[Sst-commit-watch] r643 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000112.html">[Sst-commit-watch] r645 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#111">[ date ]</a>
+              <a href="thread.html#111">[ thread ]</a>
+              <a href="subject.html#111">[ subject ]</a>
+              <a href="author.html#111">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

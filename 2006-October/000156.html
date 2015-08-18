@@ -1,0 +1,342 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r689 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-October/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r689%20-%20trunk/src&In-Reply-To=%3C200610061230.k96CUUNf004965%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000155.html">
+   <LINK REL="Next"  HREF="000157.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r689 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r689%20-%20trunk/src&In-Reply-To=%3C200610061230.k96CUUNf004965%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r689 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct  6 14:30:30 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000155.html">[Sst-commit-watch] r688 - trunk/src
+</A></li>
+        <LI>Next message: <A HREF="000157.html">[Sst-commit-watch] r690 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#156">[ date ]</a>
+              <a href="thread.html#156">[ thread ]</a>
+              <a href="subject.html#156">[ subject ]</a>
+              <a href="author.html#156">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-10-06 14:30:27 +0200 (Fri, 06 Oct 2006)
+New Revision: 689
+
+Modified:
+   trunk/src/sst.py
+Log:
+Bug fix, keyboard interrupt handling, automatic LRSCAN before CHART.
+
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-10-06 12:01:30 UTC (rev 688)
++++ trunk/src/sst.py	2006-10-06 12:30:27 UTC (rev 689)
+@@ -172,6 +172,13 @@
+ Also, the nav subsystem (enabling automatic course
+ setting) can be damaged separately from the main computer (which
+ handles weapons targeting, ETA calculation, and self-destruct).
++
++After these features were added, I translated this into Python and added
++more:
++
++9. A long-range scan is done silently whenever you call CHART; thus
++the LRSCAN command is no longer needed.  (Controlled by OPTION_PLAIN
++and turned off if game type is &quot;plain&quot; or &quot;almy&quot;.)
+ &quot;&quot;&quot;
+ import os,sys,math,curses,time,atexit,readline,cPickle,random,getopt,copy
+ 
+@@ -748,9 +755,9 @@
+                 motion = game.skill
+     # calculate preferred number of steps 
+     if motion &lt; 0:
+-        msteps = -motion
++        nsteps = -motion
+     else:
+-        msteps = motion
++        nsteps = motion
+     if motion &gt; 0 and nsteps &gt; mdist:
+ 	nsteps = mdist; # don't overshoot 
+     if nsteps &gt; QUADSIZE:
+@@ -3748,7 +3755,7 @@
+ 	    setwnd(lrscan_window)
+ 	    lrscan_window.clear()
+ 	    lrscan_window.move(0, 0)
+-	    lrscan()
++	    lrscan(silent=False)
+ 
+ def put_srscan_sym(w, sym):
+     &quot;Emit symbol for short-range scan.&quot;
+@@ -5363,30 +5370,34 @@
+                   (i, (_(&quot;s&quot;), &quot;&quot;)[i==1]))
+     skip(1)
+ 	
+-def lrscan():
++def lrscan(silent):
+     # long-range sensor scan 
+     if damaged(DLRSENS):
+ 	# Now allow base's sensors if docked 
+ 	if game.condition != &quot;docked&quot;:
+-	    prout(_(&quot;LONG-RANGE SENSORS DAMAGED.&quot;))
++            if not silent:
++                prout(_(&quot;LONG-RANGE SENSORS DAMAGED.&quot;))
+ 	    return
+-	prout(_(&quot;Starbase's long-range scan&quot;))
+-    else:
++        if not silent:
++            prout(_(&quot;Starbase's long-range scan&quot;))
++    elif not silent:
+ 	prout(_(&quot;Long-range scan&quot;))
+     for x in range(game.quadrant.x-1, game.quadrant.x+2):
+-        proutn(&quot; &quot;)
++        if not silent:
++            proutn(&quot; &quot;)
+         for y in range(game.quadrant.y-1, game.quadrant.y+2):
+ 	    if not VALID_QUADRANT(x, y):
+-		proutn(&quot;  -1&quot;)
++                if not silent:
++                    proutn(&quot;  -1&quot;)
+ 	    else:
+ 		if not damaged(DRADIO):
+ 		    game.state.galaxy[x][y].charted = True
+ 		game.state.chart[x][y].klingons = game.state.galaxy[x][y].klingons
+ 		game.state.chart[x][y].starbase = game.state.galaxy[x][y].starbase
+ 		game.state.chart[x][y].stars = game.state.galaxy[x][y].stars
+-		if game.state.galaxy[x][y].supernova: 
++		if not silent and game.state.galaxy[x][y].supernova: 
+ 		    proutn(&quot; ***&quot;)
+-		else:
++		elif not silent:
+ 		    proutn(&quot; %3d&quot; % (game.state.chart[x][y].klingons*100 + game.state.chart[x][y].starbase * 10 + game.state.chart[x][y].stars))
+ 	prout(&quot; &quot;)
+ 
+@@ -5420,6 +5431,8 @@
+ def chart():
+     # display the star chart  
+     chew()
++    if not (game.options &amp; (OPTION_PLAIN | OPTION_ALMY)):
++        lrscan(silent=True)
+     if not damaged(DRADIO):
+ 	rechart()
+     if game.lastchart &lt; game.state.date and game.condition == &quot;docked&quot;:
+@@ -6501,7 +6514,7 @@
+ 	elif cmd == &quot;REQUEST&quot;:		# status request 
+ 	    request()
+ 	elif cmd == &quot;LRSCAN&quot;:		# long range scan
+-	    lrscan()
++	    lrscan(silent=False)
+ 	elif cmd == &quot;PHASERS&quot;:		# phasers
+ 	    phasers()
+ 	    if game.ididit:
+@@ -6830,84 +6843,89 @@
+ 	atover(True)
+ 
+ if __name__ == '__main__':
+-    global line, thing, game, idebug, iqengry
+-    game = citem = aaitem = inqueue = None
+-    line = ''
+-    thing = coord()
+-    iqengry = False
+-    game = gamestate()
+-    idebug = 0
+-    game.options = OPTION_ALL &amp;~ (OPTION_IOMODES | OPTION_SHOWME | OPTION_PLAIN | OPTION_ALMY)
+-    # Disable curses mode until the game logic is working.
+-    #    if os.getenv(&quot;TERM&quot;):
+-    #	game.options |= OPTION_CURSES | OPTION_SHOWME
+-    #    else:
+-    game.options |= OPTION_TTY
+-    seed = int(time.time())
+-    (options, arguments) = getopt.getopt(sys.argv[1:], &quot;r:tx&quot;)
+-    for (switch, val) in options:
+-        if switch == '-r':
+-            try:
+-                replayfp = open(val, &quot;r&quot;)
+-            except IOError:
+-		sys.stderr.write(&quot;sst: can't open replay file %s\n&quot; % val)
+-		raise SystemExit, 1
+-            try:
+-                line = replayfp.readline().strip()
+-                (leader, key, seed) = line.split()
+-                seed = eval(seed)
+-                sys.stderr.write(&quot;sst2k: seed set to %s\n&quot; % seed)
+-                line = replayfp.readline().strip()
+-                arguments += line.split()[2:]
+-            except ValueError:
+-		sys.stderr.write(&quot;sst: replay file %s is ill-formed\n&quot;% val)
+-		os.exit(1)
+-	    game.options |= OPTION_TTY
+-	    game.options &amp;=~ OPTION_CURSES
+-	elif switch == '-t':
+-	    game.options |= OPTION_TTY
+-	    game.options &amp;=~ OPTION_CURSES
+-	elif switch == '-x':
+-	    idebug = True
+-	else:
+-	    sys.stderr.write(&quot;usage: sst [-t] [-x] [startcommand...].\n&quot;)
+-	    os.exit(0)
+-    # where to save the input in case of bugs
+     try:
+-        logfp = open(&quot;/usr/tmp/sst-input.log&quot;, &quot;w&quot;)
+-    except IOError:
+-        sys.stderr.write(&quot;sst: warning, can't open logfile\n&quot;)
+-    if logfp:
+-	logfp.write(&quot;# seed %s\n&quot; % seed)
+-	logfp.write(&quot;# options %s\n&quot; % &quot; &quot;.join(arguments))
+-    random.seed(seed)
+-    iostart()
+-    if arguments:
+-        inqueue = arguments
+-    else:
+-        inqueue = None
+-    while True: # Play a game 
+-	setwnd(fullscreen_window)
+-	clrscr()
+-	prelim()
+-	setup(needprompt=not inqueue)
+-	if game.alldone:
+-	    score()
+-	    game.alldone = False
+-	else:
+-	    makemoves()
+-	skip(1)
+-	stars()
+-	skip(1)
+-	if game.tourn and game.alldone:
+-	    proutn(_(&quot;Do you want your score recorded?&quot;))
+-	    if ja() == True:
+-		chew2()
+-		freeze(False)
+-        chew()
+-	proutn(_(&quot;Do you want to play again? &quot;))
+-	if not ja():
+-	    break
+-    skip(1)
+-    prout(_(&quot;May the Great Bird of the Galaxy roost upon your home planet.&quot;))
+-    raise SystemExit, 0
++        global line, thing, game, idebug, iqengry
++        game = citem = aaitem = inqueue = None
++        line = ''
++        thing = coord()
++        iqengry = False
++        game = gamestate()
++        idebug = 0
++        game.options = OPTION_ALL &amp;~ (OPTION_IOMODES | OPTION_PLAIN | OPTION_ALMY)
++        # Disable curses mode until the game logic is working.
++        #    if os.getenv(&quot;TERM&quot;):
++        #	game.options |= OPTION_CURSES | OPTION_SHOWME
++        #    else:
++        game.options |= OPTION_TTY
++        seed = int(time.time())
++        (options, arguments) = getopt.getopt(sys.argv[1:], &quot;r:tx&quot;)
++        for (switch, val) in options:
++            if switch == '-r':
++                try:
++                    replayfp = open(val, &quot;r&quot;)
++                except IOError:
++                    sys.stderr.write(&quot;sst: can't open replay file %s\n&quot; % val)
++                    raise SystemExit, 1
++                try:
++                    line = replayfp.readline().strip()
++                    (leader, key, seed) = line.split()
++                    seed = eval(seed)
++                    sys.stderr.write(&quot;sst2k: seed set to %s\n&quot; % seed)
++                    line = replayfp.readline().strip()
++                    arguments += line.split()[2:]
++                except ValueError:
++                    sys.stderr.write(&quot;sst: replay file %s is ill-formed\n&quot;% val)
++                    os.exit(1)
++                game.options |= OPTION_TTY
++                game.options &amp;=~ OPTION_CURSES
++            elif switch == '-t':
++                game.options |= OPTION_TTY
++                game.options &amp;=~ OPTION_CURSES
++            elif switch == '-x':
++                idebug = True
++            else:
++                sys.stderr.write(&quot;usage: sst [-t] [-x] [startcommand...].\n&quot;)
++                os.exit(0)
++        # where to save the input in case of bugs
++        try:
++            logfp = open(&quot;/usr/tmp/sst-input.log&quot;, &quot;w&quot;)
++        except IOError:
++            sys.stderr.write(&quot;sst: warning, can't open logfile\n&quot;)
++        if logfp:
++            logfp.write(&quot;# seed %s\n&quot; % seed)
++            logfp.write(&quot;# options %s\n&quot; % &quot; &quot;.join(arguments))
++        random.seed(seed)
++        iostart()
++        if arguments:
++            inqueue = arguments
++        else:
++            inqueue = None
++        while True: # Play a game 
++            setwnd(fullscreen_window)
++            clrscr()
++            prelim()
++            setup(needprompt=not inqueue)
++            if game.alldone:
++                score()
++                game.alldone = False
++            else:
++                makemoves()
++            skip(1)
++            stars()
++            skip(1)
++            if game.tourn and game.alldone:
++                proutn(_(&quot;Do you want your score recorded?&quot;))
++                if ja() == True:
++                    chew2()
++                    freeze(False)
++            chew()
++            proutn(_(&quot;Do you want to play again? &quot;))
++            if not ja():
++                break
++        skip(1)
++        prout(_(&quot;May the Great Bird of the Galaxy roost upon your home planet.&quot;))
++        raise SystemExit, 0
++    except KeyboardInterrupt:
++        print&quot;&quot;
++        pass
++
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000155.html">[Sst-commit-watch] r688 - trunk/src
+</A></li>
+	<LI>Next message: <A HREF="000157.html">[Sst-commit-watch] r690 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#156">[ date ]</a>
+              <a href="thread.html#156">[ thread ]</a>
+              <a href="subject.html#156">[ subject ]</a>
+              <a href="author.html#156">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>

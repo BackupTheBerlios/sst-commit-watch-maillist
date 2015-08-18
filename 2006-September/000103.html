@@ -1,0 +1,263 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Sst-commit-watch] r636 - trunk/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/sst-commit-watch/2006-September/index.html" >
+   <LINK REL="made" HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r636%20-%20trunk/src&In-Reply-To=%3C200609272146.k8RLkat2010312%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000102.html">
+   <LINK REL="Next"  HREF="000104.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Sst-commit-watch] r636 - trunk/src</H1>
+    <B>esr at BerliOS</B> 
+    <A HREF="mailto:sst-commit-watch%40lists.berlios.de?Subject=Re%3A%20%5BSst-commit-watch%5D%20r636%20-%20trunk/src&In-Reply-To=%3C200609272146.k8RLkat2010312%40sheep.berlios.de%3E"
+       TITLE="[Sst-commit-watch] r636 - trunk/src">esr at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 27 23:46:36 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000102.html">[Sst-commit-watch] r635 - in trunk: po src
+</A></li>
+        <LI>Next message: <A HREF="000104.html">[Sst-commit-watch] r637 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#103">[ date ]</a>
+              <a href="thread.html#103">[ thread ]</a>
+              <a href="subject.html#103">[ subject ]</a>
+              <a href="author.html#103">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: esr
+Date: 2006-09-27 23:46:35 +0200 (Wed, 27 Sep 2006)
+New Revision: 636
+
+Modified:
+   trunk/src/ai.c
+   trunk/src/finish.c
+   trunk/src/sst.py
+Log:
+Parallel cleanups in the C and scratch Python code.
+
+
+Modified: trunk/src/ai.c
+===================================================================
+--- trunk/src/ai.c	2006-09-27 16:27:49 UTC (rev 635)
++++ trunk/src/ai.c	2006-09-27 21:46:35 UTC (rev 636)
+@@ -10,8 +10,8 @@
+     iq.y = game.quadrant.y+(look.y+(QUADSIZE-1))/QUADSIZE - 1;
+     if (!VALID_QUADRANT(iq.x,iq.y) ||
+ 	game.state.galaxy[iq.x][iq.y].supernova ||
+-	game.state.galaxy[iq.x][iq.y].klingons &gt; 8)
+-	return false; /* no can do -- neg energy, supernovae, or &gt;8 Klingons */
++	game.state.galaxy[iq.x][iq.y].klingons &gt; MAXKLQUAD-1)
++	return false; /* no can do -- neg energy, supernovae, or &gt;MAXKLQUAD-1 Klingons */
+     if (ienm == IHR) return false; /* Romulans cannot escape! */
+     if (!irun) {
+ 	/* avoid intruding on another commander's territory */
+@@ -155,7 +155,7 @@
+ 		motion -= game.skill*(2.0-square(Rand()));
+ 	}
+ 	if (idebug)
+-	    proutn(&quot;=== MOTION = %1.2f, FORCES = %1.2f, &quot;, motion, forces);
++	    proutn(&quot;=== MOTION = %d, FORCES = %1.2f, &quot;, motion, forces);
+ 	/* don't move if no motion */
+ 	if (motion==0) return;
+ 	/* Limit motion according to skill */
+@@ -296,7 +296,7 @@
+ 
+     if (same(iq, game.quadrant) || !VALID_QUADRANT(iq.x, iq.y) ||
+ 	game.state.galaxy[iq.x][iq.y].supernova ||
+-	game.state.galaxy[iq.x][iq.y].klingons &gt; 8) 
++	game.state.galaxy[iq.x][iq.y].klingons &gt; MAXKLQUAD-1) 
+ 	return 1;
+     if (flag) {
+ 	/* Avoid quadrants with bases if we want to avoid Enterprise */
+@@ -413,7 +413,7 @@
+ 	    ibq = game.state.baseq[i];
+ 	    if (same(ibq, game.quadrant) || same(ibq, game.battle) ||
+ 		game.state.galaxy[ibq.x][ibq.y].supernova ||
+-		game.state.galaxy[ibq.x][ibq.y].klingons &gt; 8) 
++		game.state.galaxy[ibq.x][ibq.y].klingons &gt; MAXKLQUAD-1) 
+ 		continue;
+ 	    /* if there is a commander, an no other base is appropriate,
+ 	       we will take the one with the commander */
+
+Modified: trunk/src/finish.c
+===================================================================
+--- trunk/src/finish.c	2006-09-27 16:27:49 UTC (rev 635)
++++ trunk/src/finish.c	2006-09-27 21:46:35 UTC (rev 636)
+@@ -219,7 +219,7 @@
+ 	break;
+     case FMATERIALIZE:
+ 	prout(_(&quot;Starbase was unable to re-materialize your starship.&quot;));
+-	prout(_(&quot;Sic transit gloria muntdi&quot;));
++	prout(_(&quot;Sic transit gloria mundi&quot;));
+ 	break;
+     case FPHASER:
+ 	proutn(_(&quot;The &quot;));
+
+Modified: trunk/src/sst.py
+===================================================================
+--- trunk/src/sst.py	2006-09-27 16:27:49 UTC (rev 635)
++++ trunk/src/sst.py	2006-09-27 21:46:35 UTC (rev 636)
+@@ -1,5 +1,15 @@
+ &quot;&quot;&quot;
+ sst.py =-- Super Star Trek in Python
++
++Control flow of this translation is pretty much identical to the C version
++(and thus like the ancestral FORTRAN) but the data structures are
++radically different -- the Python code makes heavy use of objects.
++
++Note that the game.quad, game.snap.galaxy and game.snap.chart members
++are not actually arrays but dictioaries indixed by coord tuples.  Be setting
++the hash of a coord exual to the hash of a literal tuple containing its
++coordinate data, we ensure these can be indexed both ways.
++
+ &quot;&quot;&quot;
+ import math
+ 
+@@ -15,6 +25,11 @@
+ MAXKLQUAD	= 9
+ FOREVER 	= 1e30
+ 
++# These macros hide the difference between 0-origin and 1-origin addressing.
++# They're a step towards de-FORTRANizing the code.
++def VALID_QUADRANT(x,y): ((x)&gt;=1 and (x)&lt;=GALSIZE and (y)&gt;=1 and (y)&lt;=GALSIZE)
++def VALID_SECTOR(x, y):	((x)&gt;=1 and (x)&lt;=QUADSIZE and (y)&gt;=1 and (y)&lt;=QUADSIZE)
++
+ # These types have not been dealt with yet 
+ IHQUEST = '?',
+ IHWEB = '#',
+@@ -49,11 +64,17 @@
+     &quot;A feature in the current quadrant (ship, star, black hole, etc).&quot; 
+     def __init__(self):
+         self.type = None	# name of feature type
+-        self.location = None	# location
++        self.sector = None	# sector location
+     def distance(self):
+-        return self.location.distance(game.sector)
++        return self.sector.distance(game.sector)
+     def __str__(self):
+         return self.name[0]
++    def sectormove(self, dest):
++        &quot;Move this feature within the current quadrant.&quot; 
++        if self.sector:
++            game.quad[self.sector] = None
++        game.quad[dest] = self
++        self.sector = dest
+ 
+ empty = None	# Value of empty space in game.quad
+ 
+@@ -73,12 +94,6 @@
+             game.remkl -= 1
+         elif self.type == &quot;Romulan&quot;:
+             game.romrem -= 1
+-    def sectormove(self, dest):
+-        &quot;Move this ship within the current quadrant.&quot; 
+-        if self.location:
+-            game.quad[self.location] = None
+-        game.quad[dest] = self
+-        self.location = dest
+ 
+ class planet(feature):
+     &quot;A planet.  May be inhabited or not, may hold dilithium crystals or not.&quot;
+@@ -116,13 +131,17 @@
+         return '*'
+ 
+ class starbase(feature):
+-    &quot;Starbases also have no features.&quot;
+-    def __init(self):
++    &quot;Starbases also have no features, just a location.&quot;
++    def __init(self, quadrant):
+         feature.__init__(self)
++        self.quadrant = quadrant
++        game.state.bases.append(self)
+     def __del__(self):
+-        game.state.bases.remove(self.location)
++        game.state.bases.remove(self)
+     def __str__(self):
+         return 'B'
++    def __del__(self):
++        feature.__del__(self)
+ 
+ class quadrant:
+     def __init__(self):
+@@ -158,7 +177,6 @@
+ 	self.remkl = None	# remaining klingons
+ 	self.remcom = None	# remaining commanders
+ 	self.nscrem = None	# remaining super commanders
+-	self.rembase = None	# remaining bases
+ 	self.starkl = None	# destroyed stars
+ 	self.basekl = None	# destroyed bases
+ 	self.nromrem = None	# Romulans remaining
+@@ -291,8 +309,8 @@
+     iq.y = game.quadrant.y+(look.y+(QUADSIZE-1))/QUADSIZE - 1
+     if not valid_quadrant(iq) or \
+ 	game.state.galaxy[iq].supernova or \
+-        game.state.galaxy[iq].klingons &gt; 8:
+-	return False;	# no can do -- neg energy, supernovae, or &gt;8 Klingons
++        game.state.galaxy[iq].klingons &gt; MAXKLQUAD-1:
++	return False;	# no can do -- neg energy, supernovae, or &gt;MAXKLQUAD-1 Klingons
+     if ship.type == &quot;Romulan&quot;:
+         return False	# Romulans cannot escape
+     if not irun:
+@@ -530,7 +548,7 @@
+     global ipage
+     if game.state.kscmdr == game.quadrant or \
+ 	game.state.galaxy[iq].supernova or \
+-        game.state.galaxy[iq].klingons &gt; 8: 
++        game.state.galaxy[iq].klingons &gt; MAXKLQUAD-1: 
+ 	return True
+     if avoid:
+ 	# Avoid quadrants with bases if we want to avoid Enterprise
+@@ -595,7 +613,7 @@
+ 	# without too many Klingons, and not already under attack.
+         nearest = filter(game.starbases,
+                          lambda x: game.state.galaxy[x].supernova \
+-                         and game.state.galaxy[x].klingons &lt;= 8)
++                         and game.state.galaxy[x].klingons &lt;= MAXKLQUAD-1)
+         if game.quadrant in nearest:
+             nearest.remove(game.quadrant)
+         if game.battle in nearest:
+@@ -636,7 +654,7 @@
+ 		iq.x = game.state.kscmdr.x
+ 		movescom(iq, passive)
+     # check for a base
+-    if game.state.rembase == 0:
++    if len(game.state.bases) == 0:
+ 	unschedule(&quot;FSCMOVE&quot;)
+     else:
+         for ibq in game.bases:
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000102.html">[Sst-commit-watch] r635 - in trunk: po src
+</A></li>
+	<LI>Next message: <A HREF="000104.html">[Sst-commit-watch] r637 - trunk/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#103">[ date ]</a>
+              <a href="thread.html#103">[ thread ]</a>
+              <a href="subject.html#103">[ subject ]</a>
+              <a href="author.html#103">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/sst-commit-watch">More information about the Sst-commit-watch
+mailing list</a><br>
+</body></html>
